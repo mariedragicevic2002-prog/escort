@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "autofix": {
+      "source": "coderabbitai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/autofix/SKILL.md",
+      "computedHash": "1acb22e44a778ada090af5d0913ddc1dee1d7d4c0c4d2a3d4889b672c626c713"
+    }
+  }
+}

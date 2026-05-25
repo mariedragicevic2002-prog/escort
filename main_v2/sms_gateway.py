@@ -545,9 +545,19 @@ def _process_sms_message(phone_number: str, message_body: str) -> list[str]:
             if silenced_until.tzinfo is None:
                 silenced_until = silenced_until.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) < silenced_until:
+                logger.info(
+                    "sms_gateway: silenced caller %s until %s",
+                    phone_number[-4:],
+                    silenced_until.isoformat(),
+                )
                 return []
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                "sms_gateway: silenced_until parse failed for %s: %s (value=%s)",
+                phone_number[-4:],
+                type(e).__name__,
+                silenced_until_str,
+            )
 
     # Fetch message history for classifier context
     _ai_message_history = []

@@ -3,8 +3,7 @@ main_v2/webhook_main_flow.py
 
 Core webhook request processing. Called from application.py webhook() route handler.
 """
-import re as _re
-import re as _re_bp
+import re
 import time as _time_sleep
 from datetime import datetime, timezone
 
@@ -108,9 +107,9 @@ _KNOWN_ACTION_TAGS = {
     "transition_post_booking",
 }
 
-_FRUSTRATION_PATTERNS = _re.compile(
+_FRUSTRATION_PATTERNS = re.compile(
     r"\b(hello+\??|why|again|still|same|what the|ugh|wtf|ffs|forget it|never mind|nvm|useless|not working)\b",
-    _re.IGNORECASE,
+    re.IGNORECASE,
 )
 
 
@@ -610,7 +609,7 @@ def _legacy_handle_chatbot_disabled(ctx: dict):
         )
         return jsonify({"status": "ok", "chatbot_disabled": True}), 200
     except Exception as e:
-        logger.warning(f"Chatbot enabled check failed: {e}")
+        logger.warning("Chatbot enabled check failed: %s", e)
         return None
 
 
@@ -625,9 +624,9 @@ def _legacy_handle_blocked_phrase(ctx: dict):
         if not blocked_phrases_raw or not ctx["message_body"]:
             return None
         phrases = [p.strip().lower() for p in blocked_phrases_raw.splitlines() if p.strip()]
-        msg_lower = _re_bp.sub(r'\s+', ' ', ctx["message_body"].lower().strip())
+        msg_lower = re.sub(r'\s+', ' ', ctx["message_body"].lower().strip())
         for phrase in phrases:
-            phrase_norm = _re_bp.sub(r'\s+', ' ', phrase.strip().lower())
+            phrase_norm = re.sub(r'\s+', ' ', phrase.strip().lower())
             if phrase_norm and phrase_norm in msg_lower:
                 logger.info(
                     "Blocked phrase matched for %s: message not processed",
@@ -642,7 +641,7 @@ def _legacy_handle_blocked_phrase(ctx: dict):
                 return jsonify({"status": "ok", "blocked_phrase": True}), 200
         return None
     except Exception as e:
-        logger.warning(f"Blocked phrases check failed: {e}")
+        logger.warning("Blocked phrases check failed: %s", e)
         return None
 
 
@@ -1383,12 +1382,11 @@ def _legacy_evaluate_escalation(ctx: dict) -> None:
             client_context=ctx["client_context"],
         )
         if escalation.get("triggered") and "escalate_manual_review" in (escalation.get("tags") or []):
-            from datetime import datetime as _dt, timezone as _tz
             ctx["state_manager"].update_fields(
                 ctx["phone_number"],
                 {
                     "manual_review_required": True,
-                    "escalation_triggered_at": _dt.now(_tz.utc).isoformat(),
+                    "escalation_triggered_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
     except Exception as esc_err:
@@ -2089,7 +2087,7 @@ def _legacy_handle_webhook_exception(request_id: str, trace, webhook_exc):
             from services.sms_service import send_sms as _send_sms
             _send_sms(to_phone, sorry_msg)
     except Exception as send_err:
-        logger.error(f"Failed to send error fallback SMS: {send_err}")
+        logger.error("Failed to send error fallback SMS: %s", send_err)
     status_code = 503 if ("timeout" in err_l or "timed out" in err_l) else 500
     safe_msg = (
         "Service temporarily unavailable. Please try again later."
