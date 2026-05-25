@@ -33,11 +33,11 @@ class ProgressiveFieldCollector:
     def get_next_field_to_ask(self, _current_fields: dict[str, Any], missing_fields: list[str]) -> str | None:
         """
         Get the next field to ask for based on priority order.
-        
+
         Args:
-            current_fields: Current booking fields
+            _current_fields: Unused (reserved for signature compatibility)
             missing_fields: List of missing field names
-            
+
         Returns:
             Next field name to ask for, or None if all fields collected
         """

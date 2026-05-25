@@ -410,11 +410,11 @@ def get_rates_for_duration_examples() -> list:
     """List of (label, price) for error/validation messages, e.g. [('1 hour', 600), ...]."""
     p = _load_pricing()
     incall = p.get("incall") or {}
-    surcharge = int(p.get("surcharge") or 100)
     gfe_60 = int(incall.get("gfe_60") or 700)
+    gfe_30 = int(incall.get("gfe_30") or 400)
     return [
         ("1 hour", gfe_60),
-        ("1.5 hours", gfe_60 + surcharge),
+        ("1.5 hours", gfe_60 + gfe_30),
         ("2 hours", gfe_60 * 2),
         ("3 hours", gfe_60 * 3),
     ]

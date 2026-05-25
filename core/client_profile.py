@@ -36,11 +36,15 @@ def build_client_profile(
     s = state or {}
     cc = client_context or {}
     total = cc.get("total_bookings")
+    try:
+        total_int = int(total) if total is not None else 0
+    except (ValueError, TypeError):
+        total_int = 0
     profile = {
         "phone_number": (s.get("phone_number") or cc.get("phone_number") or "").strip() or None,
         "client_name": (s.get("client_name") or "").strip() or None,
-        "is_returning_client": bool(total and int(total) > 0),
-        "total_bookings": int(total or 0),
+        "is_returning_client": total_int > 0,
+        "total_bookings": total_int,
         "preferred_duration": cc.get("preferred_duration"),
         "preferred_experience": cc.get("preferred_experience"),
         "preferred_location": cc.get("preferred_location"),
@@ -67,8 +71,12 @@ def build_client_profile_with_memory(
             memories = client_memory_service.get_memories(phone_number, limit=5)
             profile["long_term_memories"] = memories
             profile["memory_prompt_snippet"] = client_memory_service.format_for_prompt(phone_number)
-        except Exception:
-            pass
+        except Exception as e:
+            # Log but don't fail — memory enrichment is optional
+            import logging
+            logging.getLogger(__name__).debug(
+                "Failed to load memories for %s: %s", phone_number, e
+            )
     return profile
 
 
@@ -80,7 +88,10 @@ def profile_to_prompt_snippet(profile: dict[str, Any] | None) -> str:
     if name:
         parts.append(f"Client name: {name}.")
     total = p.get("total_bookings")
-    total_i = int(total) if total is not None else 0
+    try:
+        total_i = int(total) if total is not None else 0
+    except (TypeError, ValueError):
+        total_i = 0
     if total_i <= 0:
         parts.append("Client is a new client.")
     else:

@@ -594,7 +594,7 @@ class StateManager:
                         set_clauses.append(psy_sql.SQL("{} = %s").format(psy_sql.Identifier(field)))
                         params.append(_normalize_value_for_db(field, value))
                     if field == 'client_name' and value:
-                        logger.info(f"Persisting client_name for {phone_number}: {value!r}")
+                        logger.info("Persisting client_name for %s: %r", sanitize_log_value(phone_number), value)
 
             # Add WHERE clause for optimistic locking
             params.extend([phone_number, current_version])
@@ -699,7 +699,7 @@ class StateManager:
                         set_clauses.append(psy_sql.SQL("{} = %s").format(psy_sql.Identifier(field)))
                         params.append(_normalize_value_for_db(field, value))
                     if field == 'client_name' and value:
-                        logger.info(f"Persisting client_name for {phone_number}: {value!r}")
+                        logger.info("Persisting client_name for %s: %r", sanitize_log_value(phone_number), value)
 
                 # No valid fields to write: treat as success and avoid version churn.
                 if not valid_update_applied:
@@ -1222,7 +1222,6 @@ class StateManager:
                     'arrival_time_minutes': None,
                     'outcall_awaiting_yes': False,
                     'incall_awaiting_yes': False,
-                    'awaiting_booking_change_cancel_choice': False,
                     'awaiting_yes_set_at': None,
                     'awaiting_name': False,
                     '_consecutive_same_response_count': 0,

@@ -8,6 +8,7 @@ preserved unchanged for full backward compatibility.
 
 import json
 import logging
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -197,7 +198,6 @@ class ConversationContext:
             return None
         
         # Return most common value
-        from collections import Counter
         counter = Counter(values)
         return counter.most_common(1)[0][0] if counter else None
     

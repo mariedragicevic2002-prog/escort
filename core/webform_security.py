@@ -19,7 +19,7 @@ import pytz
 import config
 from services.database_service import get_shared_db
 
-logger = logging.getLogger("escort_chatbot.webform_security")
+logger = logging.getLogger("adella_chatbot.webform_security")
 
 
 def generate_short_code():

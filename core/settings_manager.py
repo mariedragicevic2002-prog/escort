@@ -5,15 +5,13 @@ Replaces hardcoded config values with admin_settings table.
 Uses in-memory cache with database fallback.
 """
 
-from utils.log_sanitize import LOG_SUPPRESSED_FMT
-
-
 import logging
 import os
 import threading
 import time
 from typing import Any
 
+from utils.log_sanitize import LOG_SUPPRESSED_FMT
 from services.database_service import DatabaseService, get_shared_db_with_retry
 
 logger = logging.getLogger("adella_chatbot.settings_manager")
