@@ -146,10 +146,10 @@ def _sync_state_cache(phone_number: str, state: dict[str, Any] | None = None, *,
 # client must not be silently reclassified to NEW by the dispatcher. The only
 # legitimate reset path is StateManager.clear_booking (force=True).
 def _build_valid_transitions() -> dict[str, frozenset[str]]:
-    from core.state_machine import ALLOWED_TRANSITIONS
+    from core.state_machine import STATE_TRANSITIONS
     return {
-        state: frozenset(targets)
-        for state, targets in ALLOWED_TRANSITIONS.items()
+        state: frozenset(targets.values())
+        for state, targets in STATE_TRANSITIONS.items()
     }
 
 VALID_STATE_TRANSITIONS: dict[str, frozenset[str]] = _build_valid_transitions()
