@@ -1,0 +1,37 @@
+/**
+ * Shared mobile / touch enhancements for public webforms and admin UI.
+ * Loaded after inline page styles so these rules can override where needed.
+ */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Avoid 300ms tap delay on primary actions */
+button,
+input[type="submit"],
+input[type="button"],
+.submit-btn,
+.nav-btn,
+a.nav-btn {
+    touch-action: manipulation;
+}
+
+/* iOS Safari: inputs below 16px often trigger zoom on focus */
+@media (max-width: 600px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    select,
+    textarea {
+        font-size: max(16px, 1em);
+    }
+}
+
+/* Touch devices: hover transforms feel jumpy */
+@media (hover: none) and (pointer: coarse) {
+    .nav-btn:hover,
+    .submit-btn:hover,
+    .status-card:hover {
+        transform: none;
+    }
+}

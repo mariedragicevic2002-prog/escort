@@ -320,3 +320,29 @@ def target_state_to_event(current_state: str, target: str | None) -> str:
         reason="no_one_step_transition",
     )
     return "stay"
+
+
+# ---------------------------------------------------------------------------
+# 5. Backward-compatibility shims (refactor2 legacy callers)
+# ---------------------------------------------------------------------------
+
+class TransitionError(ValueError):
+    """Raised by validate_transition() for invalid state-to-state moves."""
+
+
+def validate_transition(from_state: str, to_state: str) -> None:
+    """Raise TransitionError if from_state → to_state is not permitted."""
+    if not is_valid_transition(from_state, to_state):
+        raise TransitionError(
+            f"Invalid transition: {from_state!r} → {to_state!r}"
+        )
+
+
+def get_allowed_transitions(state: str) -> list[str]:
+    """Return all reachable next states from *state*."""
+    return list(STATE_TRANSITIONS.get(state, {}).values())
+
+
+def is_terminal(state: str) -> bool:
+    """Return True if *state* has no outbound transitions."""
+    return not STATE_TRANSITIONS.get(state)
