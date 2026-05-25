@@ -1,0 +1,36 @@
+reviews:
+  profile: "assertive"
+
+  request_changes_workflow: true
+
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!venv/**"
+    - "!__pycache__/**"
+
+chat:
+  auto_reply: true
+  reviews:
+  instructions: |
+    Focus heavily on:
+    - Python async issues
+    - race conditions
+    - API timeout handling
+    - memory leaks
+    - prompt injection vulnerabilities
+    - dead code
+    - scalability bottlenecks
+    - duplicate logic
+    - database query efficiency
+    - chatbot hallucination risks
+    - production readiness
