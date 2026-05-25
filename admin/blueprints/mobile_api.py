@@ -128,6 +128,9 @@ def _bootstrap_bookings_db():
         if count and int(count) > 0:
             return  # already seeded
 
+        # Seed data intentionally uses Adelaide time (+09:30) for test consistency,
+        # regardless of configured timezone. The existence check above uses the
+        # configured timezone to determine whether seeding has occurred.
         TZ = "+09:30"
 
         def _ts(hhmm):

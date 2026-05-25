@@ -333,7 +333,7 @@ def _fetch_bookings_for_date(selected_date):
         from utils.row_utils import row_get
         db = get_shared_db(config.DATABASE_URL)
         if db is None:
-            return []
+            return [], "Database unavailable."
         tz = _get_local_timezone()
         tz_name = str(tz)
 

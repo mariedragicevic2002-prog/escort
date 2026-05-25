@@ -40,6 +40,9 @@ config_bp = Blueprint('config', __name__, template_folder='../templates')
 # --- File upload endpoint for deployment ---
 from flask import jsonify
 
+_UPLOAD_DIR = os.path.join(_CONFIG_BASE_DIR, "uploads")
+os.makedirs(_UPLOAD_DIR, exist_ok=True)
+
 @config_bp.route('/upload', methods=['POST'])
 def upload_file():
     if not (session.get("admin_authenticated") or session.get("config_authenticated")):
@@ -49,10 +52,32 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
+
+    # Validate file size (10MB limit)
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    if size > 10 * 1024 * 1024:
+        return jsonify({"error": "File too large (max 10MB)"}), 400
+
+    # Whitelist allowed extensions
+    ext = os.path.splitext(file.filename or '')[1].lower()
+    if ext not in {'.json', '.xlsx', '.xlsm', '.csv'}:
+        return jsonify({"error": "Invalid file type"}), 400
+
     filename = secure_filename(file.filename or "")
-    save_path = os.path.join(_CONFIG_BASE_DIR, filename)
+    filename = os.path.basename(filename)
+    save_path = os.path.join(_UPLOAD_DIR, filename)
+
+    # Prevent overwriting existing files
+    counter = 1
+    base, file_ext = os.path.splitext(save_path)
+    while os.path.exists(save_path):
+        save_path = f"{base}_{counter}{file_ext}"
+        counter += 1
+
     file.save(save_path)
-    return jsonify({"success": True, "filename": filename})
+    return jsonify({"success": True, "filename": os.path.basename(save_path)})
 # --- End file upload endpoint ---
 CREDENTIALS_JSON_PATH = os.path.join(_CONFIG_BASE_DIR, "credentials.json")
 
@@ -267,8 +292,17 @@ def _extract_xlsx_sheet_rows(
 
 
 def _extract_watchlist_rows_from_xlsx_bytes(raw_bytes: bytes) -> list[tuple[object, object, object]]:
+    _MAX_UNCOMPRESSED = 50 * 1024 * 1024  # 50MB
+    _MAX_FILES = 1000
+
     rows: list[tuple[object, object, object]] = []
     with zipfile.ZipFile(io.BytesIO(raw_bytes)) as archive:
+        total_size = sum(info.file_size for info in archive.infolist())
+        if total_size > _MAX_UNCOMPRESSED:
+            raise ValueError(f"XLSX file too large when uncompressed: {total_size} bytes")
+        if len(archive.infolist()) > _MAX_FILES:
+            raise ValueError(f"XLSX contains too many files: {len(archive.infolist())}")
+
         names = set(archive.namelist())
         shared_strings = _read_xlsx_shared_strings(archive, names)
         rel_targets = _read_xlsx_relationship_targets(archive, names)
@@ -670,6 +704,14 @@ def _get_watchlist_upload_details():
         flash('No watchlist file selected.', 'warning')
         return None, None
 
+    # Validate file size before reading (20MB limit)
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > 20 * 1024 * 1024:
+        flash('Watchlist file too large (max 20MB).', 'error')
+        return None, None
+
     filename = secure_filename(file.filename or '')
     ext = os.path.splitext(filename)[1].lower()
     if ext == '.xls':
@@ -706,6 +748,10 @@ def _extract_watchlist_rows_with_fallback(file) -> list[tuple[object, object, ob
 
     try:
         return _extract_watchlist_rows_from_xlsx_bytes(file.read())
+    except ValueError as e:
+        logger.error("Safety watchlist upload rejected: %s", e)
+        flash(str(e), 'error')
+        return None
     except Exception as e:
         logger.error("Safety watchlist upload fallback parser failed: %s", e)
         flash('Could not read Excel file on this server (missing parser dependency).', 'error')

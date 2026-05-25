@@ -814,7 +814,9 @@ def _collect_all_stats(days: int = 30, location_filter: str = "all", experience_
             "total": int((row or {}).get("total_conversations") or 0),
             "qualified": int((row or {}).get("qualified_count") or 0),
             "deposit_reached": int((row or {}).get("deposit_reached_count") or 0),
+            "deposit_paid": int((row or {}).get("deposit_paid") or 0),
             "confirmed": int((row or {}).get("confirmed_count") or 0),
+            "completed_booking": int((row or {}).get("completed_booking") or 0),
         }
         for row in flow_rows
     }
