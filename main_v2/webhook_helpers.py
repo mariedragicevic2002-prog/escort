@@ -6,10 +6,13 @@ from typing import Any
 
 from flask import Request, jsonify
 
+from app.ingress.payload_parsing import normalize_webhook_payload  # re-exported for callers
 from utils.log_sanitize import LOG_SUPPRESSED_FMT
 
 from .log import logger
 from .webhook_monitor import record_webhook_monitor
+
+__all__ = ["normalize_webhook_payload"]
 
 
 def _parse_twilio_form(form) -> dict[str, Any]:

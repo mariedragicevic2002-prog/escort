@@ -6,9 +6,8 @@ from typing import Any, Callable
 import config
 from flask import jsonify, request
 
-from main_v2 import runtime as _runtime
-from main_v2.webhook_helpers import normalize_webhook_payload
 from app.ingress.backpressure_policy import is_backpressure_reject_reason
+from app.ingress.payload_parsing import normalize_webhook_payload
 from app.ingress.quick_ack import try_enqueue_webhook_quick_ack
 from app.ingress.rollout_controls import load_webhook_ingress_quick_ack_settings
 from app.ingress.webhook_security import (
@@ -49,6 +48,7 @@ def run_refactor_webhook_ingress_pipeline(
     *,
     request_id: str,
     legacy_processor: LegacyWebhookProcessor,
+    db_service: Any = None,
 ) -> Any:
     """Feature-flagged quick-ack ingress bridge with fallback-safe legacy delegation."""
     settings = load_webhook_ingress_quick_ack_settings()
@@ -64,7 +64,6 @@ def run_refactor_webhook_ingress_pipeline(
     if len("".join(ch for ch in phone_number if ch.isdigit())) < 8 or not message_body.strip():
         return legacy_processor(request_id)
 
-    db_service = getattr(_runtime, "db_service", None)
     if db_service is None:
         return legacy_processor(request_id)
 

@@ -262,6 +262,7 @@ def _process_webhook_refactor(request_id: str):
     return run_refactor_webhook_ingress_pipeline(
         request_id=request_id,
         legacy_processor=_process_webhook_legacy,
+        db_service=getattr(_runtime, "db_service", None),
     )
 
 
