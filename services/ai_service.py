@@ -420,6 +420,8 @@ class AIService:
         routing, no personality prompt suffix).  Prefers Gemini (cheaper/faster)
         and falls back to Claude.
         """
+        started_at = time.perf_counter()
+        self._reset_last_usage()
         try:
             self._ensure_api_keys()
         except Exception as exc:
@@ -435,6 +437,10 @@ class AIService:
                     expected_exception=Exception,
                 )
                 result = cb.call(lambda: self._chat_gemini(prompt, max_tokens=max_tok))
+                self._maybe_log_last_usage(
+                    call_type="summarization",
+                    latency_ms=int((time.perf_counter() - started_at) * 1000),
+                )
                 return str(result or "").strip()
             except Exception as exc:
                 logger.warning("summarize_text gemini failed: %s", exc)
@@ -447,6 +453,10 @@ class AIService:
                     expected_exception=Exception,
                 )
                 result = cb.call(lambda: self._chat_claude(prompt, max_tokens=max_tok))
+                self._maybe_log_last_usage(
+                    call_type="summarization",
+                    latency_ms=int((time.perf_counter() - started_at) * 1000),
+                )
                 return str(result or "").strip()
             except Exception as exc:
                 logger.warning("summarize_text claude failed: %s", exc)

@@ -476,7 +476,8 @@ def _write_export_workbook(
 
     wb = Workbook()
     ws = wb.active
-    assert ws is not None
+    if ws is None:
+        raise RuntimeError("Workbook.active returned None")
     ws.title = "Lookup Mobiles"
     ws.append(["Normalized Mobile", "Raw First Seen", "First Seen Page", "Occurrences"])
     for normalized in sorted(unique_numbers.keys()):

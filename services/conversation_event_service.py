@@ -10,6 +10,8 @@ from typing import Any
 
 logger = logging.getLogger("adella_chatbot.conversation_events")
 
+_schema_ensured = False
+
 
 _CREATE_EVENTS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS conversation_events (
@@ -31,11 +33,15 @@ ON conversation_events (phone_number, created_at DESC);
 
 
 def ensure_conversation_events_schema(db_service) -> None:
+    global _schema_ensured
+    if _schema_ensured:
+        return
     if not db_service:
         return
     try:
         db_service.execute_query(_CREATE_EVENTS_TABLE_SQL, fetch=False)
         db_service.execute_query(_CREATE_EVENTS_INDEX_SQL, fetch=False)
+        _schema_ensured = True
     except Exception as e:
         logger.warning("ensure conversation_events schema failed: %s", e)
 

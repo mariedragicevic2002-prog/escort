@@ -252,8 +252,7 @@ class AnalyticsService:
             
             for row in rows:
                 booking_count = row['booking_count']
-                row['first_contact_date']
-                
+
                 if booking_count == 1:
                     new_clients += 1
                 else:
