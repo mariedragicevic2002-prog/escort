@@ -1,0 +1,14 @@
+{
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "extraPaths": [
+    "."
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/*.pyc"
+  ],
+  "reportMissingImports": "none",
+  "reportAttributeAccessIssue": "warning",
+  "reportMissingModuleSource": "none"
+}

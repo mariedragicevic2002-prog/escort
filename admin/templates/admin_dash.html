@@ -1,0 +1,1557 @@
+{% extends "base_admin.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_subtitle %}System Management & Configuration{% endblock %}
+{% block extra_css %}
+.preset-style-btn, .char-limit-btn { min-height: 44px; min-width: 44px; }
+
+@media (max-width: 768px) {
+    .admin-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .remove-btn { min-height: 44px; padding: 10px 16px; align-self: flex-end; }
+}
+@media (max-width: 480px) {
+    .preset-style-btn { flex: 1 1 calc(50% - 4px); }
+}
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; color: #ffeb3b; font-size: 14px; margin-bottom: 6px; font-weight: 600; }
+.form-group input[type="text"], .form-group input[type="tel"], .form-group input[type="number"], .form-group input[type="url"], .form-group input[type="email"], .form-group input[type="file"] { width: 100%; padding: 10px 14px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; color: #ffeb3b; font-size: 14px; outline: none; }
+.form-group input:focus { border-color: #ffeb3b; }
+.form-group select { width: 100%; padding: 10px 14px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; color: #ffeb3b; font-size: 14px; outline: none; }
+.form-group textarea { width: 100%; padding: 10px 14px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; color: #ffeb3b; font-size: 14px; outline: none; resize: vertical; }
+.form-group small { display: block; margin-top: 6px; font-size: 12px; }
+.current-value-admin { background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; color: rgba(255,255,255,0.8); font-size: 14px; border-left: 4px solid var(--success); }
+.current-value-admin strong { color: #ffeb3b; }
+.booking-mode-group { display: flex; flex-wrap: wrap; gap: 12px; }
+.booking-mode-option { flex: 1 1 220px; position: relative; }
+.booking-mode-option input { position: absolute; opacity: 0; pointer-events: none; }
+.booking-mode-pill {
+    display: block;
+    height: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.9);
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.booking-mode-option input:checked + .booking-mode-pill {
+    background: linear-gradient(135deg, #ff69b4, #9c27b0);
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 10px 24px rgba(255,105,180,0.2);
+    color: white;
+}
+.booking-mode-title { display: block; font-weight: 600; }
+.booking-mode-copy { display: block; margin-top: 4px; font-size: 13px; color: rgba(255,255,255,0.68); }
+.booking-mode-option input:checked + .booking-mode-pill .booking-mode-copy { color: rgba(255,255,255,0.88); }
+{% endblock %}
+{% block content %}
+{% if not authenticated %}
+        <div class="login-container">
+            <h1>Admin Dashboard</h1>
+            <p class="subtitle">Secure Access Required</p>
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+            <form method="POST" action="/admin">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+{% else %}
+{% if success %}
+
+<!-- Audit Log Section -->
+<div class="settings-section">
+    <h2>Audit Log (Last 20 Actions)</h2>
+    <iframe src="/admin/audit-log" style="width:100%;height:340px;border:none;background:rgba(255,255,255,0.03);border-radius:10px;"></iframe>
+</div>
+
+<div class="success-msg">{{ success }}</div>
+{% endif %}
+{% if error %}
+<div class="error-msg">{{ error }}</div>
+{% endif %}
+
+<!-- Chatbot Control Section -->
+<div class="settings-section">
+    <h2><span>*</span> Chatbot Control</h2>
+    <div class="toggle-container">
+        <span class="toggle-label" id="chatbotToggleDescription">{{ 'Chatbot is ONLINE' if chatbot_enabled else 'Chatbot is OFFLINE' }}</span>
+        <label class="toggle-switch" aria-labelledby="chatbotToggleDescription">
+            <input type="checkbox" id="chatbotToggle" aria-labelledby="chatbotToggleDescription" {% if chatbot_enabled %}checked{% endif %} onchange="toggleChatbot(this.checked)">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="info-box">
+        <p><strong>When ON:</strong> AI handles all customer messages automatically</p>
+        <p><strong>When OFF:</strong> The chatbot will turn off and not forward any messages</p>
+    </div>
+</div>
+
+<!-- My Profile -->
+<div class="settings-section">
+    <h2><span>👤</span> My Profile</h2>
+    <div class="settings-card">
+        <h3>Display Name</h3>
+        <p style="color:rgba(255,255,255,0.7);font-size:0.9em;margin-bottom:12px;">Used in all automated replies, booking confirmations, cancellation messages and deposit messages.</p>
+        <form method="POST" action="/config/save-escort-name">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="adminEscortDisplayName">Display Name</label>
+                <input type="text" id="adminEscortDisplayName" name="escort_name" value="{{ escort_name or '' }}" placeholder="e.g. Your Name" required>
+            </div>
+            <button type="submit" class="submit-btn">Save Name</button>
+        </form>
+    </div>
+    <div class="settings-card">
+        <h3>📞 Mobile Number</h3>
+        <p style="color:rgba(255,255,255,0.7);font-size:0.9em;margin-bottom:12px;">All booking alerts, deposit notifications and enquiry alerts are sent to this number.</p>
+        {% if escort_phone %}
+        <div class="current-value-admin"><strong>Current:</strong> {{ escort_phone }}</div>
+        {% endif %}
+        <form method="POST" action="/config/save-escort-phone">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="adminEscortPhone">Mobile Number (E.164 format)</label>
+                <input type="tel" id="adminEscortPhone" name="escort_phone_number" value="{{ escort_phone or '' }}" placeholder="+61412345678">
+            </div>
+            <button type="submit" class="submit-btn">Save Phone</button>
+        </form>
+    </div>
+</div>
+
+<!-- My Availability -->
+<div class="settings-section">
+    <h2><span>🕐</span> My Availability</h2>
+    <div class="settings-card">
+        <div class="current-value-admin">
+            <strong>Current:</strong> {{ available_hours or 'Not set' }}
+        </div>
+        <div class="info-box" style="margin-bottom:16px;">
+            <p>Select your working hours</p>
+        </div>
+        <form id="availableHoursForm" onsubmit="updateAvailableHours(event)">
+            <div class="form-group">
+                <label for="timeRange" style="color:#ff69b4;font-weight:600;">Time Range</label>
+                <input type="text" id="timeRange" name="time_range_display" placeholder="3pm-3am" style="max-width:200px;padding:10px 14px;background:#1e1430;border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#ffeb3b;font-size:14px;">
+                <small style="color:rgba(255,255,255,0.6);">Enter your available time range (e.g., 3pm-3am, 12pm-12am) — leave blank for 24/7</small>
+            </div>
+            <fieldset class="form-group" style="border:none;padding:0;margin:0;">
+                <legend style="color:#ff69b4;font-weight:600;padding:0;margin-bottom:6px;">Available Days</legend>
+                <div class="available-days-grid">
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Monday" onchange="updateHoursPreview()">
+                        <span>Mon</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Tuesday" onchange="updateHoursPreview()">
+                        <span>Tue</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Wednesday" onchange="updateHoursPreview()">
+                        <span>Wed</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Thursday" onchange="updateHoursPreview()">
+                        <span>Thu</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Friday" onchange="updateHoursPreview()">
+                        <span>Fri</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Saturday" onchange="updateHoursPreview()">
+                        <span>Sat</span>
+                    </label>
+                    <label class="day-checkbox">
+                        <input type="checkbox" class="day-select" value="Sunday" onchange="updateHoursPreview()">
+                        <span>Sun</span>
+                    </label>
+                </div>
+                <div class="day-action-row">
+                    <button type="button" onclick="selectAllDays()" class="day-action-btn day-action-btn-select-all">Select All</button>
+                    <button type="button" onclick="clearAllDays()" class="day-action-btn day-action-btn-clear-all">Clear All</button>
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <p id="hoursPreviewLabel" style="color:#ff69b4;font-weight:600;margin:0 0 6px 0;">Preview</p>
+                <output id="hoursPreview" aria-labelledby="hoursPreviewLabel" style="display:block;padding:12px 16px;background:rgba(33,150,243,0.15);border-left:4px solid #2196f3;border-radius:8px;color:#ffeb3b;font-weight:600;">
+                    Loading...
+                </output>
+                <small style="color:rgba(255,255,255,0.6);">This is what clients will see in first contact messages</small>
+            </div>
+            <input type="hidden" id="availableHours" name="available_hours">
+            <div class="form-group hours-password-confirm">
+                <label for="hoursPassword" class="hours-password-label">Admin Password</label>
+                <input type="password" id="hoursPassword" class="hours-password-input" required placeholder="Confirm with password">
+            </div>
+            <button type="submit" class="submit-btn">Update Available Hours</button>
+        </form>
+    </div>
+</div>
+
+<!-- Booking Type -->
+<div class="settings-section">
+    <h2><span>📍</span> Booking Type</h2>
+    <div class="settings-card">
+        <p style="color:rgba(255,255,255,0.7);font-size:0.95em;margin-bottom:14px;">Choose whether the chatbot should accept both booking types or incall bookings only.</p>
+        <form method="POST" action="/config/save-booking-mode">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="booking-mode-group">
+                <label class="booking-mode-option">
+                    <input type="radio" name="booking_mode" value="incall_outcall" {% if booking_mode == 'incall_outcall' %}checked{% endif %}>
+                    <span class="booking-mode-pill">
+                        <span class="booking-mode-title">Incall &amp; Outcall</span>
+                        <span class="booking-mode-copy">Accept both booking types.</span>
+                    </span>
+                </label>
+                <label class="booking-mode-option">
+                    <input type="radio" name="booking_mode" value="incall_only" {% if booking_mode == 'incall_only' %}checked{% endif %}>
+                    <span class="booking-mode-pill">
+                        <span class="booking-mode-title">Incall Only</span>
+                        <span class="booking-mode-copy">Only accept incall bookings.</span>
+                    </span>
+                </label>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:16px;">Save Booking Type</button>
+        </form>
+    </div>
+</div>
+
+<!-- Payment & Deposits -->
+<div class="settings-section">
+    <h2><span>💳</span> Payment & Deposits</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-payid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="ugly_mugs_sync_enabled_present" value="1">
+            <div class="form-group">
+                <label for="adminPayid">PayID (Email or Phone)</label>
+                <input type="text" id="adminPayid" name="payid" value="{{ current_payid or '' }}" placeholder="your@email.com or +61412345678">
+            </div>
+            <div class="form-group">
+                <label for="adminAccountName">Account Name</label>
+                <input type="text" id="adminAccountName" name="account_name" value="{{ current_account_name or '' }}" placeholder="Name on bank account">
+            </div>
+            <h3 style="color:#ff69b4;margin:16px 0 12px;">Deposit Settings</h3>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblRequireDeposits">Require Outcall Deposits</span>
+                <label class="toggle-switch" aria-labelledby="lblRequireDeposits">
+                    <input type="checkbox" id="requireDeposits" name="require_deposits" aria-labelledby="lblRequireDeposits" {% if require_deposits %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblRequireIncallDeposits">Require Incall Deposits</span>
+                <label class="toggle-switch" aria-labelledby="lblRequireIncallDeposits">
+                    <input type="checkbox" id="requireIncallDeposits" name="require_incall_deposits" aria-labelledby="lblRequireIncallDeposits" {% if require_incall_deposits %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblUglyMugs">Enable daily Ugly Mugs list update</span>
+                <label class="toggle-switch" aria-labelledby="lblUglyMugs">
+                    <input type="checkbox" id="uglyMugsSync" name="ugly_mugs_sync_enabled" aria-labelledby="lblUglyMugs" {% if ugly_mugs_sync_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblDepositVision">Verify deposit screenshots with Google Vision</span>
+                <label class="toggle-switch" aria-labelledby="lblDepositVision">
+                    <input type="checkbox" id="depositVision" name="deposit_verification_vision" aria-labelledby="lblDepositVision" {% if deposit_verification_vision %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblProfanityDeposit">Profanity check — force mandatory deposit</span>
+                <label class="toggle-switch" aria-labelledby="lblProfanityDeposit">
+                    <input type="checkbox" id="profanityDeposit" name="profanity_deposit_enabled" aria-labelledby="lblProfanityDeposit" {% if profanity_deposit_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:-8px 0 16px 0;padding:0 4px;">When ON, the chatbot silently tracks profanity. If a client uses 3+ offensive words their booking is flagged and a mandatory deposit is required — even for incalls. The client is never told why. Turn OFF to skip entirely.</p>
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblBlockedWords">Block client on blocked words/phrases</span>
+                <label class="toggle-switch" aria-labelledby="lblBlockedWords">
+                    <input type="checkbox" id="blockedWordsBlock" name="blocked_words_block_enabled" aria-labelledby="lblBlockedWords" {% if blocked_words_block_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:-8px 0 16px 0;padding:0 4px;">When ON, any message containing a word or phrase from your Blocked Words list below is silently dropped — the chatbot ignores it completely. Turn OFF to disable blocked-word filtering.</p>
+            <div class="form-group">
+                <label for="depositIncall">Incall Deposit Amount ($)</label>
+                <input type="number" id="depositIncall" name="deposit_incall" value="{{ deposit_amount_incall or 50 }}" min="0" step="10">
+                <div class="toggle-container" style="margin-top:8px;">
+                    <span class="toggle-label" style="font-size:13px;">Scale deposit with booking duration</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="deposit_incall_scale_duration" id="depositIncallScale" onchange="toggleDurationBase('depositIncallBaseRow', this.checked)" {% if deposit_incall_scale_duration %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="depositIncallBaseRow" style="display:{% if deposit_incall_scale_duration %}block{% else %}none{% endif %};margin-top:8px;">
+                    <label style="color:rgba(255,255,255,0.7);font-size:13px;">Base duration (hours the flat deposit covers)</label>
+                    <input type="number" name="deposit_incall_base_hours" value="{{ deposit_incall_base_hours or 1 }}" min="0.5" max="12" step="0.5" style="max-width:100px;">
+                    <small style="color:rgba(255,255,255,0.5);">e.g. if deposit is $100 and base is 1hr, a 2hr booking costs $200 deposit</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="depositOutcall">Outcall Deposit Amount ($)</label>
+                <input type="number" id="depositOutcall" name="deposit_outcall" value="{{ deposit_amount_outcall or 100 }}" min="0" step="10">
+                <div class="toggle-container" style="margin-top:8px;">
+                    <span class="toggle-label" style="font-size:13px;">Scale deposit with booking duration</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="deposit_outcall_scale_duration" id="depositOutcallScale" onchange="toggleDurationBase('depositOutcallBaseRow', this.checked)" {% if deposit_outcall_scale_duration %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="depositOutcallBaseRow" style="display:{% if deposit_outcall_scale_duration %}block{% else %}none{% endif %};margin-top:8px;">
+                    <label style="color:rgba(255,255,255,0.7);font-size:13px;">Base duration (hours the flat deposit covers)</label>
+                    <input type="number" name="deposit_outcall_base_hours" value="{{ deposit_outcall_base_hours or 1 }}" min="0.5" max="12" step="0.5" style="max-width:100px;">
+                    <small style="color:rgba(255,255,255,0.5);">e.g. if deposit is $100 and base is 1hr, a 2hr booking costs $200 deposit</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="depositGroup">Group Experiences Deposit Amount ($)</label>
+                <input type="number" id="depositGroup" name="deposit_group" value="{{ deposit_group or 200 }}" min="0" step="10">
+                <small style="color:rgba(255,255,255,0.6);">Doubles MFF / MMF / Couples MFF</small>
+                <div class="toggle-container" style="margin-top:8px;">
+                    <span class="toggle-label" style="font-size:13px;">Scale deposit with booking duration</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="deposit_group_scale_duration" id="depositGroupScale" onchange="toggleDurationBase('depositGroupBaseRow', this.checked)" {% if deposit_group_scale_duration %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="depositGroupBaseRow" style="display:{% if deposit_group_scale_duration %}block{% else %}none{% endif %};margin-top:8px;">
+                    <label style="color:rgba(255,255,255,0.7);font-size:13px;">Base duration (hours the flat deposit covers)</label>
+                    <input type="number" name="deposit_group_base_hours" value="{{ deposit_group_base_hours or 2 }}" min="0.5" max="12" step="0.5" style="max-width:100px;">
+                    <small style="color:rgba(255,255,255,0.5);">e.g. if deposit is $200 and base is 2hr, a 4hr booking costs $400 deposit</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="depositDinnerOutcall">Dinner date outcall deposit ($)</label>
+                <input type="number" id="depositDinnerOutcall" name="deposit_dinner_date_outcall" value="{{ deposit_dinner_date_outcall or 100 }}" min="0" step="10">
+                <small style="color:rgba(255,255,255,0.6);">Mandatory deposit for dinner date when outcall (same value as Rates page).</small>
+                <div class="toggle-container" style="margin-top:8px;">
+                    <span class="toggle-label" style="font-size:13px;">Scale deposit with booking duration</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="deposit_dinner_date_outcall_scale_duration" id="depositDinnerOutcallScale" onchange="toggleDurationBase('depositDinnerOutcallBaseRow', this.checked)" {% if deposit_dinner_date_outcall_scale_duration %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="depositDinnerOutcallBaseRow" style="display:{% if deposit_dinner_date_outcall_scale_duration %}block{% else %}none{% endif %};margin-top:8px;">
+                    <label style="color:rgba(255,255,255,0.7);font-size:13px;">Base duration (hours the flat deposit covers)</label>
+                    <input type="number" name="deposit_dinner_date_outcall_base_hours" value="{{ deposit_dinner_date_outcall_base_hours or 2 }}" min="0.5" max="12" step="0.5" style="max-width:100px;">
+                    <small style="color:rgba(255,255,255,0.5);">e.g. if deposit is $100 and base is 2hr, a 4hr booking costs $200 deposit</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="depositExtendedOutcall">Extended experiences outcall deposit ($)</label>
+                <input type="number" id="depositExtendedOutcall" name="deposit_extended_experience_outcall" value="{{ deposit_extended_experience_outcall or 200 }}" min="0" step="10">
+                <small style="color:rgba(255,255,255,0.6);">4+ hour overnight-style bookings when outcall (same value as Rates page).</small>
+                <div class="toggle-container" style="margin-top:8px;">
+                    <span class="toggle-label" style="font-size:13px;">Scale deposit with booking duration</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="deposit_extended_experience_outcall_scale_duration" id="depositExtendedOutcallScale" onchange="toggleDurationBase('depositExtendedOutcallBaseRow', this.checked)" {% if deposit_extended_experience_outcall_scale_duration %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="depositExtendedOutcallBaseRow" style="display:{% if deposit_extended_experience_outcall_scale_duration %}block{% else %}none{% endif %};margin-top:8px;">
+                    <label style="color:rgba(255,255,255,0.7);font-size:13px;">Base duration (hours the flat deposit covers)</label>
+                    <input type="number" name="deposit_extended_experience_outcall_base_hours" value="{{ deposit_extended_experience_outcall_base_hours or 2 }}" min="0.5" max="12" step="0.5" style="max-width:100px;">
+                    <small style="color:rgba(255,255,255,0.5);">e.g. if deposit is $200 and base is 2hr, a 4hr booking costs $400 deposit</small>
+                </div>
+            </div>
+            <button type="submit" class="submit-btn">Save Payment Settings</button>
+        </form>
+    </div>
+</div>
+
+<!-- Blocked Words & Profanity -->
+<div class="settings-section">
+    <h2><span>🚫</span> Blocked Words & Profanity</h2>
+    <div class="settings-card">
+        <h3 style="color:#ff69b4;margin:0 0 12px;">Blocked Words/Phrases</h3>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:12px;padding:0 4px;">Messages containing any of these words or phrases are silently dropped — the chatbot will not respond. One entry per line. This only applies when the "Block client on blocked words/phrases" toggle is ON in Payment & Deposits above.</p>
+        {% set blocked_ns = namespace(has_items=false) %}
+        <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:8px;">Current blocked words/phrases:</p>
+        <div class="keyword-chip-grid">
+            {% for phrase in (ai_settings.blocked_phrases or '').splitlines() %}
+                {% set phrase_clean = phrase|trim %}
+                {% if phrase_clean %}
+                    {% set blocked_ns.has_items = true %}
+                    <span class="keyword-chip">{{ phrase_clean }}</span>
+                {% endif %}
+            {% endfor %}
+            {% if not blocked_ns.has_items %}
+                <span class="keyword-chip keyword-chip-empty">No blocked words or phrases set</span>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="blockedPhrases">Add phrases to auto-block (one per line)</label>
+            <textarea id="blockedPhrases" placeholder="Enter blocked phrases...">{{ ai_settings.blocked_phrases or '' }}</textarea>
+        </div>
+        <button onclick="saveBlockedPhrases()" class="submit-btn warning" style="background:linear-gradient(135deg,#ff9800,#ffc107);">Save Blocked Phrases</button>
+    </div>
+    <div class="settings-card" style="margin-top:16px;">
+        <h3 style="color:#ff69b4;margin:0 0 12px;">Profanity Word List</h3>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin-bottom:12px;padding:0 4px;">These words trigger the profanity deposit check. If a client uses 3 or more of these across the conversation, their booking is silently flagged and a mandatory deposit is required. This only applies when the "Profanity check" toggle is ON in Payment & Deposits above.</p>
+        <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:8px;">Current words:</p>
+        <div class="keyword-chip-grid">
+            {% if profanity_words_list %}
+                {% for word in profanity_words_list %}
+                    {% if word %}
+                        <span class="keyword-chip">{{ word }}</span>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <span class="keyword-chip keyword-chip-empty">No profanity words set</span>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="profanityWords">Edit profanity words (one per line)</label>
+            <textarea id="profanityWords" placeholder="Enter profanity words...">{{ profanity_words_text }}</textarea>
+        </div>
+        <button onclick="saveProfanityWords()" class="submit-btn warning" style="background:linear-gradient(135deg,#ff5252,#ff1744);">Save Profanity Words</button>
+    </div>
+</div>
+
+<!-- Profile Link Section -->
+<div class="settings-section profile-link-section">
+    <h2><span>🔗</span> Profile Link</h2>
+    <div class="settings-card">
+        <h3>Your profile URL</h3>
+        {% if profile_url %}
+        <div class="current-value" style="background:rgba(76,175,80,0.2);border-left:4px solid var(--success);padding:14px 18px;border-radius:8px;margin-bottom:16px;color:white;">
+            <strong style="color:#8bc34a;">Current Profile:</strong>
+            <a href="https://{{ profile_url }}" target="_blank" style="color:#ff69b4;word-break:break-all;">{{ profile_url }}</a>
+        </div>
+        {% else %}
+        <div class="current-value" style="background:rgba(255,152,0,0.2);border-left:4px solid var(--warning);padding:14px 18px;border-radius:8px;margin-bottom:16px;color:white;">
+            <strong style="color:var(--warning);">No profile URL configured</strong>
+        </div>
+        {% endif %}
+        <div class="info-box">
+            <p>This is the link to your online profile page that clients can visit.</p>
+        </div>
+        <form id="profileForm" onsubmit="updateProfileLink(event)">
+            <div class="form-group">
+                <label for="profileUrl" class="profile-link-label">Profile URL</label>
+                <input type="text" id="profileUrl" placeholder="Enter profile URL" value="{{ profile_url or '' }}">
+                <small>Enter the full URL without https:// (e.g., www.escortsandbabes.com/your-profile)</small>
+            </div>
+            <button type="submit" class="submit-btn">Update Profile Link</button>
+        </form>
+    </div>
+</div>
+
+<!-- Outcall Verification -->
+<div class="settings-section">
+    <h2><span>📍</span> Outcall Verification</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-outcall-verification">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblOutcallStrict">Strict mode — reject addresses outside 15 km radius</span>
+                <label class="toggle-switch" aria-labelledby="lblOutcallStrict">
+                    <input type="checkbox" id="outcallVerificationStrict" name="outcall_verification_strict" aria-labelledby="lblOutcallStrict" {% if outcall_verification_strict %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <small style="color:rgba(255,255,255,0.6);display:block;margin-top:8px;">When OFF (lenient), a warning is shown but the booking still proceeds.</small>
+            <button type="submit" class="submit-btn" style="margin-top:16px;">Save</button>
+        </form>
+    </div>
+</div>
+
+<!-- Conversation Timeout -->
+<div class="settings-section">
+    <h2><span>⏱️</span> Conversation Timeout</h2>
+    <div class="settings-card">
+        <p style="color:rgba(255,255,255,0.7);font-size:0.9em;margin-bottom:12px;">After this many hours of no messages the conversation resets — the next message from the client gets a fresh greeting.</p>
+        <form method="POST" action="/config/save-conversation-timeout">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="conversationTimeoutHours">Hours of inactivity before reset (1–168)</label>
+                <input type="number" id="conversationTimeoutHours" name="conversation_timeout_hours" min="1" max="168" value="{{ conversation_timeout_hours or '24' }}" placeholder="24">
+            </div>
+            <button type="submit" class="submit-btn">Save</button>
+        </form>
+    </div>
+</div>
+
+<!-- SMS Notifications -->
+<div class="settings-section">
+    <h2><span>📱</span> SMS Notifications</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-escort-sms">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- MASTER TOGGLE -->
+            <div class="toggle-container">
+                <span class="toggle-label" style="font-weight:700;" id="lblEscortSmsMaster">All SMS Notifications (Master Switch) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(turns all SMS alerts on or off — individual toggles below are ignored when this is off)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblEscortSmsMaster">
+                    <input type="checkbox" id="escortSmsEnabled" name="escort_sms_enabled" aria-labelledby="lblEscortSmsMaster" {% if escort_sms_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Client Feedback -->
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblClientFeedback">Client Feedback Requests <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(sends you an SMS with a link to rate the client ~5 minutes after the booking ends — you can give a star rating and optionally block them)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblClientFeedback">
+                    <input type="checkbox" id="clientFeedbackEnabled" name="client_feedback_enabled" aria-labelledby="lblClientFeedback" {% if client_feedback_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Incall 1h reminder -->
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblIncall1h">Incall 1h reminder to clients <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(SMS client ~1 hour before start: intercom/lobby from Location page — Perth = lobby; elsewhere = intercom number)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblIncall1h">
+                    <input type="checkbox" id="incall1hReminder" name="incall_1h_reminder_enabled" aria-labelledby="lblIncall1h" {% if incall_1h_reminder_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Incall forward replies -->
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblIncallForward">All texts go through to your phone number 1 hour prior to booking start time <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(client messages are forwarded; bot does not reply — use the Incall row below to receive the forwards)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblIncallForward">
+                    <input type="checkbox" id="incallForwardReplies" name="incall_reminder_forward_replies" aria-labelledby="lblIncallForward" {% if incall_reminder_forward_replies %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- PER-CATEGORY TOGGLES (explicit, with descriptions) -->
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsDeposit">Deposit validation failed <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client submits a deposit receipt that can't be verified — e.g. wrong amount, wrong PayID, or screenshot rejected)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsDeposit">
+                    <input type="checkbox" id="escortSmsDepositValidationFailed" name="escort_sms_deposit_validation_failed" {% if escort_sms_categories.get('deposit_validation_failed', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsOutcall">Outcall notifications <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client books an outcall — includes their confirmed address and the time, so you can plan travel)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsOutcall">
+                    <input type="checkbox" id="escortSmsOutcall" name="escort_sms_outcall_notifications" {% if escort_sms_categories.get('outcall_notifications', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsEnquiry">Enquiry forwarding <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(when a client texts "ENQUIRY &lt;question&gt;", the bot forwards their question to you so you can respond personally — useful for unusual requests)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsEnquiry">
+                    <input type="checkbox" id="escortSmsEnquiry" name="escort_sms_enquiry_forwarding" {% if escort_sms_categories.get('enquiry_forwarding', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsRefund">Refund forwarding <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client requests a refund — includes their name and booking details so you can review and action it)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsRefund">
+                    <input type="checkbox" id="escortSmsRefund" name="escort_sms_refund_forwarding" {% if escort_sms_categories.get('refund_forwarding', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsDoubles">Doubles booking — source escort alert (MFF/MMF) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(when a client requests a doubles booking, the system sends you an alert with the client's request so you can arrange and confirm the second escort)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsDoubles">
+                    <input type="checkbox" id="escortSmsDoubles" name="escort_sms_doubles_source_escort" {% if escort_sms_categories.get('doubles_source_escort', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsSafety">Safety screening match alerts <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(alerts you immediately if an incoming client's number matches the ugly mugs / safety watchlist — includes their name and the reason they're flagged)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsSafety">
+                    <input type="checkbox" id="escortSmsSafety" name="escort_sms_safety_screening" {% if escort_sms_categories.get('safety_screening', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsSpecial">Extended experience enquiry alerts <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you immediately when a client enquires about Overnight, Dirty Weekend, or Fly Me To You experiences — so you can personally contact them rather than leaving it to the bot)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsSpecial">
+                    <input type="checkbox" id="escortSmsSpecial" name="escort_sms_special_bookings" {% if escort_sms_categories.get('special_bookings', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsRating">Post-booking client rating <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(~5 minutes after a booking ends, you receive an SMS with a link to rate the client — you can log whether they were easy to deal with and optionally flag them for screening)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsRating">
+                    <input type="checkbox" id="escortSmsRating" name="escort_sms_client_rating" {% if escort_sms_categories.get('client_rating', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsFeedback">Post-booking feedback acknowledgements <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(after a client submits feedback, the bot relays a brief summary to you via SMS — e.g. "Client rated 3 STAR, yes/no/yes on questions")</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsFeedback">
+                    <input type="checkbox" id="escortSmsFeedback" name="escort_sms_feedback_replies" {% if escort_sms_categories.get('feedback_replies', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsIncallFwd">Incall client text forwards (1h before) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(from 1 hour before an incall booking starts, any text the client sends is forwarded directly to your phone — the bot goes silent so you handle communication directly)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsIncallFwd">
+                    <input type="checkbox" id="escortSmsIncallFwd" name="escort_sms_incall_client_forwards" {% if escort_sms_categories.get('incall_client_forwards', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsDepositFollowup">Deposit follow-up reminder <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(if a client has been asked for a deposit but hasn't paid after 4 hours, you receive an SMS reminder with their name and booking details so you can follow up or cancel the slot)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsDepositFollowup">
+                    <input type="checkbox" id="escortSmsDepositFollowup" name="escort_sms_deposit_followup" {% if escort_sms_categories.get('deposit_followup', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblSmsCheckin">Pre-booking check-in (2h heads-up) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(approximately 2 hours before a confirmed booking starts, you receive an SMS reminder with the client's name, time, duration, and location — so you can prepare)</span></span>
+                <label class="toggle-switch" aria-labelledby="lblSmsCheckin">
+                    <input type="checkbox" id="escortSmsPrebookingCheckin" name="escort_sms_prebooking_checkin" {% if escort_sms_categories.get('prebooking_checkin', True) %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn">Save Notification Settings</button>
+        </form>
+    </div>
+</div>
+
+<!-- AI Response Settings Section -->
+<div class="settings-section">
+    <h2><span>🧠</span> AI Response Settings</h2>
+    <div class="settings-card">
+        <h3>🎯 AI Provider</h3>
+        <fieldset class="form-group" style="border:none;padding:0;margin:0;min-width:0;">
+            <legend style="color:#ff69b4;padding:0;margin-bottom:8px;">Select AI Model (click Save AI Settings after changing)</legend>
+            <div class="radio-group" style="flex-wrap:wrap;gap:12px;">
+                <label class="radio-option" style="padding:10px 15px;border:2px solid #444;border-radius:8px;">
+                    <input type="radio" name="ai_provider" value="claude" id="aiClaude" onchange="updateProviderDisplay()" {% if ai_settings.ai_provider == 'claude' or not ai_settings.ai_provider %}checked{% endif %}>
+                    <span>Claude (Recommended)</span>
+                </label>
+                <label class="radio-option" style="padding:10px 15px;border:2px solid #444;border-radius:8px;">
+                    <input type="radio" name="ai_provider" value="gemini" id="aiGemini" onchange="updateProviderDisplay()" {% if ai_settings.ai_provider == 'gemini' %}checked{% endif %}>
+                    <span>Gemini</span>
+                </label>
+                <label class="radio-option" style="padding:10px 15px;border:2px solid #444;border-radius:8px;">
+                    <input type="radio" name="ai_provider" value="random" id="aiRandom" onchange="updateProviderDisplay()" {% if ai_settings.ai_provider == 'random' %}checked{% endif %}>
+                    <span>Random Mix (Both)</span>
+                </label>
+            </div>
+            <small style="color:#ffeb3b;font-size:14px;">Selected: <span id="currentAIProvider" style="color:#00ff00;font-weight:700;font-size:16px;">{% if ai_settings.ai_provider == 'gemini' %}Gemini{% elif ai_settings.ai_provider == 'random' %}Random Mix{% else %}Claude{% endif %}</span> <span id="providerUnsaved" style="color:#ff6b6b;display:none;">(unsaved)</span></small>
+        </fieldset>
+    </div>
+    <div class="settings-card">
+        <h3>💬 Personality Presets</h3>
+        <div class="form-group">
+            <p style="color:#ff69b4;margin:0 0 8px 0;">Quick Style Selection</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+                <button type="button" onclick="setStylePreset('professional')" class="preset-style-btn" style="padding:10px 16px;background:rgba(33,150,243,0.3);border:2px solid #2196f3;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">👔 Professional</button>
+                <button type="button" onclick="setStylePreset('friendly')" class="preset-style-btn" style="padding:10px 16px;background:rgba(76,175,80,0.3);border:2px solid #4caf50;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">😊 Friendly</button>
+                <button type="button" onclick="setStylePreset('flirty')" class="preset-style-btn" style="padding:10px 16px;background:rgba(233,30,99,0.3);border:2px solid #e91e63;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">💋 Flirty</button>
+                <button type="button" onclick="setStylePreset('playful')" class="preset-style-btn" style="padding:10px 16px;background:rgba(156,39,176,0.3);border:2px solid #9c27b0;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">😜 Playful</button>
+                <button type="button" onclick="setStylePreset('sultry')" class="preset-style-btn" style="padding:10px 16px;background:rgba(255,64,129,0.3);border:2px solid #ff4081;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">🔥 Sultry</button>
+                <button type="button" onclick="setStylePreset('mysterious')" class="preset-style-btn" style="padding:10px 16px;background:rgba(103,58,183,0.3);border:2px solid #673ab7;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">🌙 Mysterious</button>
+                <button type="button" onclick="setStylePreset('sassy')" class="preset-style-btn" style="padding:10px 16px;background:rgba(255,152,0,0.3);border:2px solid #ff9800;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">💅 Sassy</button>
+                <button type="button" onclick="setStylePreset('sweet')" class="preset-style-btn" style="padding:10px 16px;background:rgba(255,193,203,0.3);border:2px solid #ffc1cb;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">🍬 Sweet</button>
+                <button type="button" onclick="setStylePreset('direct')" class="preset-style-btn" style="padding:10px 16px;background:rgba(96,125,139,0.3);border:2px solid #607d8b;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">⚡ Direct</button>
+                <button type="button" onclick="setStylePreset('luxurious')" class="preset-style-btn" style="padding:10px 16px;background:rgba(255,215,0,0.3);border:2px solid #ffd700;border-radius:10px;color:#fff;cursor:pointer;font-weight:500;transition:all 0.3s;">👑 Luxurious</button>
+            </div>
+            <small style="color:rgba(255,255,255,0.6);">Current: <span id="currentPersonality" style="color:#ffeb3b;font-weight:600;">{{ ai_settings.personality_name or 'Flirty' }}</span></small>
+            <input type="hidden" id="personalityName" value="{{ ai_settings.personality_name or 'Flirty' }}">
+        </div>
+    </div>
+    <div class="settings-card">
+        <h3>✍️ Custom Personality</h3>
+        <div class="form-group">
+            <label for="customPersonality" style="color:#ff69b4;">Create Your Own Style</label>
+            <textarea id="customPersonality" name="custom_personality_display" rows="4" placeholder="Describe the personality you want the AI to use. Example: Be confident and alluring, use subtle innuendo, keep responses mysterious and intriguing. Always sound sophisticated.">{{ ai_settings.custom_personality or '' }}</textarea>
+            <small style="color:rgba(255,255,255,0.6);">Leave blank to use preset styles. This overrides presets when filled.</small>
+        </div>
+        <button onclick="saveCustomPersonality()" class="submit-btn" style="background:linear-gradient(135deg,#673ab7,#9c27b0);">Save Custom Personality</button>
+    </div>
+    <div class="settings-card">
+        <h3>🎚️ Response Style</h3>
+        <div class="form-group">
+            <label for="personalityTone" style="color:#ff69b4;">Personality Tone</label>
+            <div class="slider-input">
+                <span style="color:#ffeb3b;font-size:12px;">Professional</span>
+                <input type="range" id="personalityTone" name="personality_tone" min="1" max="5" value="{{ ai_settings.personality_tone or 3 }}" oninput="updateSliderValue('personalityTone',this.value)">
+                <span style="color:#ff69b4;font-size:12px;">Flirty</span>
+            </div>
+            <small style="color:#fff;">Current: <span id="personalityToneValue" style="color:#ff69b4;font-weight:600;">{{ ai_settings.personality_tone or 3 }}</span>/5</small>
+        </div>
+        <div class="form-group">
+            <label for="responseLength" style="color:#ff69b4;">Response Length</label>
+            <div class="slider-input">
+                <span style="color:#ffeb3b;font-size:12px;">Ultra Short</span>
+                <input type="range" id="responseLength" name="response_length" min="1" max="5" value="{{ ai_settings.response_length or 3 }}" oninput="updateLengthValue(this.value)">
+                <span style="color:#ff69b4;font-size:12px;">Detailed</span>
+            </div>
+            <small style="color:#fff;">Current: <span id="responseLengthValue" style="color:#ff69b4;font-weight:600;">{{ ai_settings.response_length or 3 }}</span>/5 (<span id="lengthDescription" style="color:#ffeb3b;">~50-100 chars</span>)</small>
+        </div>
+        <div class="form-group">
+            <label for="maxChars" style="color:#ff69b4;">Max Characters (0 = no limit)</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" onclick="setMaxChars(0)" class="char-limit-btn" data-limit="0" style="padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">No Limit</button>
+                <button type="button" onclick="setMaxChars(80)" class="char-limit-btn" data-limit="80" style="padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">80 (SMS)</button>
+                <button type="button" onclick="setMaxChars(160)" class="char-limit-btn" data-limit="160" style="padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">160</button>
+                <button type="button" onclick="setMaxChars(250)" class="char-limit-btn" data-limit="250" style="padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">250</button>
+                <button type="button" onclick="setMaxChars(400)" class="char-limit-btn" data-limit="400" style="padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;cursor:pointer;font-size:13px;">400</button>
+            </div>
+            <input type="number" id="maxChars" min="0" max="1000" value="{{ ai_settings.max_chars or 0 }}" style="margin-top:10px;width:120px;" placeholder="Custom">
+            <small style="color:rgba(255,255,255,0.6);">Current limit: <span id="currentMaxChars" style="color:#ffeb3b;">{{ ai_settings.max_chars or 'None' }}</span></small>
+        </div>
+        <div class="form-group">
+            <p style="color:#ff69b4;margin:0 0 8px 0;">Use Emojis</p>
+            <div class="toggle-container" style="margin-bottom:0;">
+                <span class="toggle-label" style="color:#fff;" id="lblUseEmojis">Include emojis in responses</span>
+                <label class="toggle-switch" aria-labelledby="lblUseEmojis">
+                    <input type="checkbox" id="useEmojis" aria-labelledby="lblUseEmojis" {% if ai_settings.use_emojis %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <p style="color:#ff69b4;margin:0 0 8px 0;">Templates before AI</p>
+            <div class="toggle-container" style="margin-bottom:0;">
+                <span class="toggle-label" style="color:#fff;" id="lblTemplatesFirst">Always use templates &amp; patterns before AI</span>
+                <label class="toggle-switch" aria-labelledby="lblTemplatesFirst">
+                    <input type="checkbox" id="templatesFirst" aria-labelledby="lblTemplatesFirst" {% if ai_settings.templates_first %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <small style="color:rgba(255,255,255,0.7);display:block;margin-top:8px;">When ON: intent and field extraction use only pattern/template matching first; AI is used only when no template matches. When OFF: AI is used as fallback when patterns don’t match.</small>
+        </div>
+        <button onclick="saveAISettings()" class="submit-btn">Save AI Settings</button>
+    </div>
+</div>
+
+<!-- Custom Greeting -->
+<div class="settings-section">
+    <h2><span>💬</span> Custom Greeting</h2>
+    <div class="settings-card">
+        <h3>Custom Greeting</h3>
+        <div class="form-group">
+            <label for="customGreeting">First Response Message</label>
+            <textarea id="customGreeting" placeholder="Hey babe! Thanks for reaching out...">{{ ai_settings.custom_greeting or '' }}</textarea>
+            <small>Leave blank to use AI-generated greetings. Use {name} for client name.</small>
+        </div>
+        <button onclick="saveGreeting()" class="submit-btn secondary" style="background:linear-gradient(135deg,#667eea,#764ba2);">Save Greeting</button>
+    </div>
+</div>
+
+<!-- Security Settings Section -->
+<div class="settings-section">
+    <h2><span>!</span> Security Settings</h2>
+    <div class="settings-card">
+        <h3>Change Admin Password</h3>
+        <form id="passwordForm" onsubmit="changePassword(event)">
+            <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" name="current_password" required placeholder="Enter current password">
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" name="new_password" minlength="8" required placeholder="Minimum 8 characters">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" id="confirmPassword" name="confirm_password" required placeholder="Confirm new password">
+            </div>
+            <button type="submit" class="submit-btn secondary" style="background:linear-gradient(135deg,#667eea,#764ba2);">Change Password</button>
+        </form>
+    </div>
+</div>
+
+
+<style>
+/* Additional styles for admin dashboard */
+.toggle-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.toggle-label {
+    color: white;
+    font-weight: 500;
+    min-width: 0;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 56px;
+    height: 28px;
+    justify-self: end;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: .3s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background: linear-gradient(135deg, var(--success), #8bc34a);
+}
+
+input:checked + .slider:before {
+    transform: translateX(28px);
+}
+
+.available-days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.day-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 42px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.day-checkbox span {
+    font-weight: 600;
+}
+
+.day-action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+    gap: 10px;
+    max-width: 280px;
+}
+
+.day-action-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid transparent;
+}
+
+.day-action-btn-select-all {
+    background: rgba(33, 150, 243, 0.3);
+    border-color: #2196f3;
+}
+
+.day-action-btn-clear-all {
+    background: rgba(244, 67, 54, 0.3);
+    border-color: #f44336;
+}
+
+.hours-password-confirm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.hours-password-label {
+    display: block;
+    width: 100%;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.hours-password-input {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 14px;
+    background: #1e1430;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #ffeb3b;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.keyword-chip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.keyword-chip {
+    background: rgba(255, 68, 68, 0.15);
+    color: #ff8b94;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    text-align: center;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.keyword-chip-empty {
+    color: rgba(255, 255, 255, 0.6);
+    border-style: dashed;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.profile-link-section h2 {
+    color: #ffffff;
+}
+
+.profile-link-label {
+    text-align: center;
+    color: #ffffff;
+}
+
+.admin-list {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 20px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.admin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.admin-item:last-child {
+    margin-bottom: 0;
+}
+
+.admin-number {
+    color: white;
+    font-weight: 500;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.remove-btn {
+    padding: 6px 14px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.remove-btn:hover {
+    background: #d32f2f;
+    transform: scale(1.05);
+}
+
+.current-value strong {
+    color: var(--info);
+}
+
+.info-box {
+    background: rgba(33, 150, 243, 0.15);
+    border-left: 4px solid var(--info);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.info-box p {
+    color: #ff69b4;
+    font-size: 14px;
+    margin: 4px 0;
+    text-align: center;
+}
+
+.info-box strong {
+    color: #ffeb3b;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: white;
+}
+
+.radio-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.slider-input {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.slider-input input[type="range"] {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider-input input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+}
+</style>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+{% if authenticated %}
+<script>
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+async function csrfFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            ...options.headers
+        }
+    });
+}
+
+function updateSliderValue(id, value) {
+    document.getElementById(id + 'Value').textContent = value;
+}
+
+function setStylePreset(style) {
+    const presets = {
+        professional: { tone: 1, length: 3, emojis: false, name: 'Professional' },
+        friendly: { tone: 2, length: 3, emojis: true, name: 'Friendly' },
+        flirty: { tone: 4, length: 4, emojis: true, name: 'Flirty' },
+        playful: { tone: 5, length: 5, emojis: true, name: 'Playful' },
+        sultry: { tone: 5, length: 3, emojis: true, name: 'Sultry' },
+        mysterious: { tone: 4, length: 3, emojis: false, name: 'Mysterious' },
+        sassy: { tone: 4, length: 2, emojis: true, name: 'Sassy' },
+        sweet: { tone: 3, length: 4, emojis: true, name: 'Sweet' },
+        direct: { tone: 2, length: 1, emojis: false, name: 'Direct' },
+        luxurious: { tone: 3, length: 4, emojis: false, name: 'Luxurious' }
+    };
+
+    const preset = presets[style];
+    if (preset) {
+        document.getElementById('personalityTone').value = preset.tone;
+        document.getElementById('responseLength').value = preset.length;
+        document.getElementById('useEmojis').checked = preset.emojis;
+        document.getElementById('currentPersonality').textContent = preset.name;
+        const nameEl = document.getElementById('personalityName');
+        if (nameEl) nameEl.value = preset.name;
+        updateSliderValue('personalityTone', preset.tone);
+        updateLengthValue(preset.length);
+
+        const btns = document.querySelectorAll('.preset-style-btn');
+        btns.forEach(btn => {
+            btn.style.transform = 'scale(1)';
+            btn.style.background = btn.style.background.replace('0.5)', '0.3)');
+        });
+        event.target.style.transform = 'scale(1.05)';
+        event.target.style.background = event.target.style.background.replace('0.3)', '0.5)');
+    }
+}
+
+function setMaxChars(limit) {
+    document.getElementById('maxChars').value = limit;
+    document.getElementById('currentMaxChars').textContent = limit === 0 ? 'None' : limit;
+    document.querySelectorAll('.char-limit-btn').forEach(btn => {
+        const btnLimit = parseInt(btn.dataset.limit);
+        if (btnLimit === limit) {
+            btn.style.background = 'rgba(233,30,99,0.4)';
+            btn.style.borderColor = '#e91e63';
+        } else {
+            btn.style.background = 'rgba(255,255,255,0.1)';
+            btn.style.borderColor = 'rgba(255,255,255,0.3)';
+        }
+    });
+}
+
+function updateLengthValue(value) {
+    document.getElementById('responseLengthValue').textContent = value;
+    const descriptions = {
+        1: '~30-50 chars (ultra short)',
+        2: '~50-80 chars (very short)',
+        3: '~80-150 chars (short)',
+        4: '~150-250 chars (medium)',
+        5: '~250-400 chars (detailed)'
+    };
+    document.getElementById('lengthDescription').textContent = descriptions[value] || '';
+}
+
+async function saveCustomPersonality() {
+    const personality = document.getElementById('customPersonality').value.trim();
+    if (!personality) {
+        alert('Please enter a custom personality description');
+        return;
+    }
+
+    try {
+        const response = await csrfFetch('/admin/save-ai-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                custom_personality: personality,
+                personality_name: 'Custom'
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('currentPersonality').textContent = 'Custom';
+            const nameEl = document.getElementById('personalityName');
+            if (nameEl) nameEl.value = 'Custom';
+            alert('Custom personality saved!');
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function updateProviderDisplay() {
+    const aiProvider = document.querySelector('input[name="ai_provider"]:checked')?.value || 'claude';
+    const providerNames = { claude: 'Claude', gemini: 'Gemini', random: 'Random Mix' };
+    document.getElementById('currentAIProvider').textContent = providerNames[aiProvider] || 'Claude';
+    document.getElementById('providerUnsaved').style.display = 'inline';
+}
+
+async function saveAISettings() {
+    const aiProvider = document.querySelector('input[name="ai_provider"]:checked')?.value || 'claude';
+    const personalityNameEl = document.getElementById('personalityName');
+    const personalityName = (personalityNameEl && personalityNameEl.value) ? personalityNameEl.value : (document.getElementById('currentPersonality').textContent || 'Flirty');
+    const settings = {
+        ai_provider: aiProvider,
+        personality_tone: document.getElementById('personalityTone').value,
+        response_length: document.getElementById('responseLength').value,
+        use_emojis: document.getElementById('useEmojis').checked,
+        max_chars: parseInt(document.getElementById('maxChars').value) || 0,
+        personality_name: personalityName,
+        custom_personality: document.getElementById('customPersonality').value.trim(),
+        templates_first: document.getElementById('templatesFirst').checked
+    };
+
+    try {
+        const response = await csrfFetch('/admin/save-ai-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            const providerNames = { claude: 'Claude', gemini: 'Gemini', random: 'Random Mix' };
+            document.getElementById('currentAIProvider').textContent = providerNames[aiProvider] || 'Claude';
+            document.getElementById('providerUnsaved').style.display = 'none';
+            alert('AI settings saved successfully!\n\nProvider: ' + providerNames[aiProvider] + '\nPersonality: ' + document.getElementById('personalityTone').value + '/5\nResponse Length: ' + document.getElementById('responseLength').value + '/5');
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function saveGreeting() {
+    const greeting = document.getElementById('customGreeting').value;
+    try {
+        const response = await csrfFetch('/admin/save-greeting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ greeting })
+        });
+
+        const result = await response.json();
+        alert(result.success ? 'Greeting saved!' : 'Error: ' + result.error);
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function saveBlockedPhrases() {
+    const phrases = document.getElementById('blockedPhrases').value;
+    try {
+        const response = await csrfFetch('/admin/save-blocked-phrases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phrases })
+        });
+
+        const result = await response.json();
+        alert(result.success ? 'Blocked phrases saved!' : 'Error: ' + result.error);
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function saveProfanityWords() {
+    const words = document.getElementById('profanityWords').value;
+    try {
+        const response = await csrfFetch('/admin/save-profanity-words', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ words })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Profanity words saved! Reload the page to see the updated tags.');
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function updateProfileLink(e) {
+    e.preventDefault();
+    const newUrl = document.getElementById('profileUrl').value.trim();
+
+    if (!newUrl) {
+        alert('Please enter a profile URL');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile_url', newUrl);
+
+    try {
+        const response = await csrfFetch('/admin/update-profile-link', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Profile link updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function toggleChatbot(enable) {
+    const password = prompt('Enter admin password to confirm:');
+    if (!password) {
+        document.getElementById('chatbotToggle').checked = !enable;
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('password', password);
+    formData.append('enable', enable);
+
+    try {
+        const response = await csrfFetch('/admin/toggle-chatbot', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Chatbot ' + (enable ? 'enabled' : 'disabled') + ' successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+            document.getElementById('chatbotToggle').checked = !enable;
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+        document.getElementById('chatbotToggle').checked = !enable;
+    }
+}
+
+async function updateDepositSettings(e) {
+    e.preventDefault();
+    const requireDeposits = document.getElementById('requireDeposits').checked;
+    const depositAmountIncall = document.getElementById('depositAmountIncall').value;
+    const depositAmountOutcall = document.getElementById('depositAmountOutcall').value;
+    const password = document.getElementById('depositPassword').value;
+
+    const formData = new FormData();
+    formData.append('password', password);
+    formData.append('require_deposits', requireDeposits);
+    formData.append('deposit_amount_incall', depositAmountIncall);
+    formData.append('deposit_amount_outcall', depositAmountOutcall);
+
+    try {
+        const response = await csrfFetch('/admin/update-deposit-settings', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Deposit settings updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function changePassword(e) {
+    e.preventDefault();
+    if (document.getElementById('newPassword').value !== document.getElementById('confirmPassword').value) {
+        alert('Passwords do not match!');
+        return;
+    }
+
+    const formData = new FormData(e.target);
+
+    try {
+        const response = await csrfFetch('/admin/change-password', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Password changed!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+
+function toggleDurationBase(rowId, show) {
+    var row = document.getElementById(rowId);
+    if (row) {
+        row.style.display = show ? 'block' : 'none';
+    }
+}
+
+// ── Available Hours ──────────────────────────────────────────────────────────
+function updateHoursPreview() {
+    var timeRangeRaw = document.getElementById('timeRange').value.trim();
+    var timeRange = timeRangeRaw || '24/7';
+    var selectedDays = Array.from(document.querySelectorAll('.day-select:checked')).map(function(cb) { return cb.value; });
+
+    document.querySelectorAll('.day-checkbox').forEach(function(label) {
+        var checkbox = label.querySelector('input');
+        if (checkbox.checked) {
+            label.style.background = 'rgba(76,175,80,0.3)';
+            label.style.borderColor = '#4caf50';
+        } else {
+            label.style.background = 'rgba(255,255,255,0.05)';
+            label.style.borderColor = 'rgba(255,255,255,0.2)';
+        }
+    });
+
+    var daysText = '';
+    if (selectedDays.length === 0) {
+        daysText = 'No days selected';
+    } else if (selectedDays.length === 7) {
+        daysText = '7 days a week';
+    } else if (selectedDays.length === 1) {
+        daysText = selectedDays[0] + ' only';
+    } else if (selectedDays.length === 2) {
+        daysText = selectedDays[0] + ' and ' + selectedDays[1];
+    } else {
+        var dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        var firstIdx = dayOrder.indexOf(selectedDays[0]);
+        var isContinuous = selectedDays.every(function(day, i) { return dayOrder.indexOf(day) === firstIdx + i; });
+        if (isContinuous) {
+            daysText = selectedDays[0] + '-' + selectedDays[selectedDays.length - 1];
+        } else {
+            daysText = selectedDays.join(', ');
+        }
+    }
+
+    var fullText = timeRange + ', ' + daysText;
+    document.getElementById('hoursPreview').textContent = fullText;
+    document.getElementById('availableHours').value = fullText;
+}
+
+function selectAllDays() {
+    document.querySelectorAll('.day-select').forEach(function(cb) { cb.checked = true; });
+    updateHoursPreview();
+}
+
+function clearAllDays() {
+    document.querySelectorAll('.day-select').forEach(function(cb) { cb.checked = false; });
+    updateHoursPreview();
+}
+
+async function updateAvailableHours(e) {
+    e.preventDefault();
+    updateHoursPreview();
+    var availableHours = document.getElementById('availableHours').value.trim();
+    var password = document.getElementById('hoursPassword').value;
+
+    if (availableHours === 'No days selected' || availableHours === ', No days selected') {
+        alert('Please select at least one day');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('password', password);
+    formData.append('available_hours', availableHours);
+
+    try {
+        var response = await csrfFetch('/schedule/api/update-availability', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            var text = await response.text();
+            var errMsg = 'Update failed';
+            try { var j = JSON.parse(text); if (j && j.error) errMsg = j.error; } catch (_) { if (text && text.length < 200) errMsg = text; }
+            alert('Error: ' + errMsg);
+            return;
+        }
+        var result = await response.json();
+        if (result.success) {
+            alert('Available hours updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function initializeAvailableHours() {
+    var currentHours = {{ (available_hours or '')|tojson }};
+    if (!currentHours || currentHours === 'None') return;
+
+    var parts = currentHours.split(',').map(function(s) { return s.trim(); });
+    if (parts.length === 0) return;
+
+    var timeRange = parts[0];
+    document.getElementById('timeRange').value = timeRange;
+
+    var daysText = parts.slice(1).join(', ').trim();
+    var allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    document.querySelectorAll('.day-select').forEach(function(cb) { cb.checked = false; });
+
+    if (daysText.includes('7 days a week')) {
+        document.querySelectorAll('.day-select').forEach(function(cb) { cb.checked = true; });
+    } else {
+        var rangeMatch = daysText.match(/^([A-Z][a-z]+)\s*-\s*([A-Z][a-z]+)$/);
+        if (rangeMatch) {
+            var startIdx = allDays.indexOf(rangeMatch[1]);
+            var endIdx = allDays.indexOf(rangeMatch[2]);
+            if (startIdx !== -1 && endIdx !== -1) {
+                for (var i = startIdx; i <= endIdx; i++) {
+                    var cb = document.querySelector('.day-select[value="' + allDays[i] + '"]');
+                    if (cb) cb.checked = true;
+                }
+            }
+        } else {
+            var tokens = daysText.split(/\s*,\s*|\s+and\s+/).map(function(s) { return s.replace(/\s+only\s*$/, '').trim(); });
+            tokens.forEach(function(token) {
+                if (allDays.includes(token)) {
+                    var cb = document.querySelector('.day-select[value="' + token + '"]');
+                    if (cb) cb.checked = true;
+                }
+            });
+        }
+    }
+
+    updateHoursPreview();
+}
+
+if (document.getElementById('timeRange')) {
+    document.getElementById('timeRange').addEventListener('input', updateHoursPreview);
+    initializeAvailableHours();
+}
+// ── End Available Hours ─────────────────────────────────────────────────────
+
+// Initialize on load
+updateLengthValue({{ ai_settings.response_length or 3 }});
+
+</script>
+{% endif %}
+{% endblock %}

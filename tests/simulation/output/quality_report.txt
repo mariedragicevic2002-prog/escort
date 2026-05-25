@@ -1,0 +1,88 @@
+╔══════════════════════════════════════════════════════════════╗
+║         ADELLA CHATBOT  —  SIMULATION QUALITY REPORT        ║
+╚══════════════════════════════════════════════════════════════╝
+
+  Total conversations  : 500
+  Successful bookings  : 254  (50.8%)
+  FSM violations       : 0
+  Failures injected    : 84
+
+──────────────────────────────────────────────────────────────
+PER-SCENARIO BREAKDOWN
+──────────────────────────────────────────────────────────────
+  Scenario                               N  Avg turns  Top outcome           Fails
+  ----------------------------------- ----  ---------  --------------------  -----
+  abuse_to_escalation                   12        6.1  escalated                 3
+  api_failure_retry_success             12       10.2  confirmed                 2
+  booking_then_cancel                   16       11.9  abandoned                 4
+  couples_inquiry_booking               16       14.1  confirmed                 1
+  deposit_payment_issue                 13       10.0  failed                    3
+  dinner_date_booking                   14       12.2  confirmed                 3
+  doubles_inquiry_booking               21       12.0  confirmed                 3
+  duplicate_booking_attempt             19       10.0  failed                    3
+  future_date_booking                   16       12.2  confirmed                 4
+  ghost_mid_booking                     21        6.0  abandoned                 2
+  incall_1hr_new_client                 15       11.9  confirmed                 1
+  incall_2hr_returning                  16       10.1  confirmed                 1
+  invalid_date_request                  15        9.8  confirmed                 5
+  jailbreak_attempt                     22        6.0  blocked                   7
+  location_inquiry_only                 10        6.0  inquiry_only              1
+  multi_service_inquiry                 14       10.1  inquiry_only              3
+  outcall_hotel                         19       11.7  confirmed                 1
+  outside_hours_request                 20        6.0  abandoned                 3
+  overnight_incall                      23       11.9  confirmed                 5
+  prompt_injection_attempt              15        6.0  blocked                   0
+  rate_negotiation_rejected             12        8.1  abandoned                 3
+  rates_then_booking                    20       13.8  confirmed                 3
+  reschedule_request                    19       11.4  confirmed                 6
+  return_after_ghost                    12       12.1  confirmed                 1
+  same_day_booking                      14       10.2  confirmed                 3
+  session_expiry_mid_flow               20        6.0  failed                    2
+  spam_rate_limit_block                 17        6.0  blocked                   1
+  three_hour_session                    22       10.1  confirmed                 3
+  vague_request_clarification           14       13.6  confirmed                 3
+  wrong_number_scenario                 21        4.0  wrong_number              4
+
+──────────────────────────────────────────────────────────────
+PER-PERSONA-GROUP BREAKDOWN
+──────────────────────────────────────────────────────────────
+  Group      N  Avg turns  Confirmed  Abandoned  Blocked
+  ------ -----  ---------  ---------  ---------  -------
+  A — Friendly/Cooperative      90       10.0         50         10        9
+  B — Difficult/Demanding       97        9.5         51         14       10
+  C — Confused/Vague           106        9.7         53         11       15
+  D — Human-quirk Realists     110        9.6         57         15       11
+  E — Adversarial               57        9.1         22          8        9
+  F — Edge-case Specialists     40        9.2         21          7        6
+
+──────────────────────────────────────────────────────────────
+FAILURE-INJECTION RECOVERY ANALYSIS
+──────────────────────────────────────────────────────────────
+  Failure mode                        Injected  Recovered  Unrecovered  Recovery %
+  ----------------------------------- --------  ---------  -----------  ----------
+  api_timeout                                9          8            1       88.9%
+  cancellation_error                         9          2            7       22.2%
+  duplicate_booking                         10          2            8       20.0%
+  malformed_response                         3          2            1       66.7%
+  outcall_area_unavailable                   9          6            3       66.7%
+  partial_booking                            7          4            3       57.1%
+  payment_failure                            5          0            5        0.0%
+  rate_limit_trigger                         7          0            7        0.0%
+  session_expiry                            10          1            9       10.0%
+  slot_unavailable                           9          8            1       88.9%
+  stale_availability                         6          2            4       33.3%
+
+──────────────────────────────────────────────────────────────
+MESSAGE LENGTH ANALYSIS
+──────────────────────────────────────────────────────────────
+  Speaker    Count  Avg chars     Min     p50     p90     Max
+  -------- -------  ---------  ------  ------  ------  ------
+  USER        2382       25.7       1      19      48     555
+  BOT         2416       60.3      18      61      90     132
+
+──────────────────────────────────────────────────────────────
+FSM COMPLIANCE  (500/500 clean traces)
+──────────────────────────────────────────────────────────────
+  ✓ All 500 conversation FSM traces are valid.
+
+══════════════════════════════════════════════════════════════

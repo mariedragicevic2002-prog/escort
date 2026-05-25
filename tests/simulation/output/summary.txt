@@ -1,0 +1,44 @@
+============================================================
+SIMULATION SUMMARY
+Total conversations : 500
+Average turns/conv  : 9.6
+Failures injected   : 84 (16.8%)
+
+OUTCOMES
+  confirmed                 254
+  failed                    65
+  abandoned                 65
+  blocked                   60
+  inquiry_only              24
+  wrong_number              21
+  escalated                 11
+
+FAILURE MODES INJECTED
+  session_expiry                      10
+  duplicate_booking                   10
+  cancellation_error                  9
+  slot_unavailable                    9
+  api_timeout                         9
+  outcall_area_unavailable            9
+  partial_booking                     7
+  rate_limit_trigger                  7
+  stale_availability                  6
+  payment_failure                     5
+  malformed_response                  3
+
+PERSONA GROUPS
+  D                              110
+  C                              106
+  B                              97
+  A                              90
+  E                              57
+  F                              40
+
+SCENARIO CATEGORIES
+  booking_success                196
+  edge_case                      103
+  adversarial                    66
+  failure_injection              64
+  inquiry                        36
+  cancel_reschedule              35
+============================================================

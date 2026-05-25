@@ -1,0 +1,81 @@
+======================================================================
+ADELLA CODEBASE — RADON COMPLEXITY REPORT
+======================================================================
+
+CODEBASE SIZE
+----------------------------------------
+  Total LOC   : 38,758
+  Source LOC  : 31,799
+  Comments    :  1,142 (3% of LOC)
+  Blank lines :  4,863
+
+CYCLOMATIC COMPLEXITY GRADES
+  A = 1-5   (simple, low risk)
+  B = 6-10  (moderate, some risk)
+  C = 11-15 (complex, high risk)
+  D = 16-20 (very complex)
+  E = 21-30 (extremely complex)
+  F = 31+   (unmaintainable)
+
+CRITICAL — GRADE F (CC > 40): MUST REFACTOR
+----------------------------------------------------------------------
+  admin\routes.py
+    F 122:0 admin_dashboard - F (52)
+  admin\blueprints\config.py
+    F 239:0 config_page - F (57)
+  admin\blueprints\schedule\api_routes.py
+    F 717:0 update_event_api - F (82)
+  admin\blueprints\schedule\api_routes.py
+    F 528:0 create_event_api - F (58)
+  core\classifier.py
+    M 689:4 Classifier.classify - F (102)
+  handlers\booking_coll\doubles_first_turn_compose.py
+    F 201:0 compose_escort_sourced_doubles_first_turn - F (43)
+  handlers\booking_coll\doubles_first_turn_compose.py
+    F 536:0 compose_ambiguous_doubles_supply_first_turn - F (42)
+  handlers\booking_coll\_shared_dinner_doubles.py
+    F 211:0 _check_doubles_supply_response - F (61)
+  handlers\booking_coll\_shared_dinner_doubles.py
+    F 905:0 _handle_dinner_date_fields_message - F (48)
+  handlers\new_conv\availability_stages.py
+    F 321:0 _stage_avail_specific_time - F (58)
+  main_v2\state_machine_bridge.py
+    F 55:0 dispatch_message - F (41)
+  main_v2\webhook_main_flow.py
+    F 282:0 _process_webhook_legacy - F (285)
+
+HIGH — GRADE E (CC 21-30): SHOULD REFACTOR
+----------------------------------------------------------------------
+  admin\blueprints\config.py
+    F 862:0 save_payid - E (39)
+  admin\blueprints\config.py
+    F 163:0 _extract_watchlist_rows_from_xlsx_bytes - E (33)
+  admin\blueprints\config.py
+    F 679:0 save_httpsms - E (31)
+  admin\blueprints\schedule\api_routes.py
+    F 149:0 schedule_api_mobile_sync - E (36)
+  core\classifier.py
+    C 677:0 Classifier - E (36)
+  handlers\booking_coll\doubles_first_turn_compose.py
+    F 379:0 compose_client_supplied_doubles_first_turn - E (36)
+
+OVERALL AVERAGE
+----------------------------------------
+  Average complexity: A (4.130592503022974)
+
+MAINTAINABILITY INDEX (MI) — C OR BELOW
+  (100 = perfectly maintainable, < 65 = difficult)
+----------------------------------------------------------------------
+  admin\blueprints\config.py - C
+  admin\blueprints\schedule\api_routes.py - C
+  app\ingress\rollout_controls.py - C
+  app\ops\operator_recovery_service.py - C
+  app\ops\production_readiness_service.py - B
+  app\workers\dlq_replay.py - B
+  handlers\booking_coll\doubles_first_turn_compose.py - B
+  handlers\booking_coll\_shared_dinner_doubles.py - C
+  handlers\new_conv\availability_stages.py - C
+  main_v2\webhook_main_flow.py - C
+  services\push_notification_service.py - B
+
+======================================================================

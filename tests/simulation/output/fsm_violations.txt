@@ -1,0 +1,1 @@
+No FSM violations detected across all 500 conversations.
