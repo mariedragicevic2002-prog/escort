@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from refactor.app.runtime.context import OrchestrationOutcome
-from refactor.app.runtime.response_composer import compose_response
+from app.runtime.context import OrchestrationOutcome
+from app.runtime.response_composer import compose_response
 
 
 def test_compose_response_normalizes_messages_and_actions() -> None:

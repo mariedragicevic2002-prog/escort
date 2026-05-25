@@ -5,14 +5,14 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 
-from refactor.app.events.outbox import OutboxEventEnvelope
-from refactor.app.runtime.orchestration_facade import build_default_sms_facade
-from refactor.app.runtime.transition_history import (
+from app.events.outbox import OutboxEventEnvelope
+from app.runtime.orchestration_facade import build_default_sms_facade
+from app.runtime.transition_history import (
     DbTransitionHistoryRepository,
     TransitionHistoryRecord,
     build_transition_history_record,
 )
-from refactor.app.runtime.transition_service import (
+from app.runtime.transition_service import (
     StateSnapshot,
     StateTransitionService,
     TransitionMetadataRecord,

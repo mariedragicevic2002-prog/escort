@@ -6,24 +6,24 @@ from datetime import UTC, datetime, timedelta
 from threading import Lock
 from typing import Any
 
-from refactor.app.ingress.backpressure_policy import (
+from app.ingress.backpressure_policy import (
     IngressBackpressureSettings,
     resolve_ingress_backpressure_decision,
 )
-from refactor.app.ops.operator_recovery_service import (
+from app.ops.operator_recovery_service import (
     QueuePauseCommand,
     QueuePauseService,
     QueueResumeCommand,
     StuckJobInspectionQuery,
     StuckJobInspectionService,
 )
-from refactor.app.queue.inbound import InboundQueueRecord
-from refactor.app.queue.metadata import QueueMessageMetadata
-from refactor.app.queue.status import QueueStatus
-from refactor.app.workers.idempotency import DatabaseIdempotentConsumerGuard
-from refactor.app.workers.inbound_idempotency import DatabaseInboundIdempotencyGuard
-from refactor.app.workers.inbound_runtime import InboundWorkerRuntime
-from refactor.app.workers.supervision import (
+from app.queue.inbound import InboundQueueRecord
+from app.queue.metadata import QueueMessageMetadata
+from app.queue.status import QueueStatus
+from app.workers.idempotency import DatabaseIdempotentConsumerGuard
+from app.workers.inbound_idempotency import DatabaseInboundIdempotencyGuard
+from app.workers.inbound_runtime import InboundWorkerRuntime
+from app.workers.supervision import (
     InMemoryWorkerLeaseStore,
     WorkerHeartbeatTracker,
     WorkerSupervisionRuntime,

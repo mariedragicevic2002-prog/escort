@@ -4,26 +4,26 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Mapping
 
-from refactor.app.guardrails import (
+from app.guardrails import (
     SLOGuardrailAction,
     SLOGuardrailDecision,
     SLOGuardrailEngine,
     SLOGuardrailPolicy,
     SLOGuardrailSignals,
 )
-from refactor.app.incidents.executor import BoundedActionExecutor, BoundedActionPolicy
-from refactor.app.incidents.hooks import GuardrailIncidentHook, IncidentAutomationSafetyPolicy
-from refactor.app.incidents.notifier import InMemoryAlertNotifier
-from refactor.app.ingress.adaptive_rate_limiter import (
+from app.incidents.executor import BoundedActionExecutor, BoundedActionPolicy
+from app.incidents.hooks import GuardrailIncidentHook, IncidentAutomationSafetyPolicy
+from app.incidents.notifier import InMemoryAlertNotifier
+from app.ingress.adaptive_rate_limiter import (
     AdaptiveIngressSignals,
     AdaptiveRateLimiterSettings,
     resolve_adaptive_rate_limit_decision,
     sample_adaptive_ingress_signals,
 )
-from refactor.app.ingress.backpressure_policy import IngressBackpressureDecision
-from refactor.app.ops.production_readiness_service import ProductionReadinessReportService
-from refactor.app.queue.status import QueueStatus
-from refactor.app.retention import QueueArchivalCommand, QueueArchivalRetentionPolicy, QueueArchivalService
+from app.ingress.backpressure_policy import IngressBackpressureDecision
+from app.ops.production_readiness_service import ProductionReadinessReportService
+from app.queue.status import QueueStatus
+from app.retention import QueueArchivalCommand, QueueArchivalRetentionPolicy, QueueArchivalService
 
 
 def _adaptive_settings(**overrides: Any) -> AdaptiveRateLimiterSettings:

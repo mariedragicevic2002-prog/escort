@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import pytest
 
-from refactor.app.middleware.request_validation import RequestValidationMiddleware
-from refactor.app.runtime.context import InboundSMSMessage, OrchestrationContext, RuntimeServices
-from refactor.app.runtime.domain_handler_registry import DomainHandlerNotRegisteredError
-from refactor.app.runtime.intent_router import build_default_intent_router
-from refactor.app.runtime.legacy_domain_handler_adapters import (
+from app.middleware.request_validation import RequestValidationMiddleware
+from app.runtime.context import InboundSMSMessage, OrchestrationContext, RuntimeServices
+from app.runtime.domain_handler_registry import DomainHandlerNotRegisteredError
+from app.runtime.intent_router import build_default_intent_router
+from app.runtime.legacy_domain_handler_adapters import (
     LegacyBookingHandlerAdapter,
     build_legacy_domain_handler_registry,
 )
-from refactor.app.runtime.orchestration_facade import OrchestrationFacade
+from app.runtime.orchestration_facade import OrchestrationFacade
 from refactor.domain.handler_ports import BookingHandlerPayload
 
 

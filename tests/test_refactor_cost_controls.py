@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from refactor.app.cost_controls import (
+from app.cost_controls import (
     ProcessingBudgetController,
     ProcessingBudgetSettings,
     QueueCostSignals,

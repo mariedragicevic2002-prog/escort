@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from refactor.app.policy import (
+from app.policy import (
     RuntimePolicyDecision,
     RuntimePolicyEngine,
     RuntimePolicyInput,

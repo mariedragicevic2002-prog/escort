@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from refactor.app.ingress.adaptive_rate_limiter import (
+from app.ingress.adaptive_rate_limiter import (
     AdaptiveIngressSignals,
     AdaptiveRateLimiterSettings,
     resolve_adaptive_rate_limit_decision,
     sample_adaptive_ingress_signals,
 )
-from refactor.app.ingress.backpressure_policy import IngressBackpressureDecision
+from app.ingress.backpressure_policy import IngressBackpressureDecision
 
 
 def _backpressure(*, allow_enqueue: bool, behavior: str, reason: str) -> IngressBackpressureDecision:

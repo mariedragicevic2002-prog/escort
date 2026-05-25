@@ -9,8 +9,8 @@ import pytest
 import main_v2.runtime as runtime
 import main_v2.sms_gateway as gateway
 from main_v2 import webhook_main_flow as wf
-from refactor.app.ingress.rollout_controls import SMSRolloutDecision, WebhookIngressRolloutDecision
-from refactor.app.ingress.webhook_security import enforce_webhook_ingress_security
+from app.ingress.rollout_controls import SMSRolloutDecision, WebhookIngressRolloutDecision
+from app.ingress.webhook_security import enforce_webhook_ingress_security
 
 
 def _sms_decision(

@@ -20,26 +20,26 @@ from datetime import datetime, timezone
 from typing import Any
 
 from flask import Blueprint, jsonify, request
-from refactor.adapters.sms_outbound_adapter import SMSOutboundAdapter
-from refactor.app.ingress.backpressure_policy import is_backpressure_reject_reason
-from refactor.app.ingress.quick_ack import try_enqueue_sms_quick_ack
-from refactor.app.ingress.rollout_controls import (
+from adapters.sms_outbound_adapter import SMSOutboundAdapter
+from app.ingress.backpressure_policy import is_backpressure_reject_reason
+from app.ingress.quick_ack import try_enqueue_sms_quick_ack
+from app.ingress.rollout_controls import (
     SMSRolloutDecision,
     emit_sms_rollout_metrics as _emit_sms_rollout_metrics,
     resolve_sms_rollout_decision as _resolve_rollout_decision,
 )
-from refactor.app.outbound import (
+from app.outbound import (
     OutboundDispatcher,
     OutboundMessage,
     OutboundQueuePublisher,
     resolve_sms_outbound_delivery_mode,
     resolve_sms_outbound_queue_sync_fallback,
 )
-from refactor.app.outbound.contracts import OutboundDispatchResult
-from refactor.app.queue import DatabaseOutboundQueueRepository
-from refactor.app.runtime.response_composer import ComposedResponse, compose_response
-from refactor.app.security.auth import SharedSecretVerifier
-from refactor.app.security.log_scrubbing import scrub_payload_for_logging
+from app.outbound.contracts import OutboundDispatchResult
+from app.queue import DatabaseOutboundQueueRepository
+from app.runtime.response_composer import ComposedResponse, compose_response
+from app.security.auth import SharedSecretVerifier
+from app.security.log_scrubbing import scrub_payload_for_logging
 
 logger = logging.getLogger(__name__)
 
@@ -271,9 +271,9 @@ def sms_incoming():
             if duplicate:
                 logger.info("sms_gateway: duplicate inbound skipped for %s", phone_number[-4:])
         except Exception as e:
-            from refactor.app.middleware.idempotency import RetryableInboundError
-            from refactor.app.middleware.security_controls import InboundSecurityError
-            from refactor.app.middleware.request_validation import InboundValidationError
+            from app.middleware.idempotency import RetryableInboundError
+            from app.middleware.security_controls import InboundSecurityError
+            from app.middleware.request_validation import InboundValidationError
 
             if isinstance(e, InboundValidationError):
                 return jsonify({"status": "error", "message": str(e)}), e.status_code
@@ -319,8 +319,8 @@ def _process_sms_message_refactor(
     remote_addr: str | None = None,
 ) -> Any:
     from main_v2 import runtime as _runtime
-    from refactor.app.runtime.context import InboundSMSMessage
-    from refactor.app.runtime.orchestration_facade import build_default_sms_facade
+    from app.runtime.context import InboundSMSMessage
+    from app.runtime.orchestration_facade import build_default_sms_facade
 
     inbound = InboundSMSMessage(
         phone_number=phone_number,

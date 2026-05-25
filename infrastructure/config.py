@@ -29,7 +29,7 @@ def _load_callable(module_name: str, attribute: str) -> Callable[..., Any] | Non
 def _governance_getter() -> Callable[[str], Any] | None:
     for module_name in (
         "app.config_governance.registry",
-        "refactor.app.config_governance.registry",
+        "app.config_governance.registry",
     ):
         getter = _load_callable(module_name, "get_config_value")
         if getter is not None:

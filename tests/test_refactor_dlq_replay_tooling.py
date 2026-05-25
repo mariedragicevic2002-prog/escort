@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from refactor.app.queue.inbound import InboundQueueRecord
-from refactor.app.queue.metadata import QueueMessageMetadata
-from refactor.app.queue.outbound import OutboundQueueRecord
-from refactor.app.queue.status import QueueDirection, QueueStatus
-from refactor.app.workers.dlq_replay import (
+from app.queue.inbound import InboundQueueRecord
+from app.queue.metadata import QueueMessageMetadata
+from app.queue.outbound import OutboundQueueRecord
+from app.queue.status import QueueDirection, QueueStatus
+from app.workers.dlq_replay import (
     DLQReplayCommand,
     DLQReplaySelection,
     DLQReplayService,

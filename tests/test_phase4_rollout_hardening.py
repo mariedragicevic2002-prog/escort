@@ -3,20 +3,20 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from refactor.app.ingress.backpressure_policy import (
+from app.ingress.backpressure_policy import (
     IngressBackpressureDecision,
     emit_ingress_backpressure_metric,
     load_ingress_backpressure_settings,
     resolve_ingress_backpressure_decision,
 )
-from refactor.app.ingress.rollout_controls import (
+from app.ingress.rollout_controls import (
     Phase4FeatureRolloutDecision,
     load_backpressure_rollout_settings,
     load_operator_recovery_settings,
     resolve_backpressure_rollout_decision,
     resolve_worker_supervision_rollout_decision,
 )
-from refactor.app.workers.supervision.runtime import WorkerSupervisionRuntime
+from app.workers.supervision.runtime import WorkerSupervisionRuntime
 
 
 class _StubInboundProvider:

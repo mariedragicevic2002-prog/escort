@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import json
 from typing import Any
 
-from refactor.app.ops.production_readiness_service import ProductionReadinessReportService
+from app.ops.production_readiness_service import ProductionReadinessReportService
 
 
 @dataclass(frozen=True)

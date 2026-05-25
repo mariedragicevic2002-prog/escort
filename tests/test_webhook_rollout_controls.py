@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from refactor.app.ingress.rollout_controls import (
+from app.ingress.rollout_controls import (
     load_webhook_ingress_quick_ack_settings,
     resolve_webhook_ingress_rollout_decision,
 )

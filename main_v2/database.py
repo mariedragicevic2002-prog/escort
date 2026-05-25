@@ -7,7 +7,7 @@ import os
 import re
 
 import config
-from refactor.app.migrations import (
+from app.migrations import (
     MigrationPlanStep,
     SchemaRequirement,
     capture_rollback_metadata,

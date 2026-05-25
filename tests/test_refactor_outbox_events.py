@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from refactor.app.events.outbox import DatabaseOutboxRepository, OutboxEventEnvelope, OutboxStatus
+from app.events.outbox import DatabaseOutboxRepository, OutboxEventEnvelope, OutboxStatus
 
 
 class _FakeOutboxDB:

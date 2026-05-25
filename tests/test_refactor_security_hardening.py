@@ -4,13 +4,13 @@ import time
 
 import pytest
 
-from refactor.app.middleware.request_validation import RequestValidationMiddleware
-from refactor.app.middleware.security_controls import InboundSecurityError, SecurityControlsMiddleware
-from refactor.app.runtime.context import InboundSMSMessage, RuntimeServices
-from refactor.app.runtime.orchestration_facade import OrchestrationFacade
-from refactor.app.security.auth import SharedSecretVerifier
-from refactor.app.security.log_scrubbing import scrub_payload_for_logging
-from refactor.app.security.rbac import PermissionDeniedError, require_permission
+from app.middleware.request_validation import RequestValidationMiddleware
+from app.middleware.security_controls import InboundSecurityError, SecurityControlsMiddleware
+from app.runtime.context import InboundSMSMessage, RuntimeServices
+from app.runtime.orchestration_facade import OrchestrationFacade
+from app.security.auth import SharedSecretVerifier
+from app.security.log_scrubbing import scrub_payload_for_logging
+from app.security.rbac import PermissionDeniedError, require_permission
 
 
 def _inbound(*, headers: dict[str, str] | None = None) -> InboundSMSMessage:

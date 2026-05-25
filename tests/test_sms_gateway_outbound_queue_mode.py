@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import main_v2.sms_gateway as gateway
-from refactor.app.outbound import OutboundQueuePublishResult
-from refactor.app.outbound.contracts import OutboundDispatchResult
-from refactor.app.runtime.response_composer import ComposedResponse
+from app.outbound import OutboundQueuePublishResult
+from app.outbound.contracts import OutboundDispatchResult
+from app.runtime.response_composer import ComposedResponse
 
 
 def test_sms_gateway_uses_sync_dispatch_when_queue_mode_disabled(monkeypatch):

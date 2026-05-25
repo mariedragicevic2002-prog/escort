@@ -4,17 +4,17 @@ from datetime import UTC, datetime, timedelta
 import json
 from typing import Any, Mapping
 
-from refactor.app.guardrails import (
+from app.guardrails import (
     SLOGuardrailAction,
     SLOGuardrailDecision,
     SLOGuardrailPolicy,
     SLOGuardrailSignals,
 )
-from refactor.app.incidents.contracts import GuardrailIncidentEvent
-from refactor.app.incidents.executor import BoundedActionExecutor, BoundedActionPolicy
-from refactor.app.incidents.hooks import GuardrailIncidentHook, IncidentAutomationSafetyPolicy
-from refactor.app.incidents.notifier import InMemoryAlertNotifier
-from refactor.app.ingress.rollout_controls import (
+from app.incidents.contracts import GuardrailIncidentEvent
+from app.incidents.executor import BoundedActionExecutor, BoundedActionPolicy
+from app.incidents.hooks import GuardrailIncidentHook, IncidentAutomationSafetyPolicy
+from app.incidents.notifier import InMemoryAlertNotifier
+from app.ingress.rollout_controls import (
     Phase4FeatureRolloutSettings,
     resolve_phase4_feature_rollout_decision,
 )

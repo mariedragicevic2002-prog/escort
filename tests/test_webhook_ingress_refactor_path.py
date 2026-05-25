@@ -5,13 +5,13 @@ import pytest
 
 import main_v2.runtime as runtime
 from main_v2 import webhook_main_flow as wf
-from refactor.app.ingress import webhook_pipeline as wp
-from refactor.app.ingress.quick_ack import QuickAckEnqueueOutcome
-from refactor.app.ingress.rollout_controls import (
+from app.ingress import webhook_pipeline as wp
+from app.ingress.quick_ack import QuickAckEnqueueOutcome
+from app.ingress.rollout_controls import (
     WebhookIngressQuickAckSettings,
     WebhookIngressRolloutDecision,
 )
-from refactor.app.ingress.webhook_security import WebhookSecurityOutcome
+from app.ingress.webhook_security import WebhookSecurityOutcome
 
 
 def _decision(

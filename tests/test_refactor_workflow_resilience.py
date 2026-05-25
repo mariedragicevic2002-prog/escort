@@ -6,13 +6,13 @@ from threading import Lock
 
 import pytest
 
-from refactor.app.events.outbox import OutboxEventEnvelope
-from refactor.app.middleware.idempotency import IdempotencyMiddleware, RetryableInboundError
-from refactor.app.middleware.request_validation import RequestValidationMiddleware
-from refactor.app.runtime.context import InboundSMSMessage, RuntimeServices
-from refactor.app.runtime.intent_router import IntentRouter, SignalIntentResolver
-from refactor.app.runtime.orchestration_facade import OrchestrationFacade
-from refactor.app.runtime.transition_service import (
+from app.events.outbox import OutboxEventEnvelope
+from app.middleware.idempotency import IdempotencyMiddleware, RetryableInboundError
+from app.middleware.request_validation import RequestValidationMiddleware
+from app.runtime.context import InboundSMSMessage, RuntimeServices
+from app.runtime.intent_router import IntentRouter, SignalIntentResolver
+from app.runtime.orchestration_facade import OrchestrationFacade
+from app.runtime.transition_service import (
     StateSnapshot,
     StateTransitionService,
     TransitionMetadataRecord,

@@ -4,10 +4,10 @@ import logging
 
 import pytest
 
-from refactor.app.config_governance import ConfigValidationError
-from refactor.app.ingress.adaptive_rate_limiter import load_adaptive_rate_limiter_settings
-from refactor.app.ingress.backpressure_policy import load_ingress_backpressure_settings
-from refactor.app.ingress.rollout_controls import load_backpressure_rollout_settings
+from app.config_governance import ConfigValidationError
+from app.ingress.adaptive_rate_limiter import load_adaptive_rate_limiter_settings
+from app.ingress.backpressure_policy import load_ingress_backpressure_settings
+from app.ingress.rollout_controls import load_backpressure_rollout_settings
 
 
 def test_config_governance_rejects_invalid_adaptive_mode_in_strict_mode() -> None:
@@ -44,7 +44,7 @@ def test_config_governance_applies_safe_backpressure_defaults_when_inputs_are_in
 
 
 def test_config_governance_emits_drift_signal_for_mismatched_rollout_runtime_value(caplog) -> None:
-    with caplog.at_level(logging.WARNING, logger="refactor.app.ingress.rollout_controls"):
+    with caplog.at_level(logging.WARNING, logger="app.ingress.rollout_controls"):
         settings = load_backpressure_rollout_settings(
             channel="sms",
             env={

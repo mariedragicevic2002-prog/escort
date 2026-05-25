@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from refactor.app.middleware.request_validation import RequestValidationMiddleware
-from refactor.app.runtime.context import InboundSMSMessage, RuntimeServices
-from refactor.app.runtime.intent_router import IntentRouter, SignalIntentResolver
-from refactor.app.runtime.orchestration_facade import OrchestrationFacade
+from app.middleware.request_validation import RequestValidationMiddleware
+from app.runtime.context import InboundSMSMessage, RuntimeServices
+from app.runtime.intent_router import IntentRouter, SignalIntentResolver
+from app.runtime.orchestration_facade import OrchestrationFacade
 
 
 def _inbound(

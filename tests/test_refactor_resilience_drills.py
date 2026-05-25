@@ -4,10 +4,10 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from refactor.app.events.outbox import OutboxEventRecord, OutboxStatus
-from refactor.app.guardrails import SLOGuardrailAction, SLOGuardrailEngine, SLOGuardrailPolicy, SLOGuardrailSignals
-from refactor.app.ingress.quick_ack import try_enqueue_sms_quick_ack
-from refactor.app.resilience import (
+from app.events.outbox import OutboxEventRecord, OutboxStatus
+from app.guardrails import SLOGuardrailAction, SLOGuardrailEngine, SLOGuardrailPolicy, SLOGuardrailSignals
+from app.ingress.quick_ack import try_enqueue_sms_quick_ack
+from app.resilience import (
     DeterministicFailureInjector,
     DeterministicFailurePlan,
     DrillAssertion,
@@ -17,9 +17,9 @@ from refactor.app.resilience import (
     ResilienceDrillStep,
     RetryableDrillError,
 )
-from refactor.app.workers.dispatcher import OutboxEventDispatcher
-from refactor.app.workers.runtime import OutboxWorkerRuntime
-from refactor.app.workers.supervision import InMemoryWorkerLeaseStore, WorkerHeartbeatTracker, WorkerSupervisionRuntime
+from app.workers.dispatcher import OutboxEventDispatcher
+from app.workers.runtime import OutboxWorkerRuntime
+from app.workers.supervision import InMemoryWorkerLeaseStore, WorkerHeartbeatTracker, WorkerSupervisionRuntime
 
 
 class _StaticInboundProvider:

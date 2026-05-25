@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from refactor.app.ingress.quick_ack import try_enqueue_sms_quick_ack
-from refactor.app.queue.inbound import InboundQueueEnvelope, InboundQueueRecord
-from refactor.app.queue.metadata import QueueMessageMetadata
-from refactor.app.queue.providers import InboundQueueProvider
-from refactor.app.queue.status import QueueStatus
+from app.ingress.quick_ack import try_enqueue_sms_quick_ack
+from app.queue.inbound import InboundQueueEnvelope, InboundQueueRecord
+from app.queue.metadata import QueueMessageMetadata
+from app.queue.providers import InboundQueueProvider
+from app.queue.status import QueueStatus
 
 
 class _InMemoryInboundQueueProvider:

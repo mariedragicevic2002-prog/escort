@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from refactor.app.ingress.rollout_controls import WebhookIngressRolloutDecision
-from refactor.app.ingress.webhook_controller import process_webhook_ingress_with_rollout
+from app.ingress.rollout_controls import WebhookIngressRolloutDecision
+from app.ingress.webhook_controller import process_webhook_ingress_with_rollout
 
 
 class _IngressMetricsProbe:

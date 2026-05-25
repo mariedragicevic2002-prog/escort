@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from refactor.app.queue.status import QueueStatus
-from refactor.app.retention import QueueArchivalCommand, QueueArchivalRetentionPolicy, QueueArchivalService
+from app.queue.status import QueueStatus
+from app.retention import QueueArchivalCommand, QueueArchivalRetentionPolicy, QueueArchivalService
 
 
 @dataclass

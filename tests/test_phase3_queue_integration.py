@@ -6,22 +6,22 @@ from threading import Barrier, BrokenBarrierError, Lock
 from typing import Any
 
 import main_v2.sms_gateway as sms_gateway
-from refactor.adapters.sms_outbound_adapter import SMSOutboundAdapter
-from refactor.app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
-from refactor.app.ingress.quick_ack import try_enqueue_sms_quick_ack, try_enqueue_webhook_quick_ack
-from refactor.app.outbound import OutboundDispatcher, OutboundMessage, OutboundQueuePublisher
-from refactor.app.queue import (
+from adapters.sms_outbound_adapter import SMSOutboundAdapter
+from app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
+from app.ingress.quick_ack import try_enqueue_sms_quick_ack, try_enqueue_webhook_quick_ack
+from app.outbound import OutboundDispatcher, OutboundMessage, OutboundQueuePublisher
+from app.queue import (
     DatabaseInboundQueueRepository,
     DatabaseOutboundQueueRepository,
     InboundQueueRecord,
     QueueMessageMetadata,
     QueueStatus,
 )
-from refactor.app.runtime.response_composer import ComposedResponse
-from refactor.app.workers.dispatcher import OutboxEventDispatcher
-from refactor.app.workers.inbound_runtime import InboundWorkerRuntime
-from refactor.app.workers.outbound_sender import register_outbound_sender_handler
-from refactor.app.workers.runtime import OutboxWorkerRuntime
+from app.runtime.response_composer import ComposedResponse
+from app.workers.dispatcher import OutboxEventDispatcher
+from app.workers.inbound_runtime import InboundWorkerRuntime
+from app.workers.outbound_sender import register_outbound_sender_handler
+from app.workers.runtime import OutboxWorkerRuntime
 
 
 class _InMemoryInboundQueueDB:

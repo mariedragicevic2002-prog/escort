@@ -7,12 +7,12 @@ import time
 
 import pytest
 
-from refactor.app.ingress.webhook_security import (
+from app.ingress.webhook_security import (
     WebhookIngressSecurityError,
     enforce_webhook_ingress_security,
     verify_webhook_bearer_authorization,
 )
-from refactor.app.security.rotation import resolve_secret_rotation_config
+from app.security.rotation import resolve_secret_rotation_config
 
 
 class _DedupDB:

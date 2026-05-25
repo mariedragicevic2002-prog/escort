@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from refactor.app.guardrails import (
+from app.guardrails import (
     SLOGuardrailAction,
     SLOGuardrailEngine,
     SLOGuardrailPolicy,
     SLOGuardrailSignals,
 )
-from refactor.app.ingress.rollout_controls import (
+from app.ingress.rollout_controls import (
     Phase4FeatureRolloutSettings,
     resolve_phase4_feature_rollout_decision,
 )

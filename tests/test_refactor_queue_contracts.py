@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from refactor.app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
-from refactor.app.queue import (
+from app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
+from app.queue import (
     DatabaseInboundQueueRepository,
     DatabaseOutboundQueueRepository,
     DatabaseQueueProvider,

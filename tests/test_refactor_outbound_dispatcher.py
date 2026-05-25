@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from refactor.adapters.sms_outbound_adapter import SMSOutboundAdapter
-from refactor.app.outbound import OutboundDispatcher, OutboundMessage
+from adapters.sms_outbound_adapter import SMSOutboundAdapter
+from app.outbound import OutboundDispatcher, OutboundMessage
 
 
 def test_outbound_dispatcher_accounts_partial_failures() -> None:

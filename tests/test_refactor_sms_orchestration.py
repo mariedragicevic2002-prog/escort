@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from refactor.app.middleware.idempotency import IdempotencyMiddleware
-from refactor.app.middleware.request_validation import InboundValidationError, RequestValidationMiddleware
-from refactor.app.policy import RuntimePolicyEngine
-from refactor.app.runtime.context import InboundSMSMessage, RuntimeServices
-from refactor.app.runtime.orchestration_facade import OrchestrationFacade
+from app.middleware.idempotency import IdempotencyMiddleware
+from app.middleware.request_validation import InboundValidationError, RequestValidationMiddleware
+from app.policy import RuntimePolicyEngine
+from app.runtime.context import InboundSMSMessage, RuntimeServices
+from app.runtime.orchestration_facade import OrchestrationFacade
 
 
 def _inbound(phone: str = "+61412345678", body: str = "hello") -> InboundSMSMessage:

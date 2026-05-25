@@ -45,9 +45,9 @@ def _internal_report_secret() -> str:
 
 def _is_internal_report_authorized(*, headers, remote_addr: str | None) -> bool:
     try:
-        from refactor.app.security.auth import SharedSecretVerifier  # noqa: PLC0415
+        from app.security.auth import SharedSecretVerifier  # noqa: PLC0415
     except ImportError:
-        logger.error("production readiness auth unavailable: missing refactor.app.security.auth")
+        logger.error("production readiness auth unavailable: missing app.security.auth")
         return False
 
     verifier = SharedSecretVerifier(
@@ -74,9 +74,9 @@ def _build_production_readiness_service():
     from core.settings_manager import get_setting  # noqa: PLC0415
     from main_v2 import runtime  # noqa: PLC0415
     try:
-        from refactor.app.ops.production_readiness_service import ProductionReadinessReportService  # noqa: PLC0415
-        from refactor.app.queue.providers import DatabaseQueueProvider  # noqa: PLC0415
-        from refactor.app.workers.supervision.lease import DatabaseWorkerLeaseStore  # noqa: PLC0415
+        from app.ops.production_readiness_service import ProductionReadinessReportService  # noqa: PLC0415
+        from app.queue.providers import DatabaseQueueProvider  # noqa: PLC0415
+        from app.workers.supervision.lease import DatabaseWorkerLeaseStore  # noqa: PLC0415
     except ImportError as exc:
         raise RuntimeError("production_readiness_unavailable") from exc
 

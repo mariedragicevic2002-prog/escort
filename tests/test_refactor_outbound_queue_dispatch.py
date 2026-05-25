@@ -3,12 +3,12 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from refactor.adapters.sms_outbound_adapter import SMSOutboundAdapter
-from refactor.app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
-from refactor.app.outbound import OutboundDispatcher, OutboundMessage, OutboundQueuePublisher
-from refactor.app.queue import DatabaseOutboundQueueRepository
-from refactor.app.workers import OutboxEventDispatcher, OutboxWorkerRuntime
-from refactor.app.workers.outbound_sender import register_outbound_sender_handler
+from adapters.sms_outbound_adapter import SMSOutboundAdapter
+from app.events.outbox import OutboxEventEnvelope, OutboxEventRecord, OutboxStatus
+from app.outbound import OutboundDispatcher, OutboundMessage, OutboundQueuePublisher
+from app.queue import DatabaseOutboundQueueRepository
+from app.workers import OutboxEventDispatcher, OutboxWorkerRuntime
+from app.workers.outbound_sender import register_outbound_sender_handler
 
 
 def _now_iso() -> str:

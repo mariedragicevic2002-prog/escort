@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from refactor.app.ingress.quick_ack import try_enqueue_sms_quick_ack
-from refactor.app.queue import InboundQueueEnvelope, InboundQueueRecord, QueueMessageMetadata, QueueStatus
+from app.ingress.quick_ack import try_enqueue_sms_quick_ack
+from app.queue import InboundQueueEnvelope, InboundQueueRecord, QueueMessageMetadata, QueueStatus
 
 
 class _StubInboundProvider:

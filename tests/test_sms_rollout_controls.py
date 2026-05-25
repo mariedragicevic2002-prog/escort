@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from refactor.app.ingress.rollout_controls import (
+from app.ingress.rollout_controls import (
     load_sms_quick_ack_settings,
     resolve_sms_rollout_decision,
     stable_sms_canary_bucket,

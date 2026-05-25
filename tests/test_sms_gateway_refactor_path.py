@@ -4,10 +4,10 @@ from flask import Flask
 
 import main_v2.sms_gateway as gateway
 import main_v2.runtime as runtime
-from refactor.app.ingress.quick_ack import QuickAckEnqueueOutcome
-from refactor.app.outbound.contracts import OutboundDispatchResult
-from refactor.app.ingress.rollout_controls import SMSRolloutDecision
-from refactor.app.middleware.idempotency import RetryableInboundError
+from app.ingress.quick_ack import QuickAckEnqueueOutcome
+from app.outbound.contracts import OutboundDispatchResult
+from app.ingress.rollout_controls import SMSRolloutDecision
+from app.middleware.idempotency import RetryableInboundError
 
 
 def _decision(

@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from refactor.app.ingress.webhook_security import (
+from app.ingress.webhook_security import (
     WebhookIngressSecurityError,
     enforce_webhook_ingress_security,
 )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from main_v2 import database as startup_database
-from refactor.app.migrations import (
+from app.migrations import (
     MigrationPlanStep,
     SchemaRequirement,
     build_plan_hash,
