@@ -73,7 +73,7 @@ def handle_doubles_enquiry(context: dict[str, Any]) -> dict[str, Any]:
         from handlers.new_conv.booking_pivot import clear_incompatible_flow_for_special_booking_pivot
 
         bt = (state.get("booking_type") or "").strip().lower()
-        if bt not in ("doubles_mff", "Doubles MMF"):
+        if bt not in ("doubles_mff", "doubles mmf"):
             clear_incompatible_flow_for_special_booking_pivot(state_manager, phone_number)
             context = dict(context)
             context["state"] = state_manager.get_state(phone_number) or state
@@ -214,8 +214,8 @@ def handle_doubles_enquiry(context: dict[str, Any]) -> dict[str, Any]:
     gate_state = {**state, **updates}
 
     has_confirmed_doubles_experience = (
-        (state.get("booking_type") or "").strip().lower() in ("couples_booking", "doubles_mff", "Doubles MMF")
-        or (state.get("experience_type") or "").strip().lower() in ("couples_mff", "doubles_mff", "Doubles MMF")
+        (state.get("booking_type") or "").strip().lower() in ("couples_booking", "doubles_mff", "doubles mmf")
+        or (state.get("experience_type") or "").strip().lower() in ("couples_mff", "doubles_mff", "doubles mmf")
         or (state.get("doubles_type") or "").strip().lower() in ("mff", "mmf")
     )
     if doubles_signal == "ambiguous_threesome" and not has_confirmed_doubles_experience:

@@ -235,7 +235,7 @@ def parse_available_hours_window_hhmm(available_hours_str: str | None) -> tuple[
 
     # Same core pattern as check_within_available_hours_and_days (supports 24h fragments).
     m = re.search(
-        r"(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*[-\u2013to]+\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)",
+        r"(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|–|to)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)",
         lowered,
     )
     if not m:
@@ -633,6 +633,8 @@ def _coerce_booking_time_to_hm(booking_time: Any) -> tuple[int, int] | None:
         try:
             h = int(booking_time[0])
             m = int(booking_time[1]) if len(booking_time) >= 2 else 0
+            if not (0 <= h <= 23 and 0 <= m <= 59):
+                return None
             return (h, m)
         except (TypeError, ValueError):
             return None
@@ -687,7 +689,7 @@ def check_within_available_hours_and_days(
             return False, "outside available days"
         return True, "available"
 
-    m = re.search(r'(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*[-–to]+\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)', available_hours_str.lower())
+    m = re.search(r'(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|–|to)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)', available_hours_str.lower())
     if not m:
         logger.warning("Could not parse available_hours format: %r", available_hours_str)
         if not _check_day_within_available_days(_date, days_eff):

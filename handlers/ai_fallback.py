@@ -4,12 +4,11 @@ AI fallback handler – when the client says something the bot doesn't understan
 use AI to reply (e.g. off-topic, wrong number) or fall back to the enquiry prompt.
 """
 
-from utils.log_sanitize import LOG_SUPPRESSED_FMT
-
-
 import logging
 import re
 from typing import Any
+
+from utils.log_sanitize import LOG_SUPPRESSED_FMT
 
 from core.ai_policy_boundary import AI_DECISION_BOUNDARY_PROMPT, apply_ai_decision_policy_guard
 from core.client_profile import profile_to_prompt_snippet

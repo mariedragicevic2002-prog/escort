@@ -676,7 +676,8 @@ def _get_specific_time_booking_resolution(
     check_conflict,
 ) -> tuple[dict[str, Any], bool, bool]:
     ask_duration = DINNER_DURATION_MINUTES if is_dinner_date_booking(state) else 60
-    ask_incall_outcall = 'outcall' if is_dinner_date_booking(state) else 'incall'
+    is_outcall = is_dinner_date_booking(state) or _message_has_outcall_context(message)
+    ask_incall_outcall = 'outcall' if is_outcall else 'incall'
     booking_details = {
         'date': inferred_date.strftime('%Y-%m-%d'),
         'time': (inferred_hour, inferred_minute),
@@ -685,7 +686,6 @@ def _get_specific_time_booking_resolution(
     }
     conflict_type, _ = check_conflict(booking_details)
     is_available = conflict_type == 'none'
-    is_outcall = is_dinner_date_booking(state) or _message_has_outcall_context(message)
     return booking_details, is_available, is_outcall
 
 

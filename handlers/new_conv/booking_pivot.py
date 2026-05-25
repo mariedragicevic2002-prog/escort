@@ -35,7 +35,7 @@ def canonical_booking_lane(state: dict[str, Any]) -> str:
         return "dinner_date"
     if bt == "couples_booking" or exp == "couples_mff":
         return "couples_booking"
-    if bt == "doubles_mff" or exp in ("doubles_mff", "Doubles MMF"):
+    if bt in ("doubles_mff", "doubles mmf") or exp in ("doubles_mff", "doubles mmf"):
         return "doubles_mff"
     if bt == "overnight" or "overnight" in exp or "fly me" in exp or "fmty" in exp:
         return "overnight_enquiry"

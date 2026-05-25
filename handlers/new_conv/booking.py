@@ -54,7 +54,8 @@ def _handle_book_appointment_impl(context: dict[str, Any]) -> dict[str, Any]:
     state = state_manager.get_state(phone_number) or state
 
     # Detect booking type using shared helper so detection stays in sync with _shared.py
-    booking_type = "outcall" if _has_outcall_intent(message) or extracted.get('outcall_address') else "incall"
+    extracted_outcall_address = (extracted or {}).get("outcall_address")
+    booking_type = "outcall" if _has_outcall_intent(message) or extracted_outcall_address else "incall"
 
     if extracted and not missing_fields:
         from config import get_current_incall_location, get_profile_url
