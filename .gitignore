@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Media
+*.mp4
+*.zip
+*.tar
+*.gz
+
+# AI junk
+exports/
+backups/
+snapshots/
+temp/
+tmp/
+
+# Docker
+*.pid
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
