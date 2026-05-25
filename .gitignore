@@ -1,27 +1,39 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+
+# Logs & databases
 *.log
 *.sqlite3
 *.db
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 
 # Virtual environments
-venv/
 .venv/
+venv/
 env/
 
-# Node
-node_modules/
+# Environment / secrets
+.env
+.env.*
+!.env.example
 
-# Build
-dist/
-build/
+# Type checking
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
 
 # IDE
 .vscode/
@@ -31,13 +43,16 @@ build/
 .DS_Store
 Thumbs.db
 
-# Media
+# Node
+node_modules/
+
+# Media & archives
 *.mp4
 *.zip
 *.tar
 *.gz
 
-# AI junk
+# Temp / AI exports
 exports/
 backups/
 snapshots/
@@ -46,8 +61,3 @@ tmp/
 
 # Docker
 *.pid
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
