@@ -1,0 +1,956 @@
+{% extends "base_admin.html" %}
+
+{% set active_page = 'location' %}
+
+{% block title %}Update Location{% endblock %}
+{% block page_title %}Update Location{% endblock %}
+{% block page_subtitle %}Set your current city and accommodation{% endblock %}
+
+{% block extra_css %}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Current Location Card */
+.current-card {
+    background: linear-gradient(135deg, var(--info), #1976d2);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.current-card .location-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.current-card .location-item:last-child { margin-bottom: 0; }
+
+.current-card .label {
+    font-size: 12px;
+    opacity: 0.8;
+    min-width: 100px;
+}
+
+.current-card .value {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.current-card .emoji {
+    font-size: 20px;
+}
+
+/* Info Alert Box */
+.info-alert {
+    background: rgba(255, 193, 7, 0.15);
+    border: 2px solid rgba(255, 193, 7, 0.5);
+    border-radius: 12px;
+    padding: 20px;
+    color: #ffd54f;
+}
+
+.info-alert h4 {
+    color: #ffeb3b;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-alert p {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.info-alert p:last-child {
+    margin-bottom: 0;
+}
+
+.info-alert .highlight {
+    color: #ffeb3b;
+    font-weight: 600;
+}
+
+/* Presets */
+.presets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.preset-btn {
+    padding: 12px;
+    background: #1e1430;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: #ffeb3b;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preset-btn:hover {
+    background: rgba(233, 30, 99, 0.3);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Messages */
+.message {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    display: none;
+    text-align: center;
+    font-weight: 500;
+}
+
+.message.success {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid var(--success);
+    color: #8bc34a;
+    display: block;
+}
+
+.message.error {
+    background: rgba(244, 67, 54, 0.2);
+    border: 1px solid var(--danger);
+    color: #ff5722;
+    display: block;
+}
+
+/* Timezone Display */
+.timezone-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #1e1430;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: #ffeb3b;
+    font-size: 15px;
+}
+
+.timezone-icon {
+    font-size: 20px;
+}
+
+#timezoneValue {
+    font-weight: 600;
+    color: #ff69b4;
+}
+
+.current-time {
+    margin-left: auto;
+    color: #ffeb3b;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.dst-indicator {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.dst-indicator.dst-active {
+    background: rgba(76, 175, 80, 0.3);
+    color: #8bc34a;
+    border: 1px solid rgba(76, 175, 80, 0.5);
+}
+
+.dst-indicator.dst-inactive {
+    background: rgba(255, 152, 0, 0.3);
+    color: #ffb74d;
+    border: 1px solid rgba(255, 152, 0, 0.5);
+}
+
+.dst-indicator.no-dst {
+    background: rgba(158, 158, 158, 0.3);
+    color: #bdbdbd;
+    border: 1px solid rgba(158, 158, 158, 0.5);
+}
+
+/* Planned Tour Cards */
+.tour-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 4px solid var(--primary);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.tour-card.past {
+    opacity: 0.5;
+    border-left-color: rgba(255,255,255,0.2);
+}
+
+.tour-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.tour-card-city {
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.tour-card-dates {
+    font-size: 13px;
+    color: #ffeb3b;
+    margin-bottom: 4px;
+}
+
+.tour-card-hotel {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 4px;
+}
+
+.tour-card-notes {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    font-style: italic;
+}
+
+.tour-card-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.badge-upcoming {
+    background: rgba(233, 30, 99, 0.25);
+    color: #ff69b4;
+    border: 1px solid rgba(233, 30, 99, 0.4);
+}
+
+.badge-past {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tour-delete-btn {
+    background: rgba(255, 105, 180, 0.15);
+    border: 1px solid rgba(255, 105, 180, 0.3);
+    color: #ff69b4;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: 'Poppins', sans-serif;
+}
+
+.tour-delete-btn:hover {
+    background: rgba(255, 105, 180, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .presets-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(58%) sepia(100%) saturate(3000%) hue-rotate(310deg) brightness(110%);
+    cursor: pointer;
+}
+{% endblock %}
+
+{% block content %}
+{% if not authenticated %}
+<div class="login-container">
+    <h1>Update Location</h1>
+    <p class="subtitle">Secure Access Required</p>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST" action="/location">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="login">
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+    </form>
+</div>
+{% else %}
+{% if success %}<div class="success-msg">{{ success }}</div>{% endif %}
+{% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+<!-- Current Location Section -->
+<div class="settings-section">
+    <h2><span>📍</span> Current Location</h2>
+
+    <div class="current-card" style="margin-bottom: 0;">
+        <div class="location-item">
+            <span class="emoji">📍</span>
+            <span class="label">City</span>
+            <span class="value">{{ (current_location and current_location.city) or 'Not set' }}</span>
+        </div>
+        <div class="location-item">
+            <span class="emoji">🏨</span>
+            <span class="label">Accommodation</span>
+            <span class="value">{{ (current_location and current_location.hotel_name) or 'Not set' }}</span>
+        </div>
+        {% if current_location and current_location.hotel_name and current_location.address %}
+        <div class="location-item">
+            <span class="emoji">🗺️</span>
+            <span class="label">Address</span>
+            <span class="value">{{ current_location.address or 'Not set' }}</span>
+        </div>
+        {% elif current_location and current_location.address %}
+        <div class="location-item">
+            <span class="emoji">🗺️</span>
+            <span class="label">Full Address</span>
+            <span class="value">{{ current_location.address }}</span>
+        </div>
+        {% endif %}
+        {% if current_intercom %}
+        <div class="location-item">
+            <span class="emoji">🔔</span>
+            <span class="label">Intercom</span>
+            <span class="value">{{ current_intercom }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Intercom Info Alert -->
+    <div class="info-alert" style="margin-top: 20px; margin-bottom: 0;">
+        <h4>📲 Automatic Client Notifications</h4>
+        <p>When <strong>Admin → SMS Notifications → Incall 1h reminder to clients</strong> is on, clients receive your intercom/lobby message <span class="highlight">1 hour before</span> the booking (Perth: lobby meet; other cities: intercom <span class="highlight">if set above</span>).</p>
+        <p>You can <span class="highlight">forward client texts to your phone</span> from Admin → SMS Notifications (<span class="highlight">All texts go through to your phone number 1 hour prior to booking start time</span>).</p>
+    </div>
+</div>
+
+<!-- Quick Presets Section -->
+<div class="settings-section">
+    <h2><span>⚡</span> Quick Presets</h2>
+    <div class="presets-grid">
+        <button class="preset-btn" onclick="setPreset('adelaide')">Adelaide</button>
+        <button class="preset-btn" onclick="setPreset('melbourne')">Melbourne</button>
+        <button class="preset-btn" onclick="setPreset('sydney')">Sydney</button>
+        <button class="preset-btn" onclick="setPreset('brisbane')">Brisbane</button>
+        <button class="preset-btn" onclick="setPreset('perth')">Perth</button>
+        <button class="preset-btn" onclick="setPreset('goldcoast')">Gold Coast</button>
+    </div>
+</div>
+
+<!-- Location Form Section -->
+<div class="settings-section">
+    <h2><span>📍</span> Location Details</h2>
+
+    <form id="locationForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="update">
+
+        <div class="settings-card">
+            <h3>City & Timezone</h3>
+
+            <div class="form-group">
+                <label for="city">City</label>
+                <select id="city" name="city" required onchange="toggleCustomCity()">
+                    {% for city in (cities or []) %}
+                    <option value="{{ city }}" {% if city == (current_location and current_location.city) %}selected{% endif %}>{{ city }}</option>
+                    {% endfor %}
+                    <option value="other" {% if current_location and current_location.city and current_location.city not in (cities or []) %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customCityGroup" style="display: none;">
+                <label for="custom_city">Custom City/Town Name</label>
+                <input type="text" id="custom_city" name="custom_city"
+                       value="{% if current_location and current_location.city and current_location.city not in (cities or []) %}{{ current_location.city }}{% endif %}"
+                       placeholder="Enter city or town name">
+                <small>Enter the name of the city or town not listed above</small>
+            </div>
+
+            <div class="form-group">
+                <label for="timezone">Timezone</label>
+                <div class="timezone-selector">
+                    <select id="timezoneSelect" name="timezone" onchange="manualTimezoneChange()">
+                        <optgroup label="With Daylight Saving (DST)">
+                            <option value="Australia/Sydney" {% if current_timezone == 'Australia/Sydney' %}selected{% endif %}>Sydney/Melbourne/Canberra (AEST/AEDT)</option>
+                            <option value="Australia/Adelaide" {% if current_timezone == 'Australia/Adelaide' %}selected{% endif %}>Adelaide (ACST/ACDT)</option>
+                            <option value="Australia/Hobart" {% if current_timezone == 'Australia/Hobart' %}selected{% endif %}>Hobart (AEST/AEDT)</option>
+                        </optgroup>
+                        <optgroup label="No Daylight Saving">
+                            <option value="Australia/Brisbane" {% if current_timezone == 'Australia/Brisbane' %}selected{% endif %}>Brisbane/Gold Coast (AEST) - No DST</option>
+                            <option value="Australia/Perth" {% if current_timezone == 'Australia/Perth' %}selected{% endif %}>Perth (AWST) - No DST</option>
+                            <option value="Australia/Darwin" {% if current_timezone == 'Australia/Darwin' %}selected{% endif %}>Darwin (ACST) - No DST</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="timezone-display" id="timezoneDisplay">
+                    <span class="timezone-icon">🕐</span>
+                    <span id="timezoneValue">{{ current_timezone or 'Australia/Adelaide' }}</span>
+                    <span id="currentTime" class="current-time"></span>
+                    <span id="dstIndicator" class="dst-indicator"></span>
+                </div>
+                <small>Auto-updates when city changes, or select manually above</small>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h3>Accommodation</h3>
+
+            <div class="form-group">
+                <label for="hotel_name">Accommodation Name</label>
+                <input type="text" id="hotel_name" name="hotel_name"
+                       value="{{ (current_location and current_location.hotel_name) or '' }}"
+                       placeholder="e.g., Hilton Adelaide, Airbnb">
+                <small>Leave blank to show only the address as your location</small>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Full Address</label>
+                <textarea id="address" name="address" rows="2"
+                          placeholder="Street, suburb, postcode">{{ (current_location and current_location.address) or '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h3>Access Details</h3>
+
+            <div class="form-group">
+                <label for="intercom">Intercom / Buzzer Code</label>
+                <input type="text" id="intercom" name="intercom"
+                       value="{{ current_intercom or '' }}"
+                       placeholder="e.g., #2345 or Ring for Room 1205">
+                <small>Auto-sent 1 hour before incall bookings</small>
+            </div>
+
+            <div class="form-group">
+                <label for="parking">Parking Instructions</label>
+                <textarea id="parking" name="parking" rows="2"
+                          placeholder="e.g., Valet parking at main entrance">{{ current_parking or '' }}</textarea>
+                <small>Auto-sent 1 hour before incall bookings</small>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Update Location</button>
+    </form>
+
+    <div id="message" class="message"></div>
+</div>
+
+<!-- Touring Australia Section -->
+<div class="settings-section">
+    <h2><span>✈️</span> Touring Australia</h2>
+    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">Let clients know when you'll be touring and where you'll be staying</p>
+
+    <form id="touringForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="update_touring">
+
+        <div class="settings-card">
+            <h3>Touring Dates</h3>
+            
+            <div class="form-group" style="display: flex; align-items: center; gap: 15px;">
+                <div style="flex: 1;">
+                    <label for="is_touring">Touring Status</label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                        <input type="checkbox" id="is_touring" name="is_touring" 
+                               {% if touring and touring.is_touring %}checked{% endif %}
+                               onchange="toggleTouringFields()"
+                               style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="is_touring" style="margin: 0; cursor: pointer; font-weight: normal;">Currently Touring Australia</label>
+                    </div>
+                    <small style="display: block; margin-top: 8px; color: #aaa;">Enable this when you're touring, disable when you're back home</small>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="tour_start_date">Start Date</label>
+                <input type="date" id="tour_start_date" name="tour_start_date"
+                       value="{{ touring.tour_start_date or '' }}"
+                       placeholder="When your tour starts">
+                <small>Clients will be notified when your tour starts</small>
+            </div>
+
+            <div class="form-group">
+                <label for="tour_end_date">End Date</label>
+                <input type="date" id="tour_end_date" name="tour_end_date"
+                       value="{{ touring.tour_end_date or '' }}"
+                       placeholder="When your tour ends">
+                <small>Shows clients the duration of your tour</small>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h3>Touring Location</h3>
+
+            <div class="form-group">
+                <label for="tour_city">City / Region</label>
+                <select id="tour_city" name="tour_city">
+                    <option value="">Not touring</option>
+                    {% for city in (cities or []) %}
+                    <option value="{{ city }}" {% if city == (touring and touring.tour_city) %}selected{% endif %}>{{ city }}</option>
+                    {% endfor %}
+                    <option value="other" {% if touring and touring.tour_city and touring.tour_city not in (cities or []) %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customTourCityGroup" style="display: none;">
+                <label for="custom_tour_city">Custom City/Town Name</label>
+                <input type="text" id="custom_tour_city" name="custom_tour_city"
+                       value="{% if touring and touring.tour_city and touring.tour_city not in (cities or []) %}{{ touring.tour_city }}{% endif %}"
+                       placeholder="e.g., Byron Bay, Cairns">
+            </div>
+
+            <div class="form-group">
+                <label for="tour_hotel_name">Accommodation Name</label>
+                <input type="text" id="tour_hotel_name" name="tour_hotel_name"
+                       value="{{ touring.tour_hotel_name or '' }}"
+                       placeholder="e.g., Beachfront Resort, City Hotel">
+                <small>Where you'll be staying during your tour</small>
+            </div>
+
+            <div class="form-group">
+                <label for="tour_address">Full Address</label>
+                <textarea id="tour_address" name="tour_address" rows="2"
+                          placeholder="Street, suburb, postcode">{{ touring.tour_address or '' }}</textarea>
+                <small>Complete address for outcall clients</small>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Update Touring Schedule</button>
+    </form>
+
+    <div id="touringMessage" class="message" style="display: none;"></div>
+
+    <!-- Planned Tour Dates sub-section (inside Touring Australia) -->
+    <div style="margin-top: 32px;">
+        <h3 style="color: #ffeb3b; font-size: 16px; margin-bottom: 8px;"><span>🗓️</span> Planned Tour Dates</h3>
+        <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">Upcoming tours loaded from your schedule.</p>
+
+        <!-- Tours List — server-rendered first, then JS takes over -->
+        <div id="plannedToursList">
+            {% if planned_tours %}
+                {% for t in planned_tours %}
+                <div class="tour-card">
+                    <div class="tour-card-body">
+                        <div class="tour-card-city">{{ t.city }}
+                            <span class="tour-card-badge badge-upcoming">Upcoming</span>
+                        </div>
+                        <div class="tour-card-dates">📅 {{ t.start_date }}{% if t.end_date %} → {{ t.end_date }}{% endif %}</div>
+                        {% if t.hotel %}<div class="tour-card-hotel">🏨 {{ t.hotel }}</div>{% endif %}
+                        {% if t.notes %}<div class="tour-card-notes">{{ t.notes }}</div>{% endif %}
+                    </div>
+                    <button class="tour-delete-btn" onclick="deletePlannedTour({{ loop.index0 }})">Remove</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center; color:rgba(255,255,255,0.4); padding:20px; font-size:14px;">No planned tours loaded.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if authenticated %}
+<script>
+// Touring form handler
+document.getElementById('touringForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const messageDiv = document.getElementById('touringMessage');
+
+    // Handle custom tour city
+    if (formData.get('tour_city') === 'other') {
+        const customCity = formData.get('custom_tour_city');
+        if (customCity && customCity.trim()) {
+            formData.set('tour_city', customCity.trim());
+        } else {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Please enter a custom city name';
+            messageDiv.style.display = 'block';
+            return;
+        }
+    }
+    formData.delete('custom_tour_city');
+    
+    // Convert checkbox to 0 or 1
+    formData.set('is_touring', document.getElementById('is_touring').checked ? '1' : '0');
+
+    try {
+        const response = await fetch('/location', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Accept': 'application/json',
+            }
+        });
+
+        const data = await response.json ? await response.json() : { success: false };
+
+        if (data.success || response.ok) {
+            messageDiv.className = 'message success';
+            messageDiv.textContent = 'Touring schedule updated! Clients will see your tour details.';
+            messageDiv.style.display = 'block';
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = data.error || 'Failed to update touring schedule';
+            messageDiv.style.display = 'block';
+        }
+    } catch (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'Error: ' + error.message;
+        messageDiv.style.display = 'block';
+    }
+});
+
+// Toggle custom tour city input visibility
+document.getElementById('tour_city').addEventListener('change', function() {
+    const customTourCityGroup = document.getElementById('customTourCityGroup');
+    if (this.value === 'other') {
+        customTourCityGroup.style.display = 'block';
+    } else {
+        customTourCityGroup.style.display = 'none';
+    }
+});
+
+function toggleCustomTourCity() {
+    const tourCitySelect = document.getElementById('tour_city');
+    const customTourCityGroup = document.getElementById('customTourCityGroup');
+    const customTourCityInput = document.getElementById('custom_tour_city');
+
+    if (tourCitySelect.value === 'other') {
+        customTourCityGroup.style.display = 'block';
+        customTourCityInput.required = true;
+    } else {
+        customTourCityGroup.style.display = 'none';
+        customTourCityInput.required = false;
+    }
+}
+
+document.getElementById('tour_city').addEventListener('change', toggleCustomTourCity);
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCustomTourCity();
+    loadPlannedTours();
+});
+
+// Planned Tours
+document.getElementById('pt_city').addEventListener('change', function() {
+    document.getElementById('pt_custom_city_group').style.display = this.value === 'other' ? 'block' : 'none';
+});
+
+async function loadPlannedTours() {
+    try {
+        const resp = await fetch('/location/planned-tours', { headers: { 'X-CSRFToken': getCSRFToken() } });
+        const data = await resp.json();
+        if (data.success) renderPlannedTours(data.tours);
+    } catch (e) {
+        console.error('Failed to load planned tours', e);
+    }
+}
+
+function formatDate(d) {
+    if (!d) return '';
+    try {
+        const [y, m, day] = d.split('-');
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+    } catch { return d; }
+}
+
+function renderPlannedTours(tours) {
+    const container = document.getElementById('plannedToursList');
+    if (!tours || tours.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.4); padding:20px; font-size:14px;">No planned tours yet. Add one above.</div>';
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    let html = '';
+    tours.forEach((t, i) => {
+        const isPast = (t.end_date || t.start_date) < today;
+        const label = isPast
+            ? '<span class="tour-card-badge badge-past">Past</span>'
+            : '<span class="tour-card-badge badge-upcoming">Upcoming</span>';
+        const dateStr = t.end_date
+            ? `${formatDate(t.start_date)} → ${formatDate(t.end_date)}`
+            : formatDate(t.start_date);
+        html += `
+        <div class="tour-card ${isPast ? 'past' : ''}">
+            <div class="tour-card-body">
+                <div class="tour-card-city">${t.city}${label}</div>
+                <div class="tour-card-dates">📅 ${dateStr}</div>
+                ${t.hotel ? `<div class="tour-card-hotel">🏨 ${t.hotel}</div>` : ''}
+                ${t.notes ? `<div class="tour-card-notes">${t.notes}</div>` : ''}
+            </div>
+            <button class="tour-delete-btn" onclick="deletePlannedTour(${i})">Remove</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+async function deletePlannedTour(index) {
+    if (!confirm('Remove this planned tour?')) return;
+    try {
+        const resp = await fetch('/location/planned-tours/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ index })
+        });
+        const data = await resp.json();
+        if (data.success) renderPlannedTours(data.tours);
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+
+</script>
+{% endif %}
+<script>
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+const presets = {
+    'adelaide': { city: 'Adelaide', hotel_name: 'Hilton Adelaide', address: 'Hilton Adelaide, 233 Victoria Square, Adelaide SA' },
+    'melbourne': { city: 'Melbourne', hotel_name: 'Crown Towers Melbourne', address: 'Crown Towers, 8 Whiteman Street, Southbank VIC' },
+    'sydney': { city: 'Sydney', hotel_name: 'Shangri-La Sydney', address: 'Shangri-La Hotel, 176 Cumberland Street, The Rocks NSW' },
+    'brisbane': { city: 'Brisbane', hotel_name: 'W Brisbane', address: 'W Hotel, 81 North Quay, Brisbane QLD' },
+    'perth': { city: 'Perth', hotel_name: 'Crown Perth', address: 'Crown Towers Perth, Great Eastern Highway, Burswood WA' },
+    'goldcoast': { city: 'Gold Coast', hotel_name: 'The Star Gold Coast', address: 'The Star, 1 Casino Drive, Broadbeach QLD' }
+};
+
+const cityTimezones = {
+    'Adelaide': 'Australia/Adelaide',
+    'Brisbane': 'Australia/Brisbane',
+    'Canberra': 'Australia/Sydney',
+    'Darwin': 'Australia/Darwin',
+    'Gold Coast': 'Australia/Brisbane',
+    'Hobart': 'Australia/Hobart',
+    'Melbourne': 'Australia/Sydney',
+    'Perth': 'Australia/Perth',
+    'Sydney': 'Australia/Sydney',
+    'other': 'Australia/Adelaide'
+};
+
+function setPreset(city) {
+    const preset = presets[city];
+    if (preset) {
+        document.getElementById('city').value = preset.city;
+        document.getElementById('hotel_name').value = preset.hotel_name;
+        document.getElementById('address').value = preset.address;
+        toggleCustomCity();
+        updateTimezone(preset.city);
+    }
+}
+
+function toggleCustomCity() {
+    const citySelect = document.getElementById('city');
+    const customCityGroup = document.getElementById('customCityGroup');
+    const customCityInput = document.getElementById('custom_city');
+
+    if (citySelect.value === 'other') {
+        customCityGroup.style.display = 'block';
+        customCityInput.required = true;
+    } else {
+        customCityGroup.style.display = 'none';
+        customCityInput.required = false;
+    }
+
+    updateTimezone(citySelect.value);
+}
+
+function updateTimezone(city) {
+    const timezone = cityTimezones[city] || 'Australia/Adelaide';
+    document.getElementById('timezoneValue').textContent = timezone;
+    const tzSelect = document.getElementById('timezoneSelect');
+    if (tzSelect) {
+        tzSelect.value = timezone;
+    }
+    updateCurrentTime(timezone);
+}
+
+function manualTimezoneChange() {
+    const tzSelect = document.getElementById('timezoneSelect');
+    const timezone = tzSelect.value;
+    document.getElementById('timezoneValue').textContent = timezone;
+    updateCurrentTime(timezone);
+}
+
+const dstTimezones = ['Australia/Sydney', 'Australia/Adelaide', 'Australia/Hobart'];
+
+function updateCurrentTime(timezone) {
+    try {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-AU', {
+            timeZone: timezone,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        document.getElementById('currentTime').textContent = timeStr;
+
+        const dstIndicator = document.getElementById('dstIndicator');
+        if (dstIndicator) {
+            if (!dstTimezones.includes(timezone)) {
+                dstIndicator.textContent = 'No DST';
+                dstIndicator.className = 'dst-indicator no-dst';
+            } else {
+                const isDSTActive = checkDSTActive(timezone);
+                if (isDSTActive) {
+                    dstIndicator.textContent = 'DST Active';
+                    dstIndicator.className = 'dst-indicator dst-active';
+                } else {
+                    dstIndicator.textContent = 'DST Inactive';
+                    dstIndicator.className = 'dst-indicator dst-inactive';
+                }
+            }
+        }
+    } catch (e) {
+        document.getElementById('currentTime').textContent = '';
+    }
+}
+
+function checkDSTActive(timezone) {
+    const now = new Date();
+    const jan = new Date(now.getFullYear(), 0, 1);
+    const jul = new Date(now.getFullYear(), 6, 1);
+
+    const janOffset = getTimezoneOffset(jan, timezone);
+    const julOffset = getTimezoneOffset(jul, timezone);
+    const nowOffset = getTimezoneOffset(now, timezone);
+
+    const standardOffset = Math.max(janOffset, julOffset);
+    return nowOffset < standardOffset;
+}
+
+function getTimezoneOffset(date, timezone) {
+    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+    return (utcDate - tzDate) / (60 * 1000);
+}
+
+setInterval(function() {
+    const timezone = document.getElementById('timezoneValue').textContent;
+    updateCurrentTime(timezone);
+}, 60000);
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCustomCity();
+    const timezone = document.getElementById('timezoneValue').textContent;
+    updateCurrentTime(timezone);
+    toggleTouringFields();
+});
+
+function toggleTouringFields() {
+    const isTouringCheckbox = document.getElementById('is_touring');
+    const tourStartDate = document.getElementById('tour_start_date');
+    const tourEndDate = document.getElementById('tour_end_date');
+    const tourCitySelect = document.getElementById('tour_city');
+    const tourHotelName = document.getElementById('tour_hotel_name');
+    const tourAddress = document.getElementById('tour_address');
+
+    if (isTouringCheckbox.checked) {
+        // Enable all touring fields
+        tourStartDate.disabled = false;
+        tourEndDate.disabled = false;
+        tourCitySelect.disabled = false;
+        tourHotelName.disabled = false;
+        tourAddress.disabled = false;
+        tourStartDate.required = true;
+        tourEndDate.required = true;
+        tourCitySelect.required = true;
+    } else {
+        // Disable all touring fields
+        tourStartDate.disabled = true;
+        tourEndDate.disabled = true;
+        tourCitySelect.disabled = true;
+        tourHotelName.disabled = true;
+        tourAddress.disabled = true;
+        tourStartDate.required = false;
+        tourEndDate.required = false;
+        tourCitySelect.required = false;
+    }
+}
+
+document.getElementById('locationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const messageDiv = document.getElementById('message');
+
+    if (formData.get('city') === 'other') {
+        const customCity = formData.get('custom_city');
+        if (customCity && customCity.trim()) {
+            formData.set('city', customCity.trim());
+        } else {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Please enter a custom city name';
+            messageDiv.style.display = 'block';
+            return;
+        }
+    }
+    formData.delete('custom_city');
+
+    try {
+        const response = await fetch('/location', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Accept': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            messageDiv.className = 'message success';
+            messageDiv.textContent = data.message;
+            messageDiv.style.display = 'block';
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = data.error || data.message || 'Update failed';
+            messageDiv.style.display = 'block';
+        }
+    } catch (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'Error: ' + error.message;
+        messageDiv.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

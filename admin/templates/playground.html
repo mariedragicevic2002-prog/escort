@@ -1,0 +1,155 @@
+{% extends "base_admin.html" %}
+{% block title %}AI Prompt Playground{% endblock %}
+{% block page_title %}AI Prompt Playground{% endblock %}
+{% block page_subtitle %}Read-only prompt testing for synthetic SMS messages{% endblock %}
+{% block content %}
+<style>
+.playground-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:20px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.playground-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}.playground-grid .full{grid-column:1/-1}
+.playground-label{display:block;margin-bottom:6px;color:#ff9cc2;font-weight:600}.playground-input{width:100%;background:#1e1430;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px;color:#ffeb3b}
+.playground-input:focus{outline:none;border-color:#ff5c93;box-shadow:0 0 0 3px rgba(233,30,99,.18)}.playground-actions{display:flex;justify-content:flex-end;margin-top:14px}
+.playground-btn{border:0;border-radius:999px;padding:12px 22px;background:linear-gradient(135deg,#e91e63,#9c27b0);color:#fff;font-weight:700;cursor:pointer}.playground-btn[disabled]{opacity:.7;cursor:wait}
+.playground-results{display:none;margin-top:18px}.result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.badge{display:inline-block;padding:6px 12px;border-radius:999px;font-weight:700;color:#fff;text-transform:capitalize}.badge.trivial{background:#4caf50}.badge.standard{background:#2196f3}.badge.complex{background:#f44336}
+.playground-table{width:100%;border-collapse:collapse;margin-top:10px}.playground-table th,.playground-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left}.muted{color:rgba(255,235,59,.72)}.error-box{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(244,67,54,.15);border:1px solid rgba(244,67,54,.35);color:#ffd4d4}
+/* Streaming chat */
+.stream-output{min-height:80px;max-height:360px;overflow-y:auto;background:#130d20;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:14px;color:#e0e0e0;font-family:monospace;font-size:.92em;white-space:pre-wrap;word-break:break-word;margin-top:10px}
+.stream-output .cursor{display:inline-block;width:2px;height:1em;background:#ff5c93;animation:blink 1s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.stream-status{font-size:.82em;color:#aaa;margin-top:6px}
+@media (max-width:900px){.playground-grid,.result-grid{grid-template-columns:1fr}}
+</style>
+
+<!-- ── ANALYSIS CARD ── -->
+<div class="playground-card" style="margin-bottom:22px">
+  <h3 style="margin:0 0 16px;color:#ff9cc2">Message Analysis</h3>
+  <form id="playgroundForm">
+    <div class="playground-grid">
+      <div class="full">
+        <label class="playground-label" for="message">Test message</label>
+        <textarea id="message" class="playground-input" rows="5" maxlength="500" placeholder="e.g. I'd like to book for tomorrow at 3pm for an hour GFE"></textarea>
+      </div>
+      <div>
+        <label class="playground-label" for="state">State</label>
+        <select id="state" class="playground-input">
+          <option value="new">new</option><option value="collecting_date">collecting_date</option><option value="collecting_time">collecting_time</option>
+          <option value="collecting_duration">collecting_duration</option><option value="awaiting_confirmation">awaiting_confirmation</option><option value="confirmed">confirmed</option>
+        </select>
+      </div>
+      <div>
+        <label class="playground-label" for="model">Model</label>
+        <select id="model" class="playground-input"><option value="claude">claude</option><option value="gemini">gemini</option></select>
+      </div>
+      <div class="playground-actions"><button id="submitBtn" class="playground-btn" type="submit">Test</button></div>
+    </div>
+  </form>
+  <div id="errorBox" class="error-box"></div>
+  <div id="results" class="playground-results">
+    <div class="result-grid">
+      <div><div class="playground-label">Message complexity</div><span id="complexityBadge" class="badge">-</span></div>
+      <div><div class="playground-label">Detected intent</div><div id="intentValue" class="muted">-</div><div class="muted">Model used: <span id="modelUsed">-</span></div></div>
+    </div>
+    <div class="result-grid" style="margin-top:16px">
+      <div>
+        <div class="playground-label">Extracted fields</div>
+        <table class="playground-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody id="fieldsBody"></tbody></table>
+      </div>
+      <div>
+        <div class="playground-label">Confidence indicators</div>
+        <table class="playground-table"><thead><tr><th>Field</th><th>Confidence</th></tr></thead><tbody id="confidenceBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STREAMING CHAT CARD ── -->
+<div class="playground-card">
+  <h3 style="margin:0 0 16px;color:#ff9cc2">Streaming Chat</h3>
+  <p style="color:#aaa;font-size:.88em;margin:0 0 14px">Tokens stream as they arrive — no waiting for the full response.</p>
+  <form id="streamForm">
+    <div class="playground-grid">
+      <div class="full">
+        <label class="playground-label" for="streamSystemPrompt">System prompt (optional)</label>
+        <textarea id="streamSystemPrompt" class="playground-input" rows="3" maxlength="1000" placeholder="e.g. You are Adella, a friendly booking assistant…"></textarea>
+      </div>
+      <div class="full">
+        <label class="playground-label" for="streamMessage">Message</label>
+        <textarea id="streamMessage" class="playground-input" rows="4" maxlength="2000" placeholder="e.g. What services do you offer?"></textarea>
+      </div>
+      <div>
+        <label class="playground-label" for="streamModel">Model</label>
+        <select id="streamModel" class="playground-input"><option value="gemini">gemini</option><option value="claude">claude</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button id="streamBtn" class="playground-btn" type="submit" style="width:100%">Stream</button>
+      </div>
+    </div>
+  </form>
+  <div id="streamErrorBox" class="error-box"></div>
+  <div id="streamOutput" class="stream-output" style="display:none"></div>
+  <div id="streamStatus" class="stream-status"></div>
+</div>
+
+<script>
+/* ── Analysis form ── */
+const form=document.getElementById('playgroundForm'),btn=document.getElementById('submitBtn'),results=document.getElementById('results'),errorBox=document.getElementById('errorBox');
+const messageInput=document.getElementById('message'),stateInput=document.getElementById('state'),modelInput=document.getElementById('model'),fieldsBody=document.getElementById('fieldsBody'),confidenceBody=document.getElementById('confidenceBody');
+const getCsrf=()=>document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')||''; const fmt=v=>Array.isArray(v)||typeof v==='object'?JSON.stringify(v):String(v ?? '');
+const fill=(target,items,render)=>{target.innerHTML=items.length?items.map(render).join(''):'<tr><td colspan="2" class="muted">No data</td></tr>';};
+form.addEventListener('submit',async(e)=>{e.preventDefault();btn.disabled=true;btn.textContent='Testing…';errorBox.style.display='none';
+  try{const resp=await fetch('/admin/playground/test',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},credentials:'same-origin',body:JSON.stringify({message:messageInput.value,state:stateInput.value||null,model:modelInput.value})});
+    const data=await resp.json(); if(!resp.ok){throw new Error(data.error||'Request failed');}
+    const complexity=(data.complexity||'unknown').toLowerCase(),extracted=Object.entries(data.extracted||{}),confidence=Object.entries(data.confidence_fields||{});
+    document.getElementById('complexityBadge').className='badge '+complexity; document.getElementById('complexityBadge').textContent=complexity;
+    document.getElementById('intentValue').textContent=data.intent||'—'; document.getElementById('modelUsed').textContent=data.model_used||'—';
+    fill(fieldsBody,extracted,([k,v])=>`<tr><td>${k}</td><td>${fmt(v)}</td></tr>`); fill(confidenceBody,confidence,([k,v])=>`<tr><td>${k}</td><td>${(Number(v)*100).toFixed(0)}%</td></tr>`);
+    results.style.display='block';
+  }catch(err){errorBox.textContent=err.message||'Request failed'; errorBox.style.display='block'; results.style.display='none';}
+  finally{btn.disabled=false;btn.textContent='Test';}
+});
+
+/* ── Streaming chat ── */
+const streamForm=document.getElementById('streamForm'),streamBtn=document.getElementById('streamBtn');
+const streamOutput=document.getElementById('streamOutput'),streamStatus=document.getElementById('streamStatus'),streamErrorBox=document.getElementById('streamErrorBox');
+let _streamController=null;
+streamForm.addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if(_streamController){_streamController.abort();}
+  _streamController=new AbortController();
+  const msg=document.getElementById('streamMessage').value.trim();
+  const sys=document.getElementById('streamSystemPrompt').value.trim();
+  const mdl=document.getElementById('streamModel').value;
+  if(!msg){streamErrorBox.textContent='Message is required';streamErrorBox.style.display='block';return;}
+  streamErrorBox.style.display='none';
+  streamOutput.style.display='block';
+  streamOutput.innerHTML='<span class="cursor"></span>';
+  streamStatus.textContent='Connecting…';
+  streamBtn.disabled=true;streamBtn.textContent='Streaming…';
+  let tokenCount=0;const startMs=Date.now();
+  try{
+    const resp=await fetch('/admin/playground/stream',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},credentials:'same-origin',signal:_streamController.signal,body:JSON.stringify({message:msg,system_prompt:sys||null,model:mdl})});
+    if(!resp.ok){const t=await resp.text();throw new Error(t||'Stream request failed');}
+    const reader=resp.body.getReader(),decoder=new TextDecoder();
+    let buf='';
+    const cursor=streamOutput.querySelector('.cursor');
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop()||'';
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const raw=line.slice(6).trim();
+        if(raw==='[DONE]'){streamStatus.textContent=`Done — ${tokenCount} chunks in ${((Date.now()-startMs)/1000).toFixed(1)}s`;break;}
+        try{
+          const obj=JSON.parse(raw);
+          if(obj.error){streamErrorBox.textContent=obj.error;streamErrorBox.style.display='block';break;}
+          if(obj.token){tokenCount++;if(cursor)cursor.remove();streamOutput.appendChild(document.createTextNode(obj.token));streamOutput.appendChild(Object.assign(document.createElement('span'),{className:'cursor'}));streamOutput.scrollTop=streamOutput.scrollHeight;}
+        }catch(_){}
+      }
+    }
+  }catch(err){
+    if(err.name!=='AbortError'){streamErrorBox.textContent=err.message||'Stream failed';streamErrorBox.style.display='block';}
+  }finally{streamBtn.disabled=false;streamBtn.textContent='Stream';_streamController=null;const cur=streamOutput.querySelector('.cursor');if(cur)cur.remove();}
+});
+</script>
+{% endblock %}

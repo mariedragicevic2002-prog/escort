@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Experience Guide - {{ escort_name or 'escort' }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --dark: #1a1a2e;
+            --dark-secondary: #16213e;
+            --dark-tertiary: #0f0f23;
+            --gold: #ffd700;
+            --success: #ffeb3b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 50%, var(--dark-tertiary) 100%);
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.08) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Experience Cards */
+        .experience-card {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(233, 30, 99, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .experience-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(233, 30, 99, 0.15);
+            border-color: rgba(233, 30, 99, 0.4);
+        }
+
+        .experience-card.gfe {
+            border-color: rgba(255, 105, 180, 0.4);
+        }
+        .experience-card.gfe:hover {
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 105, 180, 0.2);
+        }
+
+        .experience-card.dgfe {
+            border-color: rgba(156, 39, 176, 0.4);
+        }
+        .experience-card.dgfe:hover {
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(156, 39, 176, 0.2);
+        }
+
+        .experience-card.pse {
+            border-color: rgba(255, 64, 129, 0.4);
+        }
+        .experience-card.pse:hover {
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 64, 129, 0.2);
+        }
+
+        .card-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .card-content {
+            padding: 30px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-title .abbrev {
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .price-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 1.7;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .card-description {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        /* Comparison Section */
+        .comparison-section {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            padding: 30px 25px 30px 12px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .comparison-table { min-width: 400px; }
+
+        .comparison-section h2 {
+            text-align: center;
+            color: var(--success);
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table th {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+
+        .comparison-table th:first-child {
+            width: 40%;
+        }
+
+        .comparison-table td {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .comparison-table td:first-child {
+            text-align: left;
+            color: rgba(255, 255, 255, 0.7);
+            padding-left: 0;
+        }
+
+        .comparison-table th:first-child {
+            padding-left: 0;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .yes {
+            color: #4caf50;
+        }
+
+        .comparison-table .premium {
+            color: var(--gold);
+        }
+
+        /* Other Services */
+        .other-services {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .other-services h2 {
+            text-align: center;
+            color: var(--success);
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .service-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .service-item:hover {
+            background: rgba(233, 30, 99, 0.1);
+            border-color: rgba(233, 30, 99, 0.3);
+        }
+
+        .service-item h4 {
+            color: #ff69b4;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .service-item p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .service-item .price {
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(156, 39, 176, 0.2));
+            border-radius: 24px;
+            padding: 40px;
+            border: 2px solid rgba(233, 30, 99, 0.3);
+        }
+
+        .cta-section h2 {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .cta-section p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .cta-hint {
+            color: var(--success);
+            font-size: 14px;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .faq-section h2 {
+            text-align: center;
+            color: var(--success);
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            color: #ff69b4;
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .faq-answer {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.7;
+            padding-left: 0;
+        }
+
+        /* Etiquette Section */
+        .etiquette-section {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .etiquette-section h2 {
+            text-align: center;
+            color: #81c784;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .etiquette-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .etiquette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .etiquette-item {
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .etiquette-item .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .etiquette-item h4 {
+            color: #81c784;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .etiquette-item p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .card-content {
+                padding: 24px;
+            }
+
+            .card-title {
+                font-size: 24px;
+            }
+
+            .comparison-table {
+                font-size: 12px;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 10px 6px;
+            }
+            .services-grid { grid-template-columns: repeat(2, 1fr); }
+            .etiquette-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 26px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .services-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Experience Guide</h1>
+            <p class="subtitle">Not sure which experience is right for you? Let me help you choose the perfect encounter tailored to your desires.</p>
+        </div>
+
+        <!-- GFE Card -->
+        <div class="experience-card gfe">
+            <img src="{{ url_for('static', filename='images/gfe.jpg') }}" alt="Girlfriend Experience" class="card-image" onerror="this.style.display='none'">
+            <div class="card-content">
+                <div class="card-header">
+                    <h3 class="card-title">Girlfriend Experience <span class="abbrev">(GFE)</span></h3>
+                    <span class="price-badge">Incall 30min ${{ rates.get('gfe_30', 400) }} | 1hr ${{ rates.get('gfe_60', 700) }}<br>Outcall 1hr ${{ outcall_rates.get('gfe_60', 800) }}</span>
+                </div>
+                <p class="card-description">
+                    Involves kissing, and erotic foreplay. oral on you is covered, and I love it if u go down on me. I am passionate and affectionate and enjoy playful hot sex in multiple positions.
+                </p>
+            </div>
+        </div>
+
+        <!-- DGFE Card -->
+        <div class="experience-card dgfe">
+            <img src="{{ url_for('static', filename='images/dgfe.jpg') }}" alt="Dirty Girlfriend Experience" class="card-image" onerror="this.style.display='none'">
+            <div class="card-content">
+                <div class="card-header">
+                    <h3 class="card-title">Dirty GFE <span class="abbrev">(DGFE)</span></h3>
+                    <span class="price-badge">Incall 30min ${{ rates.get('dgfe_30', 500) }} | 1hr ${{ rates.get('dgfe_60', 800) }}<br>Outcall 1hr ${{ outcall_rates.get('dgfe_60', 950) }}</span>
+                </div>
+                <p class="card-description">
+                    GFE plus BBBJ + CIM.
+                </p>
+            </div>
+        </div>
+
+        <!-- PSE Card -->
+        <div class="experience-card pse">
+            <img src="{{ url_for('static', filename='images/pse.jpg') }}" alt="Pornstar Experience" class="card-image" onerror="this.style.display='none'">
+            <div class="card-content">
+                <div class="card-header">
+                    <h3 class="card-title">Pornstar Experience <span class="abbrev">(PSE)</span></h3>
+                    <span class="price-badge">Incall 30min ${{ rates.get('pse_30', 600) }} | 1hr ${{ rates.get('pse_60', 1000) }}<br>Outcall 1hr ${{ outcall_rates.get('pse_60', 1100) }}</span>
+                </div>
+                <p class="card-description">
+                    PSE is customisable but can include ..<br><br>
+                    &#10022; <strong>My PORNSTAR BLOWJOB</strong> — an award winning masterpiece of epic deepthroat, facefucking, gagging, drooling, choking, spitting, a truly wet and sloppy Yes Daddy cock worship session in multiple positions. (Rimming and anal play on u can be included, at your request), and of course CIM or CIMWS.<br><br>
+                    &#10022; <strong>ROUGHER DIRTIER SEX</strong> — dirtytalk, slapping, spanking, choking, hairpulling, submissive and hardcore positions. (Restraints on me and BDSM toys available by request). If you are the dominant or deviant type and enjoy wilder, dirtier rougher play, that really excites me! Fuck me hard and fast... make me squirt, squeal and scream!!<br><br>
+                    &#10022; <strong>ANAL sex</strong>, anal play on me, rimming on me.<br><br>
+                    <em>And the following by Request only (no extra charge):</em><br><br>
+                    &#10022; <strong>SQUIRTING</strong> using toys or use your fingers if u know how<br>
+                    &#10022; <strong>RIMMING</strong> on you, anal play on you, toys on you if requested<br>
+                    &#10022; <strong>ROLEPLAYS</strong> — I can play a submissive or dominant role (Costumes inc bratty schoolgirl, Harley Quinn, slutty secretary, nympho nurse, kinky boss, maid). Taboo fantasies will not offend (family affairs, age-play etc). Requests to recreate your favourite porn scene also welcomed.<br>
+                    &#10022; <strong>KINK</strong> — I have some experience with waxplay, femdom and tease and denial (spanking, whipping, restraints on you, CBT, facesitting, smothering, boot worship, pegging, snowballing). I do not offer humiliation, ball busting or findom services.
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Comparison -->
+        <div class="comparison-section">
+            <h2>Quick Comparison</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>GFE</th>
+                        <th>DGFE</th>
+                        <th>PSE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Passionate Kissing</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Erotic Foreplay</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Oral on you</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Covered BJ</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>BBBJ with CIM</td>
+                        <td>-</td>
+                        <td class="yes">&#10003;</td>
+                        <td class="yes">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>BBBJ with CIM COF CIMWS</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Facefucking / Deepthroat</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Rougher / Dirtier Sex</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Anal Sex</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Squirting</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Roleplays</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Kink Options</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td class="premium">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Mood</td>
+                        <td>Sensual</td>
+                        <td class="yes">Sensual</td>
+                        <td class="premium">Pornstar</td>
+                    </tr>
+                    <tr>
+                        <td>30 min (Incall)</td>
+                        <td>${{ rates.get('gfe_30', 400) }}</td>
+                        <td>${{ rates.get('dgfe_30', 500) }}</td>
+                        <td>${{ rates.get('pse_30', 600) }}</td>
+                    </tr>
+                    <tr>
+                        <td>1 hour (Incall)</td>
+                        <td>${{ rates.get('gfe_60', 700) }}</td>
+                        <td>${{ rates.get('dgfe_60', 800) }}</td>
+                        <td>${{ rates.get('pse_60', 1000) }}</td>
+                    </tr>
+                    <tr>
+                        <td>1 hour (Outcall)</td>
+                        <td>${{ outcall_rates.get('gfe_60', 800) }}</td>
+                        <td>${{ outcall_rates.get('dgfe_60', 950) }}</td>
+                        <td>${{ outcall_rates.get('pse_60', 1100) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Other Services -->
+        <div class="other-services">
+            <h2>Extended &amp; Special Experiences</h2>
+            <div class="services-grid">
+                <div class="service-item">
+                    <h4>Dinner Date</h4>
+                    <p>Wine, dine, and unwind. 2 hours of dinner conversation followed by intimate dessert.</p>
+                    <p class="price">Incall ${{ rates.get('dinner_date', 1000) }} · Outcall ${{ outcall_rates.get('dinner_date', rates.get('dinner_date', 1000)) }}</p>
+                </div>
+                <div class="service-item">
+                    <h4>Doubles MFF</h4>
+                    <p>Double the fun with me and a gorgeous friend (GFE, DGFE, or PSE). <strong>Other provider organised by the client</strong> (you bring her), <em>or</em> <strong>I'll supply the other female escort</strong> — ask for rates.</p>
+                    <p class="price">From ${{ rates.get('mff', 1400) }}/hr</p>
+                </div>
+                <div class="service-item">
+                    <h4>Overnight</h4>
+                    <p>12 hours of companionship. Fall asleep and wake up together.</p>
+                    <p class="price">Incall ${{ rates.get('overnight', 5000) }} · Outcall ${{ outcall_rates.get('overnight', rates.get('overnight', 5000)) }}</p>
+                </div>
+                <div class="service-item">
+                    <h4>Couples (MFF)</h4>
+                    <p>Bring your partner for an unforgettable threesome experience.</p>
+                    <p class="price">${{ rates.get('mff', 1000) }}/hr</p>
+                </div>
+                <div class="service-item">
+                    <h4>Fly Me To You</h4>
+                    <p>Interstate or remote? I'll fly to you for an overnight experience.</p>
+                    <p class="price">Incall ${{ rates.get('fly_me', 5500) }} · Outcall ${{ outcall_rates.get('fly_me', rates.get('fly_me', 5500)) }} + flights</p>
+                </div>
+                <div class="service-item">
+                    <h4>MMF Experience</h4>
+                    <p>Two men, one unforgettable experience. Available on request for the adventurous.</p>
+                    <p class="price">${{ rates.get('mmf_60', 1500) }}/hr</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">What's the minimum booking duration?</div>
+                <div class="faq-answer">15 minutes for incalls. For outcalls, minimum 1 hour due to travel time.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Do I need to pay a deposit?</div>
+                <div class="faq-answer">Deposits are required for all outcalls, overnight bookings, doubles and incall bookings longer than 1 hour. For all other bookings a deposit is appreciated but not mandatory.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What payment methods do you accept?</div>
+                <div class="faq-answer">Cash is accepted as well as PayID as long as the transfer clears instantly to my account.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I extend during our date?</div>
+                <div class="faq-answer">Extensions are welcome if my schedule allows.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What's your cancellation policy?</div>
+                <div class="faq-answer">All deposits are non refundable. However if you must cancel and at least give 6 hours notice your deposit will be held in trust as a deposit towards your next booking. In the event you do not pay a deposit and do not show up a $100 cancellation fee will be required to be paid before you can book again in the future.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Do you offer outcalls?</div>
+                <div class="faq-answer">Yes! However outcalls must be within a 15km radius of {{ current_city + ' CBD' if current_city else 'the CBD' }} only. A travel surcharge applies, and a deposit is required for all outcalls.</div>
+            </div>
+        </div>
+
+        <!-- Etiquette Section -->
+        <div class="etiquette-section">
+            <h2>Booking Etiquette</h2>
+            <p class="etiquette-subtitle">A few tips to ensure we both have an amazing time together</p>
+
+            <div class="etiquette-grid">
+                <div class="etiquette-item">
+                    <div class="icon">🚿</div>
+                    <h4>Fresh &amp; Clean</h4>
+                    <p>Shower is mandatory upon arrival. Hygiene is essential for us to both enjoy our time together.</p>
+                </div>
+
+                <div class="etiquette-item">
+                    <div class="icon">⏰</div>
+                    <h4>Punctual</h4>
+                    <p>If your running late please let me know.</p>
+                </div>
+
+                <div class="etiquette-item">
+                    <div class="icon">📌</div>
+                    <h4>Ettitque</h4>
+                    <p>Rates are non negotiable. Do not ask for unprotected sex I do not offer this service no exceptions.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <h2>Ready to Book?</h2>
+            <p>Simply text me back with your preferred experience and I'll send you a booking link.</p>
+            <p class="cta-hint">Just reply: "I'd like to book [GFE/DGFE/PSE] for [duration]"</p>
+        </div>
+    </div>
+</body>
+</html>

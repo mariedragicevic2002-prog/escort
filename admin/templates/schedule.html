@@ -1,0 +1,2297 @@
+{% extends "base_admin.html" %}
+{% block title %}Daily Schedule{% endblock %}
+{% block page_title %}Daily Schedule{% endblock %}
+{% block page_subtitle %}Manage bookings and calendar events{% endblock %}
+{% block extra_css %}
+        /* Schedule page layout – toolbar and views */
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+        .view-toggle button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .view-toggle button:hover {
+            background: rgba(233, 30, 99, 0.2);
+            border-color: var(--primary);
+        }
+        .view-toggle button.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: rgba(255,255,255,0.4);
+            color: white;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 14px 18px;
+            background: var(--glass-dark);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .date-selector label {
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .date-selector input[type="date"] {
+            padding: 8px 12px;
+            background: #1e1430;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: #ffeb3b;
+            font-size: 14px;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(58%) sepia(100%) saturate(3000%) hue-rotate(310deg) brightness(110%);
+            cursor: pointer;
+        }
+        .date-selector button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+        .date-selector button:hover { opacity: 0.95; }
+
+        .week-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .week-nav button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+        .week-nav button:hover { background: rgba(233, 30, 99, 0.2); border-color: var(--primary); }
+        .week-label {
+            color: #ffeb3b;
+            font-weight: 700;
+            font-size: 16px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .week-view { margin-bottom: 24px; }
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 900px) {
+            .week-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 500px) {
+            .week-grid { grid-template-columns: 1fr; }
+        }
+        .week-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--glass-dark);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .week-summary-item {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        .week-summary-item .label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 4px;
+        }
+        .week-summary-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffeb3b;
+        }
+        .week-summary-item .value.earnings { color: #4caf50; }
+
+        .day-view {
+            width: 100%;
+            margin-top: 0;
+        }
+        .day-view .info-box {
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .day-view .info-box p { color: rgba(255,255,255,0.9); font-size: 14px; margin: 0; }
+
+        .bookings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+        }
+        .booking-card {
+            background: var(--glass-dark);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 18px 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            margin-bottom: 0;
+        }
+        .booking-card.confirmed { 
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 100%);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            border-left: 4px solid #4caf50;
+        }
+        .booking-card.pending-deposit {
+            background: linear-gradient(135deg, rgba(97, 97, 97, 0.25) 0%, rgba(97, 97, 97, 0.15) 100%);
+            border: 2px solid rgba(97, 97, 97, 0.5);
+            border-left: 4px solid #616161;
+        }
+        .booking-card.pending-travel {
+            background: linear-gradient(135deg, rgba(179, 157, 219, 0.2) 0%, rgba(179, 157, 219, 0.1) 100%);
+            border: 2px dashed rgba(179, 157, 219, 0.5);
+            border-left: 4px solid #b39ddb;
+        }
+        .booking-card.reserved { 
+            background: linear-gradient(135deg, rgba(3, 155, 229, 0.25) 0%, rgba(3, 155, 229, 0.15) 100%);
+            border: 2px solid rgba(3, 155, 229, 0.5);
+            border-left: 4px solid #039BE5;
+        }
+        .booking-card.travel { 
+            background: linear-gradient(135deg, rgba(142, 36, 170, 0.25) 0%, rgba(142, 36, 170, 0.15) 100%);
+            border: 2px solid rgba(142, 36, 170, 0.5);
+            border-left: 4px solid #8E24AA;
+        }
+        .booking-card.admin { 
+            background: linear-gradient(135deg, rgba(246, 191, 38, 0.25) 0%, rgba(246, 191, 38, 0.15) 100%);
+            border: 2px solid rgba(246, 191, 38, 0.5);
+            border-left: 4px solid #F6BF26;
+        }
+        .booking-card.social { 
+            background: linear-gradient(135deg, rgba(213, 0, 0, 0.25) 0%, rgba(213, 0, 0, 0.15) 100%);
+            border: 2px solid rgba(213, 0, 0, 0.5);
+            border-left: 4px solid #D50000;
+        }
+        .booking-card.incall { }
+        .booking-card.outcall { }
+
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .booking-time {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffeb3b;
+        }
+        .booking-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .booking-type-badge.incall { background: rgba(76, 175, 80, 0.3); color: #81c784; }
+        .booking-type-badge.outcall { background: rgba(33, 150, 243, 0.3); color: #64b5f6; }
+        .booking-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+        .status-confirmed { color: #4caf50; }
+        .status-pending-deposit { color: #9e9e9e; }
+        .status-reserved { color: #039BE5; }
+        .status-travel { color: #ce93d8; }
+        .status-pending-travel { color: #b39ddb; }
+        .status-admin { color: #F6BF26; }
+        .status-social { color: #ef5350; }
+
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px 20px;
+            margin-bottom: 14px;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .detail-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-value {
+            font-size: 14px;
+            color: #ffeb3b;
+            font-weight: 500;
+        }
+
+        .booking-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-edit {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            text-transform: none;
+            transition: all 0.2s;
+        }
+        .btn-edit:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-reschedule, .btn-cancel, .btn-delete-admin, .btn-sms-history {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            border: none;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+        }
+        .btn-reschedule {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+        .btn-reschedule:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-cancel {
+            background: linear-gradient(135deg, #f44336, #c62828);
+            color: #ffffff;
+            border: none;
+        }
+        .btn-cancel:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-delete-admin {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        .btn-delete-admin:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-sms-history {
+            background: linear-gradient(135deg, #9c27b0, #e91e8c);
+            color: white;
+        }
+        .btn-sms-history:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .reschedule-form {
+            display: none;
+            position: relative;
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .reschedule-form form label {
+            display: block;
+            color: #ffeb3b;
+            font-size: 13px;
+            margin-bottom: 4px;
+            margin-top: 10px;
+        }
+        .reschedule-form form label:first-of-type { margin-top: 0; }
+        .reschedule-form form input,
+        .reschedule-form form textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1e1430;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: #ffeb3b;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        /* Keep native calendar and clock pickers for date/time (same as booking webform) */
+        .reschedule-form form input[type="date"],
+        .reschedule-form form input[type="time"] {
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 15px;
+        }
+        .reschedule-form form input[type="date"]:focus,
+        .reschedule-form form input[type="time"]:focus {
+            outline: none;
+            border-color: #ffeb3b;
+            box-shadow: 0 0 0 3px rgba(255, 235, 59, 0.2);
+        }
+        .reschedule-form .hint {
+            font-size: 12px;
+            color: rgba(255, 235, 59, 0.8);
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .reschedule-form .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .btn-send {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn-cancel-edit {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            color: #ffeb3b;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            background: var(--glass-dark);
+            border-radius: 20px;
+            border: 2px dashed rgba(255,255,255,0.2);
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 16px;
+        }
+        .empty-state h3 {
+            color: #ffeb3b;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+        }
+
+        .day-view-only { }
+        #weekView { display: none; }
+        #monthView { display: none; }
+        #dayView { display: block; }
+        body.schedule-week-view #dayView { display: none; }
+        body.schedule-week-view #weekView { display: flex; flex-direction: column; }
+        body.schedule-week-view .day-view-only { display: none !important; }
+        body.schedule-week-view #weekNav { display: flex !important; }
+        body.schedule-month-view #dayView { display: none; }
+        body.schedule-month-view #weekView { display: none; }
+        body.schedule-month-view #monthView { display: block; }
+        body.schedule-month-view .day-view-only { display: none !important; }
+        body.schedule-month-view #monthNav { display: flex !important; }
+
+        /* Month View Styles */
+        .month-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .month-nav button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+        .month-nav button:hover { background: rgba(233, 30, 99, 0.2); border-color: var(--primary); }
+        .month-label {
+            color: #ffeb3b;
+            font-weight: 700;
+            font-size: 18px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+        .month-grid-header {
+            background: rgba(233, 30, 99, 0.3);
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px 4px;
+            border-radius: 8px;
+        }
+        .month-day {
+            background: var(--glass-dark);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            min-height: 90px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .month-day:hover {
+            border-color: var(--primary);
+            background: rgba(233, 30, 99, 0.1);
+        }
+        .month-day.other-month {
+            opacity: 0.4;
+        }
+        .month-day.today {
+            border: 2px solid #ffeb3b;
+            background: rgba(255, 235, 59, 0.1);
+        }
+        .month-day-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffeb3b;
+            margin-bottom: 4px;
+        }
+        .month-day-events {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .month-event {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: white;
+        }
+        .month-event.confirmed { background: #4caf50; }
+        .month-event.pending-deposit { background: #616161; }
+        .month-event.reserved { background: #039BE5; }
+        .month-event.travel { background: #8E24AA; }
+        .month-event.pending-travel { background: #b39ddb; }
+        .month-event.admin { background: #F6BF26; color: #333; }
+        .month-event.social { background: #D50000; }
+        .month-event-more {
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .month-grid { gap: 2px; }
+            .month-day { min-height: 60px; padding: 4px; }
+            .month-day-number { font-size: 12px; }
+            .month-event { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        }
+        @media (max-width: 480px) {
+            .month-day { min-height: 48px; padding: 3px; }
+            .month-day-number { font-size: 11px; }
+            .month-event { font-size: 0; height: 8px; border-radius: 4px; padding: 0; margin-bottom: 2px; }
+            .view-toggle { flex-wrap: wrap; gap: 6px; }
+            .view-toggle button { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+            .date-selector { flex-direction: column; align-items: stretch; }
+            .date-selector input[type="date"] { width: 100%; min-height: 44px; font-size: 16px; }
+            .date-selector button { min-height: 44px; width: 100%; }
+        }
+        /* Vuetify reschedule date/time pickers */
+        .reschedule-vue-mount { min-height: 1px; }
+        .reschedule-pickers-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .reschedule-pickers-wrap .v-date-picker,
+        .reschedule-pickers-wrap .v-time-picker {
+            max-width: 100%;
+        }
+{% endblock %}
+{% block content %}
+{% if not authenticated %}
+        <div class="login-container">
+            <h1>Daily Schedule</h1>
+            <p class="subtitle">Secure Access Required</p>
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+            <form method="POST" action="/schedule">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="login">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+{% else %}
+<!-- Calendar Sync Indicator -->
+<div id="calendarSyncStatus" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--glass-dark); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);">
+    <span id="syncIcon" style="font-size: 20px;">📅</span>
+    <div style="flex: 1;">
+        <div id="syncStatusText" style="color: white; font-weight: 600; font-size: 14px;">Checking Google Calendar...</div>
+        <div id="syncLastUpdate" style="color: rgba(255,255,255,0.6); font-size: 12px;">Loading...</div>
+    </div>
+    <button onclick="refreshCalendarSync()" id="syncRefreshBtn" style="padding: 12px 16px; min-height: 44px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 12px;">Refresh</button>
+</div>
+
+<!-- View Toggle and Create Button -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div class="view-toggle">
+        <button id="dayViewBtn" class="active" onclick="switchView('day')">Day View</button>
+        <button id="weekViewBtn" onclick="switchView('week')">Week View</button>
+        <button id="monthViewBtn" onclick="switchView('month')">Month View</button>
+    </div>
+    <button onclick="showCreateEventModal()" style="padding: 12px 24px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 14px; transition: all 0.3s;">
+        ➕ Create New Event
+    </button>
+</div>
+
+<!-- Date Selector (Day View) -->
+<div class="date-selector day-view-only" id="daySelector">
+    <label for="dateInput">View Date:</label>
+    <input type="date" id="dateInput" value="{{ selected_date }}" onchange="updateDateDisplay()">
+    <span id="dateDisplay" style="color: #ffeb3b; font-weight: 600; min-width: 100px;">{{ display_date }}</span>
+    <button onclick="loadDate()">Load</button>
+    <button onclick="exportToExcel()" style="background: linear-gradient(135deg, #217346, #1a5e38);">📊 Export Excel</button>
+    <button onclick="openClearModal()" style="background: rgba(25,118,210,0.35); border: 2px solid rgba(25,118,210,0.8); color: #ffeb3b;">🗑 Clear Schedule</button>
+</div>
+
+<!-- Week Navigation (Week View) -->
+<div class="week-nav" id="weekNav" style="display: none;">
+    <button onclick="navigateWeek(-1)">&larr; Previous Week</button>
+    <span class="week-label" id="weekLabel">Loading...</span>
+    <button onclick="navigateWeek(1)">Next Week &rarr;</button>
+</div>
+
+<!-- Month Navigation (Month View) -->
+<div class="month-nav" id="monthNav" style="display: none;">
+    <button onclick="navigateMonth(-1)">&larr; Previous Month</button>
+    <span class="month-label" id="monthLabel">Loading...</span>
+    <button onclick="navigateMonth(1)">Next Month &rarr;</button>
+</div>
+
+<!-- Clear Schedule Modal -->
+<div id="clearScheduleModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 32px; max-width: 440px; width: 90%; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="color: #ff6b6b; font-size: 22px; margin: 0;">🗑 Clear Schedule</h2>
+            <button onclick="closeClearModal()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+
+        <!-- Step 1: Choose period -->
+        <div id="clearStep1">
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">Delete all events for a specific day, month, or year. This cannot be undone.</p>
+            <fieldset aria-label="Period to clear" style="display: flex; flex-direction: column; gap: 12px; margin: 0 0 24px 0; padding: 0; border: none;">
+                <label style="display: flex; align-items: center; gap: 12px; color: white; cursor: pointer; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="radio" name="clearPeriod" id="clearPeriodDay" value="day" style="width: 18px; height: 18px;"> Clear today's events only
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; color: white; cursor: pointer; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="radio" name="clearPeriod" id="clearPeriodMonth" value="month" style="width: 18px; height: 18px;"> Clear entire month (<span id="clearMonthLabel"></span>)
+                </label>
+                <label style="display: flex; align-items: center; gap: 12px; color: white; cursor: pointer; padding: 14px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="radio" name="clearPeriod" id="clearPeriodYear" value="year" style="width: 18px; height: 18px;"> Clear entire year (<span id="clearYearLabel"></span>)
+                </label>
+            </fieldset>
+            <button onclick="goToClearStep2()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border: none; border-radius: 10px; color: white; font-weight: 600; font-size: 16px; cursor: pointer; font-family: 'Poppins', sans-serif;">Continue</button>
+        </div>
+
+        <!-- Step 2: Password confirmation -->
+        <div id="clearStep2" style="display: none;">
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 8px; font-size: 14px;">Enter admin password to confirm deletion of <strong id="clearSummaryText" style="color: #ff6b6b;"></strong>.</p>
+            <input type="password" id="clearPasswordInput" placeholder="Admin password" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; font-size: 16px; font-family: 'Poppins', sans-serif; margin: 16px 0; box-sizing: border-box;" onkeydown="if(event.key==='Enter') confirmClearSchedule()">
+            <div id="clearError" style="color: #ff6b6b; font-size: 13px; margin-bottom: 12px; display: none;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="goBackClearStep1()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; font-weight: 600; font-size: 15px; cursor: pointer; font-family: 'Poppins', sans-serif;">Back</button>
+                <button onclick="confirmClearSchedule()" id="clearConfirmBtn" style="flex: 2; padding: 14px; background: linear-gradient(135deg, #d32f2f, #b71c1c); border: none; border-radius: 10px; color: white; font-weight: 600; font-size: 15px; cursor: pointer; font-family: 'Poppins', sans-serif;">Delete Events</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Result -->
+        <div id="clearStep3" style="display: none; text-align: center;">
+            <div id="clearResultIcon" style="font-size: 48px; margin-bottom: 16px;"></div>
+            <p id="clearResultMsg" style="color: white; font-size: 16px;"></p>
+            <button onclick="closeClearModal()" style="margin-top: 20px; padding: 12px 32px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Colour Legend (matches Android app) -->
+<div style="display: flex; gap: 16px; margin-bottom: 20px; font-size: 12px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #b39ddb; border-radius: 3px; border: 1px dashed rgba(179,157,219,0.8);"></span>
+        <span style="color: rgba(255,255,255,0.8);">Travel Time (Awaiting Deposit)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #616161; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Pending Booking (Awaiting Deposit)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #8E24AA; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Travel Time (Deposit Paid)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #0B8043; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Confirmed Booking (Deposit Paid)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #039BE5; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Reserved Booking (Deposit N/A)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #D50000; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Social Time (Music Festival/Time Off)</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; background: #F6BF26; border-radius: 3px;"></span>
+        <span style="color: rgba(255,255,255,0.8);">Admin (Hairdresser/Nails etc)</span>
+    </div>
+</div>
+
+<!-- Week View Container -->
+<div class="week-view" id="weekView">
+    <div class="week-grid" id="weekGrid">
+        <!-- Days will be populated by JavaScript -->
+    </div>
+    <div class="week-summary" id="weekSummary">
+        <div class="week-summary-item">
+            <div class="label">Total Bookings</div>
+            <div class="value" id="weekTotalBookings">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Confirmed</div>
+            <div class="value" id="weekConfirmed">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Pending</div>
+            <div class="value" id="weekPending">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Est. Earnings</div>
+            <div class="value earnings" id="weekEarnings">$0</div>
+        </div>
+    </div>
+</div>
+
+<!-- Month View Container -->
+<div id="monthView">
+    <div class="month-grid" id="monthGrid">
+        <div class="month-grid-header">Mon</div>
+        <div class="month-grid-header">Tue</div>
+        <div class="month-grid-header">Wed</div>
+        <div class="month-grid-header">Thu</div>
+        <div class="month-grid-header">Fri</div>
+        <div class="month-grid-header">Sat</div>
+        <div class="month-grid-header">Sun</div>
+        <!-- Days will be populated by JavaScript -->
+    </div>
+    <div class="week-summary" id="monthSummary">
+        <div class="week-summary-item">
+            <div class="label">Total Bookings</div>
+            <div class="value" id="monthTotalBookings">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Confirmed</div>
+            <div class="value" id="monthConfirmed">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Pending</div>
+            <div class="value" id="monthPending">0</div>
+        </div>
+        <div class="week-summary-item">
+            <div class="label">Est. Earnings</div>
+            <div class="value earnings" id="monthEarnings">$0</div>
+        </div>
+    </div>
+</div>
+
+<!-- Day View Container -->
+<div class="day-view" id="dayView">
+{% if bookings %}
+<div class="info-box">
+    <p><strong>How it works:</strong> Click "Reschedule" to offer new times, or "Cancel" to notify the client. The bot will automatically send an SMS requesting their confirmation.</p>
+</div>
+
+<div class="bookings-list">
+    {% for booking in bookings %}
+    <div class="booking-card {{ booking.status_class }} {{ 'incall' if 'incall' in (booking.location_type|lower|default('')) else ('outcall' if 'outcall' in (booking.location_type|lower|default('')) else '') }}">
+        <div class="booking-header">
+            <div class="booking-time">
+                {{ booking.start_time }} - {{ booking.end_time }}
+                <span class="booking-type-badge {{ 'incall' if 'incall' in (booking.location_type|lower|default('')) else 'outcall' }}">
+                    {{ booking.location_type or 'N/A' }}
+                </span>
+            </div>
+            <div class="booking-status status-{{ booking.status_class }}">
+                {% if booking.status_class == 'confirmed' and booking.deposit_paid %}
+                Confirmed (Deposit of {{ booking.deposit_paid|replace('PAID', '')|replace('paid', '')|trim }} paid)
+                {% else %}
+                {{ booking.status_label }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="booking-details">
+            {% if booking.status_class not in ['travel', 'pending-travel'] %}
+            <div class="detail-item">
+                <span class="detail-label">Client</span>
+                <span class="detail-value">{{ booking.client_name or 'Not specified' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Phone</span>
+                <span class="detail-value">{{ booking.phone_number or 'N/A' }}</span>
+            </div>
+            {% if booking.safety_screening_status %}
+            <div class="detail-item">
+                <span class="detail-label">Safety screening</span>
+                <span class="detail-value" style="color: #ff8a80; font-weight: 700;">{{ booking.safety_screening_status }}</span>
+            </div>
+            {% endif %}
+            <div class="detail-item">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{{ booking.duration_display }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Experience</span>
+                <span class="detail-value">{{ (booking.experience or '')|replace('_', ' ') }}</span>
+            </div>
+            {% set _show_mmf_exploration = booking.show_mmf_preferences | default(false) %}
+            {% if _show_mmf_exploration %}
+            <div class="detail-item">
+                <span class="detail-label">Preferences</span>
+                <span class="detail-value">{{ booking.preferences or '—' }}</span>
+            </div>
+            {% endif %}
+            {% if booking.special_requests %}
+            <div class="detail-item">
+                <span class="detail-label">Special requests</span>
+                <span class="detail-value" style="white-space: pre-wrap;">{{ booking.special_requests }}</span>
+            </div>
+            {% endif %}
+            {% if (booking.experience or '')|lower in ['doubles mmf', 'doubles mff', 'Doubles MMF', 'doubles_mff'] %}
+            <div class="detail-item">
+                <span class="detail-label">Organise other escort</span>
+                <span class="detail-value">{{ booking.organise_other_escort or 'Not specified' }}</span>
+            </div>
+            {% endif %}
+            <div class="detail-item">
+                <span class="detail-label">Type</span>
+                <span class="detail-value">{{ booking.location_type }}</span>
+            </div>
+            {% if booking.deposit_paid %}
+            <div class="detail-item">
+                <span class="detail-label">Deposit Paid</span>
+                <span class="detail-value">{{ booking.deposit_paid }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Deposit reference</span>
+                <span class="detail-value">{{ booking.deposit_reference or '—' }}</span>
+            </div>
+            {% endif %}
+            {% if booking.remaining_balance %}
+            <div class="detail-item">
+                <span class="detail-label">Remaining Balance</span>
+                <span class="detail-value">{{ booking.remaining_balance }}</span>
+            </div>
+            {% endif %}
+            {% if booking.address %}
+            <div class="detail-item">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ booking.address }}</span>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% if booking.status_class in ['travel', 'pending-travel'] %}
+            <div class="detail-item">
+                <span class="detail-label">Client</span>
+                <span class="detail-value">{{ booking.client_name or 'Client' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Experience</span>
+                <span class="detail-value">{{ (booking.experience or 'Travel time')|replace('_', ' ') }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Current address (escort)</span>
+                <span class="detail-value">{{ booking.origin_address or 'Not specified' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Destination address</span>
+                <span class="detail-value">{{ booking.destination_address or booking.address or 'Not specified' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Travel</span>
+                <span class="detail-value">{{ booking.duration_display or booking.status_label }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if booking.status_class in ['travel', 'pending-travel'] %}
+        <div class="booking-actions">
+            <button class="btn-delete-admin" onclick="deleteTravelBlock('{{ booking.event_id }}')">
+                Delete Travel Time
+            </button>
+        </div>
+        {% elif booking.status_class in ['admin', 'social'] %}
+        <div class="booking-actions">
+            <button class="btn-delete-admin" onclick="deleteAdminBlock('{{ booking.event_id }}', '{{ booking.status_class }}')">
+                Delete Event
+            </button>
+        </div>
+        {% elif booking.phone_number and booking.status_class not in ['admin', 'social'] %}
+        <div class="booking-actions">
+            <button class="btn-reschedule" onclick="toggleReschedule('{{ booking.event_id }}')">
+                Reschedule
+            </button>
+            <button class="btn-edit" onclick="toggleEdit('{{ booking.event_id }}')">
+                Edit Details
+            </button>
+            <button class="btn-cancel" onclick="confirmCancel('{{ booking.event_id }}', '{{ booking.client_name or 'Client' }}', '{{ booking.start_time }}')">
+                Cancel Booking
+            </button>
+            <button class="btn-delete-admin" onclick="showDeleteBookingDialog('{{ booking.event_id }}', '{{ booking.client_name or 'Client' }}', '{{ booking.start_time }}')">
+                Delete Booking
+            </button>
+            <button class="btn-sms-history" onclick="showSmsHistory('{{ booking.phone_number }}', '{{ booking.client_name or 'Client' }}')">
+                Sms History
+            </button>
+        </div>
+
+        <!-- Reschedule Form -->
+        <div id="reschedule-{{ booking.event_id }}" class="reschedule-form" style="display: none;">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="reschedule">
+                <input type="hidden" name="event_id" value="{{ booking.event_id }}">
+                <input type="hidden" name="phone_number" value="{{ booking.phone_number }}">
+                <input type="hidden" name="client_name" value="{{ booking.client_name or 'Client' }}">
+                <input type="hidden" name="original_time" value="{{ booking.start_time }}">
+                <input type="hidden" name="original_datetime_display" value="{{ booking.original_datetime_display or booking.start_time }}">
+
+                <input type="hidden" name="new_date" class="reschedule-date-input">
+                <input type="hidden" name="new_time" class="reschedule-time-input">
+                <div id="reschedule-vue-app-{{ booking.event_id }}" class="reschedule-vue-mount" data-event-id="{{ booking.event_id }}"></div>
+
+                <label for="rescheduleMessage-{{ booking.event_id }}">Message that will be sent to client</label>
+                <textarea id="rescheduleMessage-{{ booking.event_id }}" readonly placeholder="Select a new date and time to see the message that will be sent..."></textarea>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn-send">Send Reschedule Request</button>
+                    <button type="button" class="btn-cancel-edit" onclick="toggleReschedule('{{ booking.event_id }}')">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Edit Details Form -->
+        <div id="edit-{{ booking.event_id }}" class="reschedule-form" style="display: none;">
+            <form onsubmit="event.preventDefault(); submitEdit('{{ booking.event_id }}');">
+                <p class="hint" style="margin: 0 0 14px 0;">
+                    Editing details only — to change date/time use Reschedule (which notifies the client by SMS).
+                </p>
+
+                <label for="edit-client-name-{{ booking.event_id }}">Client name</label>
+                <input type="text" id="edit-client-name-{{ booking.event_id }}" value="{{ booking.client_name or '' }}">
+
+                <label for="edit-client-phone-{{ booking.event_id }}">Phone number</label>
+                <input type="text" id="edit-client-phone-{{ booking.event_id }}" value="{{ booking.phone_number or '' }}">
+
+                <label for="edit-experience-{{ booking.event_id }}">Experience</label>
+                <select id="edit-experience-{{ booking.event_id }}" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-family: 'Poppins', sans-serif; font-size: 14px;">
+                    {% set _exp = (booking.experience or '')|trim %}
+                    <option value="" {% if not _exp %}selected{% endif %}>Not specified</option>
+                    {% for opt in ['GFE', 'DGFE', 'PSE', 'PSE with filming', 'Dinner Date', 'Couples MFF', 'Doubles MFF', 'Doubles MMF', 'Overnight', 'Weekend', 'Fly Me To You'] %}
+                    <option value="{{ opt }}" {% if _exp|lower == opt|lower or _exp|replace('_',' ')|lower == opt|lower %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="edit-location-type-{{ booking.event_id }}">Location type</label>
+                <select id="edit-location-type-{{ booking.event_id }}" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-family: 'Poppins', sans-serif; font-size: 14px;">
+                    {% set _loc = (booking.location_type or '')|lower %}
+                    <option value="incall" {% if 'incall' in _loc %}selected{% endif %}>Incall</option>
+                    <option value="outcall" {% if 'outcall' in _loc %}selected{% endif %}>Outcall</option>
+                </select>
+
+                <label for="edit-duration-{{ booking.event_id }}">Duration (hours)</label>
+                <input type="text" id="edit-duration-{{ booking.event_id }}" value="{{ booking.duration|default('')|replace(' hours', '')|replace(' hour', '')|trim }}" placeholder="e.g. 1, 1.5, 2">
+
+                <label for="edit-notes-{{ booking.event_id }}">Notes / special requests</label>
+                <textarea id="edit-notes-{{ booking.event_id }}" rows="3">{{ booking.special_requests or '' }}</textarea>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn-send">Save Changes</button>
+                    <button type="button" class="btn-cancel-edit" onclick="toggleEdit('{{ booking.event_id }}')">Cancel</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">CAL</div>
+    <h3>No Bookings Found</h3>
+    <p>There are no confirmed or reserved bookings for {{ display_date or selected_date }}</p>
+</div>
+{% endif %}
+</div><!-- End Day View Container -->
+
+<!-- Available Hours has been moved to the Admin Dashboard -->
+<!-- SMS History Modal -->
+<div id="smsHistoryModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 28px; max-width: 600px; width: 94%; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-shrink: 0;">
+            <div>
+                <h2 style="color: white; font-size: 20px; margin: 0;">💬 SMS History</h2>
+                <p id="smsHistorySubtitle" style="color: rgba(255,255,255,0.5); font-size: 13px; margin: 4px 0 0 0;"></p>
+            </div>
+            <button onclick="closeSmsHistory()" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer; opacity: 0.6; transition: opacity 0.3s; line-height: 1;">&times;</button>
+        </div>
+        <!-- Messages -->
+        <div id="smsHistoryBody" style="overflow-y: auto; flex: 1; padding-right: 4px;">
+            <div id="smsHistoryLoading" style="text-align: center; color: rgba(255,255,255,0.5); padding: 40px 0;">Loading...</div>
+            <div id="smsHistoryMessages" style="display: none;"></div>
+            <div id="smsHistoryEmpty" style="display: none; text-align: center; color: rgba(255,255,255,0.4); padding: 40px 0;">No messages found for this number.</div>
+            <div id="smsHistoryError" style="display: none; text-align: center; color: #f44336; padding: 40px 0;"></div>
+        </div>
+        <!-- Footer -->
+        <div style="flex-shrink: 0; margin-top: 18px; text-align: right;">
+            <button onclick="closeSmsHistory()" style="padding: 10px 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Booking Preview Modal -->
+<div id="cancelPreviewModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 32px; max-width: 500px; width: 90%; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #ffeb3b; font-family: 'Poppins', sans-serif; margin: 0; font-size: 18px;">📱 Message Preview</h3>
+            <button onclick="closeCancelPreviewModal()" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 22px; cursor: pointer; line-height: 1;">×</button>
+        </div>
+        <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 12px;">Edit the SMS below before sending:</p>
+        <div id="cancelPreviewSpinner" style="text-align: center; padding: 20px; color: rgba(255,255,255,0.5);">Loading…</div>
+        <textarea id="cancelPreviewMessage" rows="6" style="background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 16px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; line-height: 1.6; margin-bottom: 24px; width: 100%; box-sizing: border-box; resize: vertical; display: none;"></textarea>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button onclick="closeCancelPreviewModal()" style="padding: 10px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-family: 'Poppins', sans-serif; cursor: pointer; font-size: 14px;">Keep Booking</button>
+            <button id="cancelPreviewConfirmBtn" disabled style="padding: 10px 24px; background: linear-gradient(135deg, #f44336, #c62828); border: none; border-radius: 8px; color: white; font-family: 'Poppins', sans-serif; cursor: pointer; font-size: 14px; font-weight: 600;">Send Cancellation</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Booking Modal -->
+<div id="deleteBookingModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 32px; max-width: 450px; width: 90%; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="color: #f44336; font-size: 24px; margin: 0;">🗑️ Delete Booking</h2>
+            <button onclick="hideDeleteBookingDialog()" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer; opacity: 0.6; transition: opacity 0.3s;">&times;</button>
+        </div>
+
+        <div style="background: rgba(244, 67, 54, 0.15); border-left: 4px solid #f44336; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <p style="color: rgba(255,255,255,0.9); margin: 0 0 12px 0; font-size: 14px;">
+                <strong style="color: #ffeb3b;">Booking:</strong> <span id="deleteClientName" style="color: white;">Client Name</span>
+            </p>
+            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">
+                <strong style="color: #ffeb3b;">Time:</strong> <span id="deleteStartTime" style="color: white;">Start Time</span>
+            </p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+            <label for="notifyClientCheckbox" style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: white;">
+                <input type="checkbox" id="notifyClientCheckbox" style="accent-color: #f44336; cursor: pointer; width: 18px; height: 18px;">
+                <span style="font-size: 14px;">
+                    <strong>☎️ Notify Client</strong> - Send cancellation SMS
+                </span>
+            </label>
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 12px 0 0 30px;">
+                If unchecked, the booking will be deleted silently without notifying the client.
+            </p>
+        </div>
+
+        <div style="background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 8px; padding: 12px; margin-bottom: 24px;">
+            <p style="color: #ffeb3b; margin: 0; font-size: 12px;">
+                ⚠️ This action cannot be undone. The booking will be permanently removed from the calendar.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+            <button type="button" onclick="hideDeleteBookingDialog()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">Cancel</button>
+            <button type="button" onclick="confirmDeleteBooking()" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #f44336, #c62828); border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">Delete Booking</button>
+        </div>
+        
+        <input type="hidden" id="deleteEventId">
+    </div>
+</div>
+
+<!-- Create Event Modal -->
+<div id="createEventModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div style="background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%); border-radius: 20px; padding: 32px; max-width: 540px; width: 90%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.15);">
+            <h2 style="color: #ffeb3b; font-size: 22px; margin: 0; font-family: 'Poppins', sans-serif; font-weight: 700;">➕ Create New Event</h2>
+            <button onclick="hideCreateEventModal()" style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 28px; cursor: pointer; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#ffeb3b'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">&times;</button>
+        </div>
+
+        <form id="createEventForm" onsubmit="handleCreateEvent(event)">
+            <!-- Event Type -->
+            <div style="margin-bottom: 18px;">
+                <label for="eventType" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Event Type</label>
+                <select id="eventType" name="event_type" required onchange="toggleBookingFields()" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                    <option value="booking">Client Booking</option>
+                    <option value="admin">Admin/Maintenance</option>
+                    <option value="social">Social/Personal</option>
+                    <option value="travel">Travel Time</option>
+                </select>
+            </div>
+
+            <!-- Booking-specific fields -->
+            <div id="bookingFields">
+                <!-- Client Name -->
+                <div style="margin-bottom: 18px;">
+                    <label for="clientName" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Client Name</label>
+                    <input type="text" id="clientName" name="client_name" placeholder="e.g., John" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+
+                <!-- Phone Number -->
+                <div style="margin-bottom: 18px;">
+                    <label for="clientPhone" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Phone Number</label>
+                    <input type="tel" id="clientPhone" name="client_phone" placeholder="+61412345678" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+
+                <!-- Experience Type -->
+                <div style="margin-bottom: 18px;">
+                    <label for="experienceType" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Experience</label>
+                    <select id="experienceType" name="experience_type" onchange="onCreateExperienceChange()" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="">Not specified</option>
+                        <optgroup label="── Standard Services ──">
+                            <option value="GFE">GFE (Girlfriend Experience)</option>
+                            <option value="DGFE">DGFE (Dirty GFE)</option>
+                            <option value="PSE">PSE (Pornstar Experience)</option>
+                            <option value="PSE with filming">PSE with Filming</option>
+                            <option value="Dinner Date">Dinner Date (2 hrs — Outcall)</option>
+                        </optgroup>
+                        <optgroup label="── Group Experiences ──">
+                            <option value="Couples MFF">Couples MFF</option>
+                            <option value="Doubles MFF">Doubles MFF</option>
+                            <option value="Doubles MMF">Doubles MMF</option>
+                        </optgroup>
+                        <optgroup label="── Extended Experiences ──">
+                            <option value="Overnight">Overnight (12 hrs)</option>
+                            <option value="Weekend">Dirty Weekend (48 hrs)</option>
+                            <option value="Fly Me To You">Fly Me To You</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Couples MFF note -->
+                <div id="createCouplesMffSection" style="margin-bottom: 18px; display: none; padding: 12px 16px; background: rgba(233,30,99,0.12); border: 2px solid rgba(233,30,99,0.35); border-radius: 12px;">
+                    <p style="color: #ff80ab; font-size: 13px; margin: 0; font-family: 'Poppins', sans-serif;">You and your partner join me for a 3 sum.</p>
+                </div>
+
+                <!-- Doubles MFF: organise female escort -->
+                <div id="createDoublesMffSection" style="margin-bottom: 18px; display: none; padding: 14px 16px; background: var(--glass-dark); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;">
+                    <label style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Doubles MFF — Source other female escort?</label>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0 0 10px; font-family: 'Poppins', sans-serif;">Select Yes only if you need me to source the other female escort (4 hrs notice; rate doubled).</p>
+                    <select id="createOrganiseFemaleEscort" name="organise_female_escort" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="no">No — client is bringing her</option>
+                        <option value="yes">Yes — I will source the other female escort</option>
+                    </select>
+                </div>
+
+                <!-- Doubles MMF: organise male escort + exploration checkboxes -->
+                <div id="createDoublesMMFSection" style="margin-bottom: 18px; display: none; padding: 14px 16px; background: var(--glass-dark); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px;">
+                    <label style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Doubles MMF — Source other male escort?</label>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0 0 10px; font-family: 'Poppins', sans-serif;">Select Yes only if you need me to arrange the other male (4 hrs notice required).</p>
+                    <select id="createOrganiseMaleEscort" name="organise_male_escort" onchange="toggleMMFExploration()" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="no">No — client is bringing him</option>
+                        <option value="yes">Yes — I will arrange the other male escort</option>
+                    </select>
+                    <div id="createMMFExploration" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <p style="color: #ffeb3b; font-size: 13px; font-weight: 600; margin: 0 0 10px; font-family: 'Poppins', sans-serif;">What the client would like to explore (tick all that apply):</p>
+                        <label style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.85); font-size: 13px; margin-bottom: 10px; cursor: pointer; font-family: 'Poppins', sans-serif;">
+                            <input type="checkbox" name="mmf_humiliation" value="1" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                            Humiliation (have me or both of us humiliate you)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.85); font-size: 13px; margin-bottom: 10px; cursor: pointer; font-family: 'Poppins', sans-serif;">
+                            <input type="checkbox" name="mmf_voyeurism" value="1" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                            Voyeurism (watch me get fucked by male bull)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.85); font-size: 13px; margin-bottom: 10px; cursor: pointer; font-family: 'Poppins', sans-serif;">
+                            <input type="checkbox" name="mmf_bisexual" value="1" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                            Bisexual (get fucked/sucked by both of us)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.85); font-size: 13px; cursor: pointer; font-family: 'Poppins', sans-serif;">
+                            <input type="checkbox" name="mmf_heterosexual" value="1" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                            Heterosexual (just touch and fuck me only)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Dinner Date: restaurant field -->
+                <div id="createDinnerDateSection" style="margin-bottom: 18px; display: none;">
+                    <label for="createDinnerRestaurant" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Restaurant name &amp; suburb</label>
+                    <input type="text" id="createDinnerRestaurant" name="dinner_restaurant" maxlength="200" placeholder="e.g. Windy Point Restaurant, Belair" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                    <p style="color: rgba(255,235,59,0.6); font-size: 12px; margin: 6px 0 0; font-family: 'Poppins', sans-serif;">Duration is fixed at 2 hours for Dinner Date.</p>
+                </div>
+
+                <!-- Incall/Outcall -->
+                <fieldset style="margin: 0 0 18px 0; padding: 0; border: none;">
+                    <legend style="color: #ffeb3b; margin-bottom: 8px; font-weight: 600; font-size: 13px; padding: 0; font-family: 'Poppins', sans-serif;">Location Type</legend>
+                    <div style="display: flex; gap: 12px;">
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(76,175,80,0.15); border: 2px solid rgba(76,175,80,0.5); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif;">
+                            <input type="radio" id="createEventLocationIncall" name="location_type" value="incall" checked style="accent-color: #4caf50;">
+                            <span style="color: #81c784; font-weight: 600; font-size: 14px;">Incall</span>
+                        </label>
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(33,150,243,0.15); border: 2px solid rgba(33,150,243,0.5); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif;">
+                            <input type="radio" id="createEventLocationOutcall" name="location_type" value="outcall" style="accent-color: #2196f3;">
+                            <span style="color: #64b5f6; font-weight: 600; font-size: 14px;">Outcall</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Booking Status -->
+                <div style="margin-bottom: 18px;">
+                    <label for="bookingStatus" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Booking Status</label>
+                    <select id="bookingStatus" name="booking_status" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="peacock">Reserved (No Deposit)</option>
+                        <option value="pending_deposit">Pending Deposit</option>
+                        <option value="confirmed">Confirmed (Deposit Paid)</option>
+                    </select>
+                </div>
+
+                <!-- Deposit Amount -->
+                <div style="margin-bottom: 18px;">
+                    <label for="depositAmount" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Deposit Paid (if applicable)</label>
+                    <select id="depositAmount" name="deposit_amount" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="none">None</option>
+                        <option value="50">$50</option>
+                        <option value="100">$100</option>
+                        <option value="200">$200</option>
+                    </select>
+                </div>
+
+                <!-- Auto-calculated price preview -->
+                <div id="createPricePreview" style="display: none; margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, rgba(76,175,80,0.18), rgba(76,175,80,0.08)); border: 2px solid rgba(76,175,80,0.5); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="color: rgba(255,255,255,0.75); font-size: 12px; font-family: 'Poppins', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">Calculated Price</span>
+                        <span id="createPriceDisplay" style="color: #4caf50; font-size: 22px; font-weight: 700; font-family: 'Poppins', sans-serif;">$0</span>
+                    </div>
+                    <div id="createPriceBreakdown" style="color: rgba(255,255,255,0.5); font-size: 12px; font-family: 'Poppins', sans-serif;"></div>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label for="totalCost" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Total Cost</label>
+                    <input type="number" id="totalCost" name="total_cost" min="0" step="1" placeholder="Auto-calculated from experience + duration" oninput="updateCreateRemainingBalance()" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                    <p style="color: rgba(255,235,59,0.55); font-size: 12px; margin: 5px 0 0; font-family: 'Poppins', sans-serif;">Auto-filled — edit to override.</p>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label for="depositReference" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Deposit Reference</label>
+                    <input type="text" id="depositReference" name="deposit_reference" placeholder="Reference given to client" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label for="remainingBalance" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Balance Remaining</label>
+                    <input type="number" id="remainingBalance" name="remaining_balance" min="0" step="1" placeholder="Auto: total minus deposit" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                    <p style="color: rgba(255,235,59,0.55); font-size: 12px; margin: 5px 0 0; font-family: 'Poppins', sans-serif;">Auto-calculated: Total Cost minus Deposit. Edit to override.</p>
+                </div>
+            </div>
+
+            <!-- Title (for non-booking events) -->
+            <div id="titleField" style="margin-bottom: 18px; display: none;">
+                <label for="eventTitle" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Title/Description</label>
+                <input type="text" id="eventTitle" name="title" placeholder="e.g., Hair Appointment, Gym" style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+            </div>
+
+            <!-- Date -->
+            <div style="margin-bottom: 18px;">
+                <label for="eventDate" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Date</label>
+                <input type="date" id="eventDate" name="date" required style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+            </div>
+
+            <!-- Time + Duration -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+                <div>
+                    <label for="eventTime" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Start Time</label>
+                    <input type="time" id="eventTime" name="time" required style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label for="eventDuration" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Duration</label>
+                    <select id="eventDuration" name="duration" required style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none;">
+                        <option value="0.25">15 mins (Incall only)</option>
+                        <option value="0.5">30 mins (Incall only)</option>
+                        <option value="1" selected>1 hour</option>
+                        <option value="1.5">1.5 hours</option>
+                        <option value="2">2 hours</option>
+                        <option value="3">3 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="6">6 hours</option>
+                        <option value="8">8 hours</option>
+                        <option value="12">12 hours (Overnight)</option>
+                        <option value="48">48 hours (Weekend)</option>
+                    </select>
+                    <p id="createDurationNote" style="display: none; color: rgba(255,235,59,0.8); font-size: 12px; margin: 6px 0 0; font-family: 'Poppins', sans-serif;">Duration is fixed for this experience.</p>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div style="margin-bottom: 24px;">
+                <label for="eventNotes" style="display: block; color: #ffeb3b; margin-bottom: 6px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;">Special requests (optional)</label>
+                <textarea id="eventNotes" name="notes" placeholder="Client notes, preferences..." style="width: 100%; padding: 12px 16px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; color: #ffeb3b; font-size: 14px; font-family: 'Poppins', sans-serif; min-height: 80px; resize: vertical; outline: none; box-sizing: border-box;"></textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px;">
+                <button type="button" onclick="hideCreateEventModal()" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 12px; color: #ffeb3b; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14px; transition: all 0.2s;">Cancel</button>
+                <button type="submit" style="flex: 1; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14px; transition: all 0.2s;">Create Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+{% if authenticated %}
+<link href="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3/dist/vuetify.min.js"></script>
+<script>
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+function formatLocalDate(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+async function csrfFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            ...options.headers
+        }
+    });
+}
+
+// View switching
+let currentView = 'day';
+let currentMonthDate = new Date();
+let currentWeekDate = new Date();
+
+function switchView(view) {
+    currentView = view;
+    document.body.classList.remove('schedule-week-view', 'schedule-month-view');
+    document.getElementById('dayViewBtn').classList.remove('active');
+    document.getElementById('weekViewBtn').classList.remove('active');
+    document.getElementById('monthViewBtn').classList.remove('active');
+    document.getElementById('weekNav').style.display = 'none';
+    document.getElementById('monthNav').style.display = 'none';
+
+    if (view === 'week') {
+        document.body.classList.add('schedule-week-view');
+        document.getElementById('weekViewBtn').classList.add('active');
+        document.getElementById('weekNav').style.display = 'flex';
+        loadWeekView();
+    } else if (view === 'month') {
+        document.body.classList.add('schedule-month-view');
+        document.getElementById('monthViewBtn').classList.add('active');
+        document.getElementById('monthNav').style.display = 'flex';
+        loadMonthView();
+    } else {
+        document.getElementById('dayViewBtn').classList.add('active');
+    }
+}
+
+// Month View Functions
+function navigateMonth(delta) {
+    currentMonthDate.setMonth(currentMonthDate.getMonth() + delta);
+    loadMonthView();
+}
+
+function getMonthName(date) {
+    return date.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+}
+
+async function loadMonthView() {
+    const year = currentMonthDate.getFullYear();
+    const month = currentMonthDate.getMonth();
+    
+    document.getElementById('monthLabel').textContent = getMonthName(currentMonthDate);
+    
+    // Get first and last day of month
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Get the Monday before the first day (for grid alignment)
+    const startDate = new Date(firstDay);
+    const dayOfWeek = firstDay.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(firstDay.getDate() - daysToMonday);
+    
+    // Get the Sunday after the last day
+    const endDate = new Date(lastDay);
+    const lastDayOfWeek = lastDay.getDay();
+    const daysToSunday = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    endDate.setDate(lastDay.getDate() + daysToSunday);
+    
+    // Build the grid
+    const grid = document.getElementById('monthGrid');
+    // Keep headers, remove day cells
+    const headers = Array.from(grid.querySelectorAll('.month-grid-header'));
+    grid.innerHTML = '';
+    headers.forEach(h => grid.appendChild(h));
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let totalBookings = 0;
+    let confirmedCount = 0;
+    let pendingCount = 0;
+    let totalEarnings = 0;
+    
+    // Iterate through days (let + in-loop advance — avoids const-mutation confusion for static analysis)
+    let iterDate = new Date(startDate);
+    while (iterDate <= endDate) {
+        const currentDate = iterDate;
+        const dayCell = document.createElement('div');
+        dayCell.className = 'month-day';
+        
+        const dateStr = formatLocalDate(currentDate);
+        const isOtherMonth = currentDate.getMonth() !== month;
+        const isToday = currentDate.getTime() === today.getTime();
+        
+        if (isOtherMonth) dayCell.classList.add('other-month');
+        if (isToday) dayCell.classList.add('today');
+        
+        dayCell.innerHTML = `
+            <div class="month-day-number">${currentDate.getDate()}</div>
+            <div class="month-day-events" id="events-${dateStr}">
+                <div style="font-size:10px;color:rgba(255,255,255,0.5);">Loading...</div>
+            </div>
+        `;
+        
+        dayCell.onclick = () => {
+            document.getElementById('dateInput').value = dateStr;
+            switchView('day');
+            loadDate();
+        };
+        
+        grid.appendChild(dayCell);
+
+        iterDate = new Date(iterDate);
+        iterDate.setDate(iterDate.getDate() + 1);
+
+        // Fetch bookings for this date
+        fetchDayBookings(dateStr, isOtherMonth ? null : (bookings) => {
+            bookings.forEach(b => {
+                totalBookings++;
+                if (b.status_class === 'confirmed') confirmedCount++;
+                else if (b.status_class === 'pending-deposit' || b.status_class === 'reserved') pendingCount++;
+                if (b.price) {
+                    const price = parseInt(b.price.replace(/[^0-9]/g, '')) || 0;
+                    totalEarnings += price;
+                }
+            });
+            updateMonthSummary(totalBookings, confirmedCount, pendingCount, totalEarnings);
+        });
+    }
+}
+
+function scheduleBookingIsDoublesMmf(b) {
+    var e = String((b && b.experience) || '').toLowerCase();
+    return e.indexOf('doubles mmf') >= 0 || e.indexOf('Doubles MMF') >= 0;
+}
+
+function scheduleShowMmfPreferencesHint(b) {
+    if (b && typeof b.show_mmf_preferences === 'boolean') return b.show_mmf_preferences;
+    var exp = String((b && b.experience) || '').toLowerCase();
+    if (exp.indexOf('dinner') >= 0 && exp.indexOf('date') >= 0) return false;
+    var org = String((b && b.organise_other_escort) || '').toLowerCase().trim();
+    var arranges = org === 'yes' || org === 'y' || org === 'true' || org === '1';
+    var mmf = exp.indexOf('doubles mmf') >= 0 || exp.indexOf('Doubles MMF') >= 0;
+    return mmf && arranges;
+}
+
+/** Week-view hint line: exploration selections when escort-sourced Doubles MMF only. */
+function scheduleFormatMmfExplorationLine(b) {
+    if (!scheduleShowMmfPreferencesHint(b)) return '';
+    var raw = String((b && b.preferences) || '').trim();
+    var text = raw || '\u2014';
+    var safe = text.replace(/</g, '&lt;');
+    if (safe.length > 44) safe = safe.substring(0, 44) + '\u2026';
+    return '<div style="font-size:10px;opacity:0.9;margin-top:2px;color:#ffeb3b;">Preferences: ' + safe + '</div>';
+}
+
+async function fetchDayBookings(dateStr, callback) {
+    try {
+        const response = await csrfFetch(`/schedule/api/bookings?date=${dateStr}`);
+        const data = await response.json();
+        const bookings = data.bookings || [];
+        
+        const eventsContainer = document.getElementById(`events-${dateStr}`);
+        if (eventsContainer) {
+            if (bookings.length === 0) {
+                eventsContainer.innerHTML = '';
+            } else {
+                const maxShow = 3;
+                let html = '';
+                bookings.slice(0, maxShow).forEach(b => {
+                    const time = b.start_time.replace(/^0/, '');
+                    const sr = (b.special_requests || '').trim();
+                    const srHint = sr ? ` \u2022` : '';
+                    var tipParts = [];
+                    if (sr) tipParts.push(sr);
+                    if (scheduleShowMmfPreferencesHint(b)) {
+                        var pref = String((b.preferences || '')).trim();
+                        if (pref) tipParts.push('Preferences: ' + pref);
+                        else tipParts.push('Preferences: —');
+                    }
+                    var tipStr = tipParts.join(' | ').replace(/"/g, '&quot;').replace(/</g, '');
+                    html += `<div class="month-event ${b.status_class}" title="${tipStr}">${time} ${b.client_name.substring(0, 8)}${srHint}</div>`;
+                });
+                if (bookings.length > maxShow) {
+                    html += `<div class="month-event-more">+${bookings.length - maxShow} more</div>`;
+                }
+                eventsContainer.innerHTML = html;
+            }
+        }
+        
+        if (callback) callback(bookings);
+    } catch (error) {
+        console.error('Error loading bookings for', dateStr, error);
+        const eventsContainer = document.getElementById(`events-${dateStr}`);
+        if (eventsContainer) eventsContainer.innerHTML = '';
+    }
+}
+
+function updateMonthSummary(total, confirmed, pending, earnings) {
+    document.getElementById('monthTotalBookings').textContent = total;
+    document.getElementById('monthConfirmed').textContent = confirmed;
+    document.getElementById('monthPending').textContent = pending;
+    document.getElementById('monthEarnings').textContent = '$' + earnings.toLocaleString();
+}
+
+// Week View Functions (if not already defined)
+function navigateWeek(delta) {
+    currentWeekDate.setDate(currentWeekDate.getDate() + (delta * 7));
+    loadWeekView();
+}
+
+async function loadWeekView() {
+    const startOfWeek = new Date(currentWeekDate);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    
+    const startStr = startOfWeek.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+    const endStr = endOfWeek.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('weekLabel').textContent = `${startStr} - ${endStr}`;
+    
+    const grid = document.getElementById('weekGrid');
+    grid.innerHTML = '';
+    
+    let totalBookings = 0;
+    let confirmedCount = 0;
+    let pendingCount = 0;
+    let totalEarnings = 0;
+    
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(startOfWeek);
+        date.setDate(date.getDate() + i);
+        const dateStr = formatLocalDate(date);
+        const dayName = date.toLocaleDateString('en-AU', { weekday: 'short' });
+        const dayNum = date.getDate();
+        
+        const dayCard = document.createElement('div');
+        dayCard.className = 'booking-card';
+        dayCard.style.cursor = 'pointer';
+        dayCard.innerHTML = `
+            <div style="text-align:center;margin-bottom:10px;">
+                <div style="font-size:12px;color:rgba(255,255,255,0.6);">${dayName}</div>
+                <div style="font-size:24px;font-weight:700;color:#ffeb3b;">${dayNum}</div>
+            </div>
+            <div id="week-events-${dateStr}" style="font-size:12px;color:rgba(255,255,255,0.7);">Loading...</div>
+        `;
+        dayCard.onclick = () => {
+            document.getElementById('dateInput').value = dateStr;
+            switchView('day');
+            loadDate();
+        };
+        grid.appendChild(dayCard);
+        
+        // Fetch bookings
+        try {
+            const response = await csrfFetch(`/schedule/api/bookings?date=${dateStr}`);
+            const data = await response.json();
+            const bookings = data.bookings || [];
+            
+            const container = document.getElementById(`week-events-${dateStr}`);
+            if (bookings.length === 0) {
+                container.innerHTML = '<div style="text-align:center;opacity:0.5;">No bookings</div>';
+            } else {
+                let html = '';
+                bookings.forEach(b => {
+                    totalBookings++;
+                    if (b.status_class === 'confirmed') confirmedCount++;
+                    else if (b.status_class === 'pending-deposit' || b.status_class === 'reserved') pendingCount++;
+                    if (b.price) {
+                        const price = parseInt(b.price.replace(/[^0-9]/g, '')) || 0;
+                        totalEarnings += price;
+                    }
+                    html += `<div style="padding:4px 6px;margin-bottom:4px;background:rgba(255,255,255,0.1);border-radius:4px;border-left:3px solid ${getStatusColor(b.status_class)};">
+                        <div style="font-weight:600;color:#ffeb3b;">${b.start_time}</div>
+                        <div style="color:rgba(255,255,255,0.8);">${b.client_name}</div>
+                        ${scheduleFormatMmfExplorationLine(b)}
+                        ${b.special_requests && String(b.special_requests).trim() ? `<div style="font-size:10px;opacity:0.85;margin-top:2px;">${String(b.special_requests).replace(/</g, '&lt;').substring(0, 48)}${String(b.special_requests).length > 48 ? '\u2026' : ''}</div>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            }
+        } catch (error) {
+            document.getElementById(`week-events-${dateStr}`).innerHTML = '<div style="color:#f44336;">Error</div>';
+        }
+    }
+    
+    document.getElementById('weekTotalBookings').textContent = totalBookings;
+    document.getElementById('weekConfirmed').textContent = confirmedCount;
+    document.getElementById('weekPending').textContent = pendingCount;
+    document.getElementById('weekEarnings').textContent = '$' + totalEarnings.toLocaleString();
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'confirmed': '#4caf50',
+        'pending-deposit': '#616161',
+        'reserved': '#039BE5',
+        'travel': '#8E24AA',
+        'admin': '#F6BF26',
+        'social': '#D50000'
+    };
+    return colors[status] || '#666';
+}
+
+function loadDate() {
+    const date = document.getElementById('dateInput').value;
+    window.location.href = `/schedule?date=${date}`;
+}
+
+function updateDateDisplay() {
+    const input = document.getElementById('dateInput');
+    const display = document.getElementById('dateDisplay');
+    const date = new Date(input.value);
+    display.textContent = date.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatRescheduleNewDateTime(dateStr, timeStr) {
+    const dt = new Date(dateStr + 'T' + timeStr);
+    if (isNaN(dt.getTime())) return dateStr + ' ' + timeStr;
+    const weekday = dt.toLocaleDateString('en-GB', { weekday: 'long' });
+    const day = dt.getDate();
+    const suffix = (day >= 10 && day <= 20) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[day % 10] || 'th');
+    const month = dt.toLocaleDateString('en-GB', { month: 'long' });
+    const h = dt.getHours() % 12 || 12;
+    const m = String(dt.getMinutes()).padStart(2, '0');
+    const ampm = dt.getHours() < 12 ? 'am' : 'pm';
+    return `${weekday}, ${day}${suffix} ${month} ${h}:${m} ${ampm}`;
+}
+
+function updateReschedulePreview(eventId) {
+    const container = document.getElementById('reschedule-' + eventId);
+    if (!container) return;
+    const form = container.querySelector('form');
+    if (!form) return;
+
+    const clientInput = form.querySelector('input[name="client_name"]');
+    const originalDisplayInput = form.querySelector('input[name="original_datetime_display"]');
+    const originalTimeInput = form.querySelector('input[name="original_time"]');
+    const dateInput = form.querySelector('input[name="new_date"]');
+    const timeInput = form.querySelector('input[name="new_time"]');
+    const preview = document.getElementById('rescheduleMessage-' + eventId);
+
+    if (!preview || !dateInput || !timeInput) return;
+
+    const clientName = (clientInput && clientInput.value ? clientInput.value : 'Client').trim();
+    const originalDisplay = (originalDisplayInput && originalDisplayInput.value ? originalDisplayInput.value : (originalTimeInput && originalTimeInput.value) || '').trim();
+    const newDate = dateInput.value;
+    const newTime = timeInput.value;
+
+    if (!newDate || !newTime) {
+        preview.value = '';
+        return;
+    }
+
+    const newDisplay = formatRescheduleNewDateTime(newDate, newTime);
+    const escortName = "{{ escort_name }}";
+    const webformPlaceholder = "(booking webform url)";
+
+    preview.value =
+        `Hi ${clientName} I need to reschedule your booking from ${originalDisplay} to ${newDisplay}.\n\n` +
+        "Please reply with the word YES to confirm if this is suitable for you.\n\n" +
+        `If this time is not suitable please submit your booking again by submitting my booking webform. ${webformPlaceholder}\n\n` +
+        "If you wish to cancel your booking then please reply with the word CANCEL.\n\n" +
+        `Kind regards ${escortName} ❤️`;
+}
+
+function destroyReschedulePickers(container) {
+    var mountEl = container.querySelector('.reschedule-vue-mount');
+    if (mountEl && mountEl._rescheduleVueApp) {
+        mountEl._rescheduleVueApp.unmount();
+        mountEl._rescheduleVueApp = null;
+    }
+}
+
+function initReschedulePickers(container, eventId) {
+    var mountEl = container.querySelector('.reschedule-vue-mount');
+    var dateInput = container.querySelector('input[name="new_date"]');
+    var timeInput = container.querySelector('input[name="new_time"]');
+    if (!mountEl || !dateInput || !timeInput) return;
+    if (mountEl._rescheduleVueApp) return;
+
+    var today = new Date();
+    var dateStr = formatLocalDate(today);
+    var timeStr = (today.getHours() < 10 ? '0' : '') + today.getHours() + ':' + (today.getMinutes() < 10 ? '0' : '') + today.getMinutes();
+    if (dateInput.value) dateStr = dateInput.value;
+    if (timeInput.value) timeStr = timeInput.value;
+
+    var vuetify = window.Vuetify && window.Vuetify.createVuetify ? window.Vuetify.createVuetify({ theme: { defaultTheme: 'dark' } }) : {};
+    var app = window.Vue.createApp({
+        template: '<v-app><div class="reschedule-pickers-wrap"><v-date-picker v-model="date" :min="minDate" @update:model-value="syncToForm" color="primary" hide-header></v-date-picker><v-time-picker v-model="time" format="24hr" @update:model-value="syncToForm" color="primary"></v-time-picker></div></v-app>',
+        data: function() { return { date: dateStr, time: timeStr, eventId: eventId }; },
+        computed: {
+            minDate: function() { return formatLocalDate(new Date()); }
+        },
+        mounted: function() {
+            this.syncToForm();
+        },
+        methods: {
+            syncToForm: function() {
+                var form = this.$el && this.$el.closest ? this.$el.closest('form') : null;
+                if (!form) return;
+                var d = form.querySelector('input[name="new_date"]');
+                var t = form.querySelector('input[name="new_time"]');
+                var dateVal = this.date;
+                if (dateVal instanceof Date) {
+                    dateVal = dateVal.getFullYear() + '-' + String(dateVal.getMonth() + 1).padStart(2, '0') + '-' + String(dateVal.getDate()).padStart(2, '0');
+                }
+                if (d && dateVal) d.value = dateVal;
+                var timeVal = this.time;
+                if (t && timeVal != null) {
+                    if (typeof timeVal === 'object' && timeVal !== null) {
+                        var h = (timeVal.hour != null ? timeVal.hour : timeVal.hours != null ? timeVal.hours : 12);
+                        var m = (timeVal.minute != null ? timeVal.minute : timeVal.minutes != null ? timeVal.minutes : 0);
+                        timeVal = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+                    }
+                    t.value = timeVal;
+                }
+                if (window.updateReschedulePreview) window.updateReschedulePreview(this.eventId);
+            }
+        }
+    });
+    if (vuetify && app.use) app.use(vuetify);
+    app.mount(mountEl);
+    mountEl._rescheduleVueApp = app;
+}
+
+function toggleReschedule(eventId) {
+    const form = document.getElementById('reschedule-' + eventId);
+    if (form) {
+        var isHidden = form.style.display === 'none' || window.getComputedStyle(form).display === 'none';
+        if (isHidden) {
+            form.style.display = 'block';
+            initReschedulePickers(form, eventId);
+            updateReschedulePreview(eventId);
+        } else {
+            destroyReschedulePickers(form);
+            form.style.display = 'none';
+        }
+    }
+}
+
+function toggleEdit(eventId) {
+    const form = document.getElementById('edit-' + eventId);
+    if (!form) return;
+    var isHidden = form.style.display === 'none' || window.getComputedStyle(form).display === 'none';
+    form.style.display = isHidden ? 'block' : 'none';
+}
+
+async function submitEdit(eventId) {
+    const $ = (id) => document.getElementById(id);
+    const clientName = ($('edit-client-name-' + eventId)?.value || '').trim();
+    const clientPhone = ($('edit-client-phone-' + eventId)?.value || '').trim();
+    const experience = ($('edit-experience-' + eventId)?.value || '').trim();
+    const locationType = ($('edit-location-type-' + eventId)?.value || '').trim();
+    const durationRaw = ($('edit-duration-' + eventId)?.value || '').trim();
+    const notes = ($('edit-notes-' + eventId)?.value || '').trim();
+
+    const payload = {
+        client_name: clientName,
+        client_phone: clientPhone,
+        experience_type: experience,
+        location_type: locationType,
+        notes: notes,
+    };
+    if (durationRaw) {
+        const durNum = parseFloat(durationRaw);
+        if (!isFinite(durNum) || durNum <= 0) {
+            alert('Duration must be a positive number of hours (e.g. 1, 1.5, 2).');
+            return;
+        }
+        payload.duration = durNum;
+    }
+
+    const btnGroup = document.querySelector('#edit-' + eventId + ' .btn-group');
+    const buttons = btnGroup ? btnGroup.querySelectorAll('button') : [];
+    buttons.forEach((b) => { b.disabled = true; });
+
+    try {
+        const res = await fetch('/schedule/api/events/' + encodeURIComponent(eventId), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) {
+            const errMsg = (data && data.error) ? data.error : ('HTTP ' + res.status);
+            alert('Failed to save changes: ' + errMsg);
+            return;
+        }
+        window.location.reload();
+    } catch (err) {
+        alert('Network error: ' + (err && err.message ? err.message : err));
+    } finally {
+        buttons.forEach((b) => { b.disabled = false; });
+    }
+}
+
+async function confirmCancel(eventId, clientName, startTime) {
+    const modal = document.getElementById('cancelPreviewModal');
+    const msgEl = document.getElementById('cancelPreviewMessage');
+    const spinner = document.getElementById('cancelPreviewSpinner');
+    const confirmBtn = document.getElementById('cancelPreviewConfirmBtn');
+
+    msgEl.value = '';
+    msgEl.style.display = 'none';
+    spinner.style.display = 'block';
+    confirmBtn.disabled = true;
+    confirmBtn.onclick = null;
+    modal.style.display = 'flex';
+
+    try {
+        const resp = await fetch(`/schedule/api/events/${eventId}/cancel-preview`, {
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const data = await resp.json();
+        spinner.style.display = 'none';
+        if (data.error) {
+            msgEl.value = 'Could not load message preview: ' + data.error;
+            msgEl.style.display = 'block';
+        } else {
+            msgEl.value = data.message;
+            msgEl.style.display = 'block';
+            confirmBtn.disabled = false;
+            confirmBtn.onclick = () => {
+                modal.style.display = 'none';
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="csrf_token" value="${getCSRFToken()}">
+                    <input type="hidden" name="action" value="cancel">
+                    <input type="hidden" name="event_id" value="${eventId}">
+                    <input type="hidden" name="cancel_message" value="${msgEl.value.replace(/"/g, '&quot;')}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            };
+        }
+    } catch (e) {
+        spinner.style.display = 'none';
+        msgEl.value = 'Network error loading preview.';
+        msgEl.style.display = 'block';
+    }
+}
+
+function closeCancelPreviewModal() {
+    document.getElementById('cancelPreviewModal').style.display = 'none';
+}
+
+function toggleBookingFields() {
+    const eventType = document.getElementById('eventType').value;
+    const bookingFields = document.getElementById('bookingFields');
+    const titleField = document.getElementById('titleField');
+    
+    if (eventType === 'booking') {
+        bookingFields.style.display = 'block';
+        titleField.style.display = 'none';
+    } else {
+        bookingFields.style.display = 'none';
+        titleField.style.display = 'block';
+    }
+    onCreateExperienceChange();
+}
+
+const CREATE_FIXED_DURATIONS = {
+    'Dinner Date': '2',
+    'Overnight': '12',
+    'Weekend': '48',
+    'Fly Me To You': '12',
+};
+
+function onCreateExperienceChange() {
+    const exp = (document.getElementById('experienceType')?.value || '');
+    const durSelect = document.getElementById('eventDuration');
+    const durNote = document.getElementById('createDurationNote');
+
+    // Fixed duration lock
+    if (CREATE_FIXED_DURATIONS[exp]) {
+        durSelect.value = CREATE_FIXED_DURATIONS[exp];
+        durSelect.disabled = true;
+        durNote.style.display = 'block';
+    } else {
+        durSelect.disabled = false;
+        if (durSelect.value === '') durSelect.value = '1';
+        durNote.style.display = 'none';
+    }
+
+    // Show/hide experience-specific sections
+    document.getElementById('createCouplesMffSection').style.display  = exp === 'Couples MFF'  ? 'block' : 'none';
+    document.getElementById('createDoublesMffSection').style.display  = exp === 'Doubles MFF'  ? 'block' : 'none';
+    document.getElementById('createDoublesMMFSection').style.display  = exp === 'Doubles MMF'  ? 'block' : 'none';
+    document.getElementById('createDinnerDateSection').style.display  = exp === 'Dinner Date'  ? 'block' : 'none';
+
+    // Reset sub-fields when hidden
+    if (exp !== 'Doubles MMF') {
+        document.getElementById('createMMFExploration').style.display = 'none';
+        document.getElementById('createOrganiseMaleEscort').value = 'no';
+    }
+    if (exp !== 'Doubles MFF') {
+        document.getElementById('createOrganiseFemaleEscort').value = 'no';
+    }
+}
+
+function toggleMMFExploration() {
+    const val = document.getElementById('createOrganiseMaleEscort').value;
+    document.getElementById('createMMFExploration').style.display = val === 'yes' ? 'block' : 'none';
+}
+
+function showCreateEventModal() {
+    document.getElementById('createEventModal').style.display = 'flex';
+    document.getElementById('eventDate').value = document.getElementById('dateInput')?.value || '';
+    document.getElementById('eventType').value = 'booking';
+    toggleBookingFields();
+    // Clear form fields
+    document.getElementById('clientName').value = '';
+    document.getElementById('clientPhone').value = '';
+    document.getElementById('eventTitle').value = '';
+    document.getElementById('eventNotes').value = '';
+    document.getElementById('bookingStatus').value = 'peacock';
+    document.getElementById('depositAmount').value = 'none';
+    document.getElementById('experienceType').value = '';
+    document.getElementById('createDinnerRestaurant').value = '';
+    document.querySelector('input[name="location_type"][value="incall"]').checked = true;
+    onCreateExperienceChange();
+}
+
+function hideCreateEventModal() {
+    document.getElementById('createEventModal').style.display = 'none';
+}
+
+async function handleCreateEvent(e) {
+    e.preventDefault();
+    const eventType = document.getElementById('eventType').value;
+    
+    let data = {
+        event_type: eventType,
+        date: document.getElementById('eventDate').value,
+        time: document.getElementById('eventTime').value,
+        duration: document.getElementById('eventDuration').value,
+        notes: document.getElementById('eventNotes').value
+    };
+    
+    if (eventType === 'booking') {
+        const clientName = document.getElementById('clientName').value.trim();
+        const clientPhone = document.getElementById('clientPhone').value.trim();
+        const locationType = document.querySelector('input[name="location_type"]:checked').value;
+        const bookingStatus = document.getElementById('bookingStatus').value;
+        const depositAmount = document.getElementById('depositAmount').value;
+        const totalCost = document.getElementById('totalCost').value;
+        const depositReference = document.getElementById('depositReference').value.trim();
+        const remainingBalance = document.getElementById('remainingBalance').value;
+        const experienceType = (document.getElementById('experienceType').value || '').trim();
+        const expLower = experienceType.toLowerCase();
+        const isMFF = expLower === 'doubles mff';
+        const isMMF = expLower === 'doubles mmf';
+        const organiseOtherEscort = isMFF
+            ? (document.getElementById('createOrganiseFemaleEscort')?.value || 'no')
+            : isMMF
+                ? (document.getElementById('createOrganiseMaleEscort')?.value || 'no')
+                : '';
+
+        data.client_name = clientName || 'Client';
+        data.client_phone = clientPhone;
+        data.experience_type = experienceType;
+        data.location_type = locationType;
+        data.title = clientName || 'Booking';
+        data.booking_status = bookingStatus;
+        data.deposit_amount = depositAmount;
+        data.total_cost = totalCost;
+        data.deposit_reference = depositReference;
+        data.remaining_balance = remainingBalance;
+        data.organise_other_escort = organiseOtherEscort;
+        data.dinner_restaurant = experienceType === 'Dinner Date'
+            ? (document.getElementById('createDinnerRestaurant')?.value || '')
+            : '';
+    } else {
+        data.title = document.getElementById('eventTitle').value;
+    }
+    
+    try {
+        const response = await csrfFetch('/schedule/api/create-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert('Event created successfully!');
+            hideCreateEventModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function refreshCalendarSync() {
+    document.getElementById('syncStatusText').textContent = 'Syncing...';
+    location.reload();
+}
+
+function exportToExcel() {
+    const dateInput = document.getElementById('dateInput');
+    const date = dateInput ? dateInput.value : formatLocalDate(new Date());
+    window.location.href = `/schedule/api/export-excel?date=${date}`;
+}
+
+// Delete Booking Dialog Functions
+function showDeleteBookingDialog(eventId, clientName, startTime) {
+    const modal = document.getElementById('deleteBookingModal');
+    document.getElementById('deleteEventId').value = eventId;
+    document.getElementById('deleteClientName').textContent = clientName;
+    document.getElementById('deleteStartTime').textContent = startTime;
+    document.getElementById('notifyClientCheckbox').checked = false;
+    modal.style.display = 'flex';
+}
+
+function hideDeleteBookingDialog() {
+    document.getElementById('deleteBookingModal').style.display = 'none';
+}
+
+async function confirmDeleteBooking() {
+    const eventId = document.getElementById('deleteEventId').value;
+    const notifyClient = document.getElementById('notifyClientCheckbox').checked;
+    
+    if (!eventId) return;
+    
+    const confirmMsg = notifyClient 
+        ? "Delete this booking AND send cancellation SMS to client?" 
+        : "Delete this booking silently WITHOUT notifying the client?";
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch(`/schedule/api/events/${eventId}?notify_client=${notifyClient}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to delete booking'));
+            return;
+        }
+        
+        const result = await response.json();
+        alert('✅ ' + result.message);
+        hideDeleteBookingDialog();
+        location.reload();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteAdminBlock(eventId, statusClass) {
+    const label = statusClass === 'social' ? 'social/personal' : 'admin/maintenance';
+    if (!confirm(`Remove this ${label} event from the calendar?`)) return;
+    try {
+        const response = await fetch(`/schedule/api/events/${eventId}?notify_client=false`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            alert('Error: ' + (result.error || 'Failed to delete event'));
+            return;
+        }
+        location.reload();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteTravelBlock(eventId) {
+    if (!confirm('Remove this travel time block from the calendar?')) return;
+    try {
+        const response = await fetch(`/schedule/api/events/${eventId}?notify_client=false`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            alert('Error: ' + (result.error || 'Failed to delete travel block'));
+            return;
+        }
+        location.reload();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// ── Clear Schedule ──────────────────────────────────────────────────────────
+function openClearModal() {
+    const now = new Date();
+    document.getElementById('clearMonthLabel').textContent = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    document.getElementById('clearYearLabel').textContent = now.getFullYear();
+    document.querySelector('input[name="clearPeriod"][value="day"]').checked = true;
+    document.getElementById('clearPasswordInput').value = '';
+    document.getElementById('clearError').style.display = 'none';
+    document.getElementById('clearStep1').style.display = 'block';
+    document.getElementById('clearStep2').style.display = 'none';
+    document.getElementById('clearStep3').style.display = 'none';
+    const modal = document.getElementById('clearScheduleModal');
+    modal.style.display = 'flex';
+}
+
+function closeClearModal() {
+    document.getElementById('clearScheduleModal').style.display = 'none';
+}
+
+function goToClearStep2() {
+    const period = document.querySelector('input[name="clearPeriod"]:checked');
+    if (!period) { alert('Please select a period.'); return; }
+    const now = new Date();
+    const labels = {
+        day: 'today (' + now.toLocaleDateString('en-AU') + ')',
+        month: now.toLocaleString('default', { month: 'long', year: 'numeric' }),
+        year: 'all of ' + now.getFullYear()
+    };
+    document.getElementById('clearSummaryText').textContent = labels[period.value];
+    document.getElementById('clearStep1').style.display = 'none';
+    document.getElementById('clearStep2').style.display = 'block';
+    setTimeout(() => document.getElementById('clearPasswordInput').focus(), 100);
+}
+
+function goBackClearStep1() {
+    document.getElementById('clearStep2').style.display = 'none';
+    document.getElementById('clearStep1').style.display = 'block';
+}
+
+async function confirmClearSchedule() {
+    const period = document.querySelector('input[name="clearPeriod"]:checked').value;
+    const password = document.getElementById('clearPasswordInput').value;
+    const errEl = document.getElementById('clearError');
+    const btn = document.getElementById('clearConfirmBtn');
+    if (!password) { errEl.textContent = 'Please enter the password.'; errEl.style.display = 'block'; return; }
+    btn.textContent = 'Deleting...';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+    try {
+        const now = new Date();
+        const resp = await fetch('/schedule/api/clear-events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+            body: JSON.stringify({ period, password, date: formatLocalDate(now) })
+        });
+        const raw = await resp.text();
+        let data = {};
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch (parseErr) {
+            errEl.textContent = (resp.status === 403 || resp.status === 401)
+                ? 'Invalid password.'
+                : 'Something went wrong. Please try again.';
+            errEl.style.display = 'block';
+            btn.textContent = 'Delete Events';
+            btn.disabled = false;
+            return;
+        }
+        const authFail = resp.status === 403 || resp.status === 401
+            || /invalid password|incorrect password|unauthorized/i.test(String(data.error || ''));
+        if (authFail || (data.success === false && /password/i.test(String(data.error || '')))) {
+            errEl.textContent = 'Invalid password.';
+            errEl.style.display = 'block';
+            btn.textContent = 'Delete Events';
+            btn.disabled = false;
+            return;
+        }
+        document.getElementById('clearStep2').style.display = 'none';
+        document.getElementById('clearStep3').style.display = 'block';
+        if (resp.ok && data.success) {
+            document.getElementById('clearResultIcon').textContent = '✅';
+            document.getElementById('clearResultMsg').textContent = data.message || 'Events deleted successfully.';
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            document.getElementById('clearResultIcon').textContent = '❌';
+            document.getElementById('clearResultMsg').textContent = data.error || 'Failed to delete events.';
+            btn.textContent = 'Delete Events'; btn.disabled = false;
+        }
+    } catch (e) {
+        errEl.textContent = 'Network error: ' + e.message; errEl.style.display = 'block';
+        btn.textContent = 'Delete Events'; btn.disabled = false;
+        document.getElementById('clearStep2').style.display = 'block';
+        document.getElementById('clearStep3').style.display = 'none';
+    }
+}
+// ── End Clear Schedule ───────────────────────────────────────────────────────
+
+// ── SMS History ──────────────────────────────────────────────────────────────
+async function showSmsHistory(phone, clientName) {
+    const modal = document.getElementById('smsHistoryModal');
+    document.getElementById('smsHistorySubtitle').textContent = clientName + ' · ' + phone;
+    document.getElementById('smsHistoryLoading').style.display = 'block';
+    document.getElementById('smsHistoryMessages').style.display = 'none';
+    document.getElementById('smsHistoryMessages').innerHTML = '';
+    document.getElementById('smsHistoryEmpty').style.display = 'none';
+    document.getElementById('smsHistoryError').style.display = 'none';
+    modal.style.display = 'flex';
+
+    try {
+        const resp = await csrfFetch(`/admin/sms-history?phone=${encodeURIComponent(phone)}`);
+        const data = await resp.json();
+        document.getElementById('smsHistoryLoading').style.display = 'none';
+
+        if (!data.success) {
+            document.getElementById('smsHistoryError').textContent = data.error || 'Failed to load history.';
+            document.getElementById('smsHistoryError').style.display = 'block';
+            return;
+        }
+        if (!data.messages || data.messages.length === 0) {
+            document.getElementById('smsHistoryEmpty').style.display = 'block';
+            return;
+        }
+
+            const tz = data.timezone || 'Australia/Adelaide';
+        const container = document.getElementById('smsHistoryMessages');
+        container.innerHTML = data.messages.map(msg => {
+            const isInbound = msg.direction === 'inbound';
+            const ts = msg.ts ? new Date(msg.ts).toLocaleString('en-AU', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true,
+                timeZone: tz
+            }) : '';
+            const body = (msg.body || '').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+            return `
+                <div style="display:flex; flex-direction:column; align-items:${isInbound ? 'flex-start' : 'flex-end'}; margin-bottom:14px;">
+                    <div style="
+                        max-width: 78%;
+                        padding: 10px 14px;
+                        border-radius: ${isInbound ? '4px 16px 16px 16px' : '16px 4px 16px 16px'};
+                        background: ${isInbound ? 'rgba(255,255,255,0.12)' : 'linear-gradient(135deg, #9c27b0, #e91e8c)'};
+                        color: white;
+                        font-size: 13px;
+                        line-height: 1.5;
+                        word-break: break-word;
+                    ">${body}</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; padding: 0 4px;">
+                        ${isInbound ? '👤 Client' : '🤖 Bot'} · ${ts}
+                    </div>
+                </div>`;
+        }).join('');
+        container.style.display = 'block';
+        // Scroll to bottom
+        document.getElementById('smsHistoryBody').scrollTop = 99999;
+    } catch (e) {
+        document.getElementById('smsHistoryLoading').style.display = 'none';
+        document.getElementById('smsHistoryError').textContent = 'Network error: ' + e.message;
+        document.getElementById('smsHistoryError').style.display = 'block';
+    }
+}
+
+function closeSmsHistory() {
+    document.getElementById('smsHistoryModal').style.display = 'none';
+}
+// ── End SMS History ───────────────────────────────────────────────────────────
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    const syncStatus = document.getElementById('syncStatusText');
+    const syncLastUpdate = document.getElementById('syncLastUpdate');
+    if (syncStatus) {
+        syncStatus.textContent = 'Connected to Google Calendar';
+        syncLastUpdate.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

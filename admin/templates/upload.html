@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Upload Deposit Screenshot</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #4caf50;
+            --warning: #ffeb3b;
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.1) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.6s ease-out;
+            max-width: 480px;
+            width: 100%;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(233, 30, 99, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .container:hover {
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 50px rgba(233, 30, 99, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-color: rgba(233, 30, 99, 0.4);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(255, 235, 59, 0.15), rgba(30, 30, 50, 0.9));
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            color: white;
+            border: 2px solid rgba(255, 235, 59, 0.3);
+        }
+
+        .info-card h3 {
+            color: var(--warning);
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-card p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .info-card ul {
+            margin-top: 12px;
+            padding-left: 0;
+            list-style-position: inside;
+            text-align: center;
+        }
+
+        .info-card li {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 6px;
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(233, 30, 99, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(233, 30, 99, 0.2);
+            transform: scale(1.02);
+        }
+
+        .upload-area.has-file {
+            border-color: var(--success);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .preview-container.visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .file-name {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.5), 0 0 30px rgba(233, 30, 99, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .submit-btn.loading {
+            pointer-events: none;
+        }
+
+        .submit-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .submit-btn.loading .spinner {
+            display: block;
+        }
+
+        .submit-btn.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-message {
+            display: none;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-message.success {
+            display: block;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .result-message.error {
+            display: block;
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+            color: #f44336;
+        }
+
+        .result-message h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .result-message p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .error-page {
+            text-align: center;
+        }
+
+        .error-page h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .error-page p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% if error %}
+        <div class="error-page">
+            <h1>{{ error_icon|default('⚠️') }}</h1>
+            <div class="header">
+                <h1>{{ error_title|default('Link Invalid') }}</h1>
+            </div>
+            <p>{{ error }}</p>
+        </div>
+        {% else %}
+        <div class="header">
+            <h1>Upload Deposit Screenshot</h1>
+            <p class="subtitle">Secure verification for your booking</p>
+        </div>
+
+        <div class="info-card">
+            <h3>📷 What to upload 📷</h3>
+            <p>Please upload a screenshot from your banking app showing:</p>
+            <ul>
+                <li>The payment amount ({% if deposit_amount and deposit_amount <= 50 %}$50–$100{% else %}${{ deposit_amount|default(100) }}{% endif %})</li>
+                <li>The PayID or recipient details</li>
+                {% if payment_reference %}
+                <li>The payment reference <strong>{{ payment_reference }}</strong></li>
+                {% endif %}
+                <li>Transaction confirmation</li>
+            </ul>
+        </div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📤</div>
+                <p class="upload-text">Tap to select screenshot</p>
+                <p class="upload-hint">or drag and drop here</p>
+            </div>
+
+            <input type="file" name="screenshot" id="fileInput" class="file-input" accept="image/*">
+
+            <div class="preview-container" id="previewContainer">
+                <img id="previewImage" class="preview-image" src="" alt="Preview">
+                <p class="file-name" id="fileName"></p>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                <span class="btn-text">Upload & Verify</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+
+        <div class="result-message" id="resultMessage">
+            <h3 id="resultTitle"></h3>
+            <p id="resultText"></p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not error %}
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultText = document.getElementById('resultText');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        // File selected
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.classList.add('visible');
+                uploadArea.classList.add('has-file');
+                uploadArea.querySelector('.upload-text').textContent = 'Screenshot selected';
+                fileName.textContent = file.name;
+                submitBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Form submit
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            resultMessage.className = 'result-message';
+
+            const formData = new FormData(uploadForm);
+
+            try {
+                // Get CSRF token if available (route is exempted, so optional)
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const headers = {};
+                if (csrfMeta && csrfMeta.content) {
+                    headers['X-CSRFToken'] = csrfMeta.content;
+                }
+
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: headers
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // Server returned HTML error page
+                    const text = await response.text();
+                    console.error('Server returned non-JSON:', text.substring(0, 500));
+                    throw new Error('Server error - please try again');
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultMessage.className = 'result-message success';
+                    resultTitle.textContent = '✓ Deposit Verified!';
+                    resultText.textContent = result.message || 'Your booking is now confirmed. You\'ll receive an SMS shortly.';
+
+                    // If server provides a redirect URL, navigate to the full booking confirmation page
+                    if (result.redirect_url) {
+                        window.location.href = result.redirect_url;
+                        return;
+                    }
+
+                    uploadForm.style.display = 'none';
+                } else {
+                    resultMessage.className = 'result-message error';
+                    resultTitle.textContent = '✗ Verification Failed';
+                    resultText.textContent = result.error || 'Could not verify the screenshot. Please try again with a clearer image.';
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultMessage.className = 'result-message error';
+                resultTitle.textContent = '✗ Upload Failed';
+                resultText.textContent = error.message || 'Network error. Please try again.';
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

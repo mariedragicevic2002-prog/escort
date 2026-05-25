@@ -1,0 +1,62 @@
+{% extends "base_admin.html" %}
+{% block title %}Enable SMS Two-Factor Authentication{% endblock %}
+{% block extra_css %}
+.login-container.twofa-sms { max-width: 540px; margin-top: 32px; margin-bottom: 48px; }
+.twofa-sms h2.twofa-step {
+    font-size: 1rem; font-weight: 700; color: #ffeb3b; margin-top: 22px; margin-bottom: 10px; text-align: left;
+}
+.twofa-sms p { color: rgba(255, 255, 255, 0.75); font-size: 14px; line-height: 1.55; margin-bottom: 12px; }
+.twofa-sms label.field-label { display: block; color: #ff69b4; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+.twofa-sms input.code-field {
+    text-align: center; letter-spacing: 6px; font-size: 1.15rem !important;
+}
+.twofa-sms .submit-btn.secondary-sms {
+    background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.28); margin-top: 12px; box-shadow: none;
+}
+.twofa-sms .submit-btn.secondary-sms:hover:not(:disabled) {
+    background: rgba(233, 30, 99, 0.25); border-color: var(--primary);
+}
+.twofa-back { display: inline-block; margin-top: 18px; color: #ffeb3b; text-decoration: none; font-size: 14px; margin-right: 16px; font-weight: 500; }
+.twofa-back:hover { color: var(--accent); text-decoration: underline; }
+.twofa-warn { color: var(--warning); font-size: 14px; }
+{% endblock %}
+{% block content %}
+<div class="login-container twofa-sms">
+    <h1>Enable SMS two-factor authentication</h1>
+    <p class="subtitle">One-time codes by text</p>
+
+    <p>Each time you log in, we will text a one-time code to your mobile. Standard SMS charges may apply via your gateway.</p>
+
+    {% if not sms_gateway_ok %}
+    <p class="twofa-warn">SMS is not configured on this server. Enable httpSMS with API key and sender phone on the Config page before using SMS 2FA.</p>
+    {% endif %}
+
+    <h2 class="twofa-step">1. Mobile number</h2>
+    <p>E.164 format (e.g. +61412345678). This can be the same as your escort alert number.</p>
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="flow" value="sms">
+      <input type="hidden" name="action" value="send">
+      <div class="form-group">
+        <label class="field-label" for="sms_phone">Mobile number</label>
+        <input type="tel" id="sms_phone" name="sms_phone" placeholder="+61412345678" value="{{ default_phone or '' }}" required>
+      </div>
+      <button type="submit" class="submit-btn" {% if not sms_gateway_ok %}disabled{% endif %}>Send verification code</button>
+    </form>
+
+    <h2 class="twofa-step">2. Confirm the code</h2>
+    <p>Enter the 6-digit code from the SMS we sent:</p>
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="flow" value="sms">
+      <div class="form-group">
+        <label for="sms-enroll-code">Code</label>
+        <input type="text" id="sms-enroll-code" name="code" class="code-field" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autofocus>
+      </div>
+      <button type="submit" class="submit-btn">Verify and enable SMS 2FA</button>
+    </form>
+
+    <a href="{{ url_for('admin.two_factor_setup') }}" class="twofa-back">&larr; Use authenticator app instead</a>
+    <a href="/admin" class="twofa-back">&larr; Cancel and go back</a>
+</div>
+{% endblock %}

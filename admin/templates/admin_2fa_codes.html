@@ -1,0 +1,63 @@
+{% extends "base_admin.html" %}
+{% block title %}Your backup codes{% endblock %}
+{% block extra_css %}
+.login-container.twofa-codes { max-width: 560px; margin-top: 32px; margin-bottom: 48px; }
+.twofa-codes .subtitle-success { color: rgba(255, 235, 59, 0.85); font-size: 15px; text-align: center; margin-bottom: 16px; }
+.twofa-codes-panel {
+    background: rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 22px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12); margin: 20px 0;
+}
+.twofa-codes-panel ol { margin: 0 0 0 22px; color: #ffeb3b; font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 1.05rem; line-height: 1.95; }
+.twofa-codes-panel li::marker { color: rgba(255, 235, 59, 0.5); }
+.twofa-save-warn {
+    background: rgba(255, 152, 0, 0.12); border: 1px solid var(--warning); color: #ffeb3b;
+    padding: 16px; border-radius: 12px; margin: 18px 0; font-size: 14px; line-height: 1.5;
+}
+.twofa-btn-row { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.twofa-btn-row .submit-btn { flex: 1; min-width: 140px; text-decoration: none; text-align: center; box-sizing: border-box; }
+.twofa-btn-row .submit-btn.secondary-copy {
+    background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.28); box-shadow: none;
+}
+.twofa-btn-row .submit-btn.secondary-copy:hover {
+    background: rgba(233, 30, 99, 0.25); border-color: var(--primary);
+}
+{% endblock %}
+{% block content %}
+<div class="login-container twofa-codes">
+    <h1>{% if setup %}2FA enabled{% else %}New backup codes{% endif %}</h1>
+    <p class="subtitle-success">{% if setup %}Save your backup codes below{% else %}Store these codes securely{% endif %}</p>
+
+    <p>Save these one-time backup codes somewhere safe — a password manager is ideal.
+       Each one works <strong style="color:#ffeb3b;">exactly once</strong> if you ever lose access to your authenticator or SMS.</p>
+
+    <div class="twofa-save-warn">
+      <strong>This is the only time you'll see these codes.</strong>
+      Closing this page without saving means you'll have to regenerate.
+    </div>
+
+    <div class="twofa-codes-panel">
+      <ol>
+        {% for code in backup_codes %}<li>{{ code }}</li>{% endfor %}
+      </ol>
+    </div>
+
+    <p style="color: rgba(255,255,255,0.7); font-size: 14px;">Previous backup codes (if any) are now invalid.</p>
+
+    <div class="twofa-btn-row">
+      <button type="button" class="submit-btn secondary-copy" onclick="copyAllBackupCodes()">Copy all</button>
+      <a href="/admin" class="submit-btn">I've saved them — continue</a>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function copyAllBackupCodes() {
+  var lis = document.querySelectorAll('.twofa-codes-panel li');
+  var codes = Array.prototype.map.call(lis, function(li) { return li.textContent.trim(); }).join('\n');
+  navigator.clipboard.writeText(codes).then(function() {
+    alert('Copied ' + lis.length + ' codes');
+  });
+}
+</script>
+{% endblock %}

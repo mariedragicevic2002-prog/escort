@@ -1,0 +1,722 @@
+{% extends "base_admin.html" %}
+{% block title %}Statistics{% endblock %}
+{% block page_title %}Statistics{% endblock %}
+{% block page_subtitle %}Booking and revenue analytics{% endblock %}
+{% block extra_css %}
+.stats-page {
+    background: transparent;
+    border-radius: 18px;
+    padding: 8px;
+}
+.stats-page h1,
+.stats-page h2,
+.stats-page h3,
+.stats-page .kpi-label,
+.stats-page .funnel-step .name {
+    text-align: center;
+    color: #ffeb3b;
+}
+.dashboard-header h1 {
+    background: none;
+    -webkit-text-fill-color: #ffeb3b;
+    color: #ffeb3b;
+}
+.filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.filters-bar .pill {
+    border: 1px solid rgba(255,255,255,0.35);
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+    color: white;
+    border-radius: 999px;
+    padding: 8px 14px;
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+.filters-bar .pill.active {
+    background: rgba(233,30,99,0.35);
+    border-color: rgba(233,30,99,0.8);
+    box-shadow: none;
+}
+.filters-bar .pill:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255,255,255,0.6);
+}
+.filters-bar select {
+    background: rgba(26, 18, 46, 0.9);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: white;
+    border-radius: 10px;
+    padding: 8px 12px;
+}
+.filters-bar .apply-btn {
+    border: 0;
+    background: linear-gradient(90deg,#e91e63,#9c27b0);
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+}
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+.kpi-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    margin-bottom: 8px;
+}
+.kpi-value {
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+}
+.kpi-sub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    text-align: center;
+}
+.delta {
+    display: inline-block;
+    margin-left: 8px;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+}
+.delta.up { background: rgba(76,175,80,0.25); color: #8dff95; }
+.delta.down { background: rgba(244,67,54,0.25); color: #ff9d9d; }
+.delta.flat { background: rgba(255,255,255,0.14); color: #e8e8e8; }
+.alert-list {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+.alert-item {
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border: 1px solid transparent;
+}
+.alert-item.warning {
+    background: rgba(255,152,0,0.16);
+    border-color: rgba(255,152,0,0.4);
+    color: #ffd39b;
+}
+.funnel-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.funnel-step {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 10px;
+    transition: all 0.2s ease;
+}
+.funnel-step .name {
+    color: rgba(255,255,255,0.72);
+    font-size: 11px;
+}
+.funnel-step .count {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 4px;
+    text-align: center;
+}
+.chart-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.chart-container {
+    background: var(--glass-dark);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+.chart-container h3 {
+    color: #ffeb3b;
+    font-size: 15px;
+    margin-bottom: 14px;
+}
+.chart-wrapper { position: relative; height: 230px; }
+.table-wrap {
+    overflow-x: auto;
+}
+.top-clients-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.top-clients-table th {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.9);
+    padding: 11px 12px;
+    text-align: center;
+    font-size: 12px;
+}
+.top-clients-table td {
+    padding: 11px 12px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+    text-align: center;
+}
+.top-clients-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+.top-clients-table .col-value { color: #ffeb3b; font-weight: 600; }
+.kpi-card:hover,
+.funnel-step:hover,
+.chart-container:hover,
+.alert-item:hover,
+.top-clients-table:hover {
+    border-color: #e91e63;
+    box-shadow: 0 0 0 2px rgba(233,30,99,0.25);
+}
+@media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .funnel-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .chart-grid-2 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .funnel-row { grid-template-columns: 1fr; }
+}
+{% endblock %}
+{% block content %}
+{% if not authenticated %}
+        <div class="login-container">
+            <h1>Statistics</h1>
+            <p class="subtitle">Secure Access Required</p>
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+            <form method="POST" action="{{ url_for('stats.stats_page') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+{% else %}
+{% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+{% if stats.stats_load_error %}<div class="error-msg">{{ stats.stats_load_error }}</div>{% endif %}
+<div class="stats-page">
+<form method="GET" action="{{ url_for('stats.stats_page') }}" class="filters-bar">
+    <a class="pill {% if stats.selected_days == 7 %}active{% endif %}" href="{{ url_for('stats.stats_page', days=7, location=stats.selected_location, experience=stats.selected_experience) }}">7d</a>
+    <a class="pill {% if stats.selected_days == 30 %}active{% endif %}" href="{{ url_for('stats.stats_page', days=30, location=stats.selected_location, experience=stats.selected_experience) }}">30d</a>
+    <a class="pill {% if stats.selected_days == 90 %}active{% endif %}" href="{{ url_for('stats.stats_page', days=90, location=stats.selected_location, experience=stats.selected_experience) }}">90d</a>
+    <input type="hidden" name="days" value="{{ stats.selected_days }}">
+    <select name="location">
+        <option value="all" {% if stats.selected_location == 'all' %}selected{% endif %}>All locations</option>
+        <option value="incall" {% if stats.selected_location == 'incall' %}selected{% endif %}>Incall</option>
+        <option value="outcall" {% if stats.selected_location == 'outcall' %}selected{% endif %}>Outcall</option>
+    </select>
+    <select name="experience">
+        <option value="all" {% if (stats.selected_experience or 'all') == 'all' %}selected{% endif %}>All experiences</option>
+        {% for exp in (stats.experience_labels or []) %}
+            <option value="{{ exp }}" {% if stats.selected_experience == exp %}selected{% endif %}>{{ exp }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="apply-btn">Apply filters</button>
+</form>
+
+<div class="meta-row">
+    <div>Showing last {{ stats.selected_days }} days{% if stats.selected_location != 'all' %} - {{ stats.selected_location|title }}{% endif %}{% if stats.selected_experience != 'all' %} - {{ stats.selected_experience }}{% endif %}</div>
+    <div>Updated {{ stats.generated_at }} UTC</div>
+</div>
+<div class="chart-container" id="aiCostCard">
+    <h3>AI Cost (7d)</h3>
+    <div class="kpi-value" id="aiCost7dValue">$0.00</div>
+    <div class="kpi-sub" id="aiCost7dMeta">Loading protected AI cost analytics…</div>
+</div>
+<div class="chart-grid-2">
+    <div class="chart-container">
+        <h3>Threshold optimizer</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:10px;">
+            Target low-confidence band: {{ ((stats.threshold_optimizer or {}).target_low_confidence_band or [15, 25])[0] }}%–{{ ((stats.threshold_optimizer or {}).target_low_confidence_band or [15, 25])[1] }}%.
+            Estimated v2 confirmation lift: {{ (stats.threshold_optimizer or {}).estimated_confirmation_lift_pp or 0 }}pp.
+        </p>
+        {% if (stats.threshold_optimizer or {}).reasons %}
+        <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:10px;">
+            {% for reason in (stats.threshold_optimizer or {}).reasons %}
+                <div>{{ reason }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('stats.apply_threshold_optimizer') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="days" value="{{ stats.selected_days }}">
+            <input type="hidden" name="location" value="{{ stats.selected_location }}">
+            <input type="hidden" name="experience" value="{{ stats.selected_experience }}">
+            <button type="submit" class="apply-btn">Apply recommended thresholds</button>
+        </form>
+    </div>
+    <div class="chart-container">
+        <h3>Rollout guardrail</h3>
+        {% set guardrail = (stats.rollout_guardrail or {}) %}
+        <p style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:10px;">
+            Status: <strong>{{ (guardrail.status or 'healthy')|upper }}</strong> —
+            {{ guardrail.summary or 'No guardrail summary available.' }}
+        </p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:12px;">
+            v2 confirmation gap: {{ guardrail.confirmation_gap_pp or 0 }}pp,
+            low-confidence gap: {{ guardrail.low_confidence_gap_pp or 0 }}pp.
+        </p>
+        <form method="POST" action="{{ url_for('stats.apply_rollout_guardrail') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="days" value="{{ stats.selected_days }}">
+            <input type="hidden" name="location" value="{{ stats.selected_location }}">
+            <input type="hidden" name="experience" value="{{ stats.selected_experience }}">
+            <button type="submit" class="apply-btn">Apply guardrail action</button>
+        </form>
+    </div>
+</div>
+
+{% set month_delta = (stats.bookings_this_month or 0) - (stats.bookings_last_month or 0) %}
+{% set month_base = stats.bookings_last_month or 0 %}
+{% if month_base > 0 %}
+    {% set month_delta_pct = ((month_delta / month_base) * 100) | round(1) %}
+{% else %}
+    {% set month_delta_pct = 0 %}
+{% endif %}
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Total bookings</div>
+        <div class="kpi-value">{{ stats.total_bookings }}</div>
+        <div class="kpi-sub">Lifetime confirmed bookings</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">This month</div>
+        <div class="kpi-value">
+            {{ stats.bookings_this_month }}
+            {% if month_delta > 0 %}
+                <span class="delta up">+{{ month_delta_pct }}%</span>
+            {% elif month_delta < 0 %}
+                <span class="delta down">{{ month_delta_pct }}%</span>
+            {% else %}
+                <span class="delta flat">0%</span>
+            {% endif %}
+        </div>
+        <div class="kpi-sub">vs {{ stats.bookings_last_month }} last month</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Conversion</div>
+        <div class="kpi-value">{{ stats.conversion_rate }}%</div>
+        <div class="kpi-sub">{{ stats.total_enquiries }} unique enquiries in range</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Earnings</div>
+        <div class="kpi-value">${{ "%.0f"|format((stats.total_earnings_30d or 0)|float) }}</div>
+        <div class="kpi-sub">${{ "%.0f"|format((stats.avg_booking_value or 0)|float) }} avg booking value</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Deposit completion</div>
+        <div class="kpi-value">{{ stats.deposit_rate }}%</div>
+        <div class="kpi-sub">{{ stats.deposits_paid }}/{{ stats.deposits_requested }} paid</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Blocked clients</div>
+        <div class="kpi-value">{{ stats.blocked_count }}</div>
+        <div class="kpi-sub">Current blocked list size</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">AI fallback events</div>
+        <div class="kpi-value">{{ stats.ai_fallback_count }}</div>
+        <div class="kpi-sub">Last {{ stats.selected_days }} days</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Messages sent</div>
+        <div class="kpi-value">{{ stats.messages_sent_30d }}</div>
+        <div class="kpi-sub">Outbound over selected range</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Avg turn confidence</div>
+        <div class="kpi-value">{{ stats.avg_turn_confidence }}%</div>
+        <div class="kpi-sub">{{ stats.total_turn_quality_events }} quality-scored turns</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Low-confidence turns</div>
+        <div class="kpi-value">{{ stats.low_confidence_rate }}%</div>
+        <div class="kpi-sub">{{ stats.low_confidence_turns }} turns below threshold {{ stats.ai_fallback_confidence_threshold }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Template fallback share</div>
+        <div class="kpi-value">{{ (stats.fallback_path_percentages or {}).template or 0 }}%</div>
+        <div class="kpi-sub">{{ (stats.fallback_path_counts or {}).template or 0 }} fallback turns</div>
+    </div>
+</div>
+
+{% if stats.alerts %}
+<div class="alert-list">
+    {% for alert in stats.alerts %}
+    <div class="alert-item {{ alert.severity }}">{{ alert.text }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="funnel-row">
+    <div class="funnel-step"><div class="name">New</div><div class="count">{{ stats.funnel.NEW }}</div></div>
+    <div class="funnel-step"><div class="name">Collecting</div><div class="count">{{ stats.funnel.COLLECTING }}</div></div>
+    <div class="funnel-step"><div class="name">Checking availability</div><div class="count">{{ stats.funnel.CHECKING_AVAILABILITY }}</div></div>
+    <div class="funnel-step"><div class="name">Deposit required</div><div class="count">{{ stats.funnel.DEPOSIT_REQUIRED }}</div></div>
+    <div class="funnel-step"><div class="name">Confirmed</div><div class="count">{{ stats.funnel.CONFIRMED }}</div></div>
+</div>
+
+<div class="chart-container">
+    <h3>v1 vs v2 conversion comparison</h3>
+    <div class="table-wrap">
+    <table class="top-clients-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>v1</th>
+                <th>v2</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Qualification rate</td>
+                <td>{{ ((stats.flow_version_comparison or {}).qualification_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).qualification_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Deposit step reach</td>
+                <td>{{ ((stats.flow_version_comparison or {}).deposit_reach_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).deposit_reach_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Deposit paid rate</td>
+                <td>{{ ((stats.flow_version_comparison or {}).deposit_paid_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).deposit_paid_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Confirmation rate</td>
+                <td>{{ ((stats.flow_version_comparison or {}).confirmation_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).confirmation_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Completed booking rate</td>
+                <td>{{ ((stats.flow_version_comparison or {}).completed_booking_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).completed_booking_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Low-confidence rate</td>
+                <td>{{ ((stats.flow_version_comparison or {}).low_confidence_rate or [0, 0])[0] }}%</td>
+                <td>{{ ((stats.flow_version_comparison or {}).low_confidence_rate or [0, 0])[1] }}%</td>
+            </tr>
+            <tr>
+                <td>Conversations</td>
+                <td>{{ ((stats.flow_version_comparison or {}).conversation_totals or [0, 0])[0] }}</td>
+                <td>{{ ((stats.flow_version_comparison or {}).conversation_totals or [0, 0])[1] }}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="chart-container">
+    <h3>Enquiries — last 7 days</h3>
+    <div class="chart-wrapper"><canvas id="chartEnquiries7d"></canvas></div>
+</div>
+<div class="chart-container">
+    <h3>Bookings trend</h3>
+    <div class="chart-wrapper"><canvas id="chartBookings"></canvas></div>
+</div>
+<div class="chart-container">
+    <h3>Booking funnel</h3>
+    <div class="chart-wrapper"><canvas id="chartBookingFunnel"></canvas></div>
+</div>
+<div class="chart-container">
+    <h3>Weekly earnings</h3>
+    <div class="chart-wrapper"><canvas id="chartWeeklyEarnings"></canvas></div>
+</div>
+<div class="chart-grid-2">
+    <div class="chart-container">
+        <h3>Experience mix</h3>
+        <div class="chart-wrapper"><canvas id="chartExperience"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h3>Incall vs Outcall</h3>
+        <div class="chart-wrapper"><canvas id="chartLocation"></canvas></div>
+    </div>
+</div>
+<div class="chart-grid-2">
+    <div class="chart-container">
+        <h3>Confidence by funnel step</h3>
+        <div class="chart-wrapper"><canvas id="chartConfidenceByStep"></canvas></div>
+    </div>
+    <div class="chart-container">
+        <h3>Fallback path split</h3>
+        <div class="chart-wrapper"><canvas id="chartFallbackPathSplit"></canvas></div>
+    </div>
+</div>
+<div class="chart-container">
+    <h3>v1 vs v2 rate comparison</h3>
+    <div class="chart-wrapper"><canvas id="chartFlowVersionComparison"></canvas></div>
+</div>
+<div class="chart-container">
+    <h3>Top clients by spend</h3>
+    <div class="table-wrap">
+    <table class="top-clients-table">
+        <thead><tr><th>Phone</th><th>Name</th><th>Bookings</th><th>Total spent</th></tr></thead>
+        <tbody>
+            {% for c in (stats.top_clients or []) %}
+            <tr><td>{{ c.phone_number or c.get('phone_number') }}</td><td>{{ c.client_name or c.get('client_name') or '—' }}</td><td>{{ c.bookings or c.get('bookings', 0) }}</td><td class="col-value">${{ "%.2f"|format((c.total_spent or c.get('total_spent', 0))|float) }}</td></tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.5);">No data yet</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+ </div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+{% if authenticated %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    if (typeof Chart === 'undefined') {
+        document.querySelectorAll('.chart-wrapper canvas').forEach(function(c) {
+            var ctx = c.getContext('2d');
+            if (ctx) {
+                c.width = c.offsetWidth || 400;
+                c.height = c.offsetHeight || 220;
+                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                ctx.font = '14px Poppins, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Charts unavailable (Chart.js failed to load)', c.width / 2, c.height / 2);
+            }
+        });
+        return;
+    }
+    var stats = {{ stats | tojson }};
+    var opts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { labels: { color: '#f0f0f0', boxWidth: 12 } },
+            tooltip: { backgroundColor: 'rgba(20,20,20,0.95)' }
+        },
+        scales: {}
+    };
+    var scaleOpt = { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } };
+    function noData(id) {
+        var el = document.getElementById(id);
+        if (!el || !el.getContext) return;
+        var ctx = el.getContext('2d');
+        el.width = el.offsetWidth || 400;
+        el.height = el.offsetHeight || 220;
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.font = '14px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No data yet', el.width / 2, el.height / 2);
+    }
+    function formatUsd(value) {
+        var amount = Number(value || 0);
+        return '$' + (amount >= 1 ? amount.toFixed(2) : amount.toFixed(4));
+    }
+
+    var aiCostValueEl = document.getElementById('aiCost7dValue');
+    var aiCostMetaEl = document.getElementById('aiCost7dMeta');
+    if (aiCostValueEl && aiCostMetaEl) {
+        fetch('{{ url_for("analytics.get_ai_cost_analytics") }}?days=7', { credentials: 'same-origin' })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('AI cost request failed');
+                }
+                return response.json();
+            })
+            .then(function(payload) {
+                var summary = payload.summary || {};
+                var byDay = payload.by_day || [];
+                var activeDays = byDay.length;
+                var dayLabel = activeDays === 1 ? 'active day' : 'active days';
+                aiCostValueEl.textContent = formatUsd(summary.total_cost_usd || 0);
+                aiCostMetaEl.textContent = (summary.total_calls || 0) + ' calls over ' + activeDays + ' ' + dayLabel;
+            })
+            .catch(function() {
+                aiCostMetaEl.textContent = 'AI cost analytics unavailable.';
+            });
+    }
+
+    if (stats.enquiries_7d_labels && stats.enquiries_7d_labels.length) {
+        new Chart(document.getElementById('chartEnquiries7d'), {
+            type: 'bar',
+            data: {
+                labels: stats.enquiries_7d_labels,
+                datasets: [{ label: 'Unique enquirers', data: stats.enquiries_7d_values, backgroundColor: 'rgba(33,150,243,0.5)', borderColor: '#2196f3', borderWidth: 1, borderRadius: 6 }]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: Object.assign({}, scaleOpt, { beginAtZero: true, ticks: Object.assign({}, scaleOpt.ticks, { precision: 0 }) }) } })
+        });
+    } else { noData('chartEnquiries7d'); }
+    if (stats.bookings_labels && stats.bookings_labels.length) {
+        new Chart(document.getElementById('chartBookings'), {
+            type: 'bar',
+            data: {
+                labels: stats.bookings_labels,
+                datasets: [{ label: 'Bookings', data: stats.bookings_values, backgroundColor: 'rgba(233,30,99,0.5)', borderColor: '#e91e63', borderWidth: 1, borderRadius: 6 }]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: scaleOpt } })
+        });
+    } else { noData('chartBookings'); }
+    var funnelLabels = ['New', 'Collecting', 'Checking availability', 'Deposit required', 'Confirmed'];
+    var funnelValues = [
+        ((stats.funnel || {}).NEW || 0),
+        ((stats.funnel || {}).COLLECTING || 0),
+        ((stats.funnel || {}).CHECKING_AVAILABILITY || 0),
+        ((stats.funnel || {}).DEPOSIT_REQUIRED || 0),
+        ((stats.funnel || {}).CONFIRMED || 0)
+    ];
+    if (funnelValues.some(function(v) { return v > 0; })) {
+        new Chart(document.getElementById('chartBookingFunnel'), {
+            type: 'bar',
+            data: {
+                labels: funnelLabels,
+                datasets: [{
+                    label: 'Conversations',
+                    data: funnelValues,
+                    backgroundColor: ['rgba(33,150,243,0.45)','rgba(103,58,183,0.45)','rgba(156,39,176,0.45)','rgba(233,30,99,0.45)','rgba(76,175,80,0.45)'],
+                    borderColor: ['#2196f3','#673ab7','#9c27b0','#e91e63','#4caf50'],
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: scaleOpt } })
+        });
+    } else { noData('chartBookingFunnel'); }
+    if (stats.weekly_earnings_labels && stats.weekly_earnings_labels.length) {
+        new Chart(document.getElementById('chartWeeklyEarnings'), {
+            type: 'bar',
+            data: {
+                labels: stats.weekly_earnings_labels,
+                datasets: [{ label: 'Earnings ($)', data: stats.weekly_earnings_values, backgroundColor: 'rgba(156,39,176,0.5)', borderColor: '#9c27b0', borderWidth: 1 }]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: scaleOpt } })
+        });
+    } else { noData('chartWeeklyEarnings'); }
+    if (stats.experience_labels && stats.experience_labels.length) {
+        new Chart(document.getElementById('chartExperience'), {
+            type: 'doughnut',
+            data: {
+                labels: stats.experience_labels,
+                datasets: [{ data: stats.experience_values, backgroundColor: ['#e91e63','#9c27b0','#673ab7','#3f51b5','#2196f3','#00bcd4'] }]
+            },
+            options: Object.assign({}, opts)
+        });
+    } else { noData('chartExperience'); }
+    if (stats.location_labels && stats.location_labels.length) {
+        new Chart(document.getElementById('chartLocation'), {
+            type: 'doughnut',
+            data: {
+                labels: stats.location_labels,
+                datasets: [{ data: stats.location_values, backgroundColor: ['#e91e63','#9c27b0'] }]
+            },
+            options: Object.assign({}, opts)
+        });
+    } else { noData('chartLocation'); }
+    if (stats.confidence_by_step_labels && stats.confidence_by_step_labels.length && stats.confidence_by_step_values && stats.confidence_by_step_values.some(function(v) { return v > 0; })) {
+        new Chart(document.getElementById('chartConfidenceByStep'), {
+            type: 'bar',
+            data: {
+                labels: stats.confidence_by_step_labels,
+                datasets: [{
+                    label: 'Avg confidence (%)',
+                    data: stats.confidence_by_step_values,
+                    backgroundColor: 'rgba(76,175,80,0.45)',
+                    borderColor: '#4caf50',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: Object.assign({}, scaleOpt, { beginAtZero: true, max: 100 }) } })
+        });
+    } else { noData('chartConfidenceByStep'); }
+    var fallbackCounts = (stats.fallback_path_counts || {});
+    var fallbackValues = [
+        fallbackCounts.retrieval_policy || 0,
+        fallbackCounts.ai_fallback || 0,
+        fallbackCounts.template || 0
+    ];
+    if (fallbackValues.some(function(v) { return v > 0; })) {
+        new Chart(document.getElementById('chartFallbackPathSplit'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Retrieval policy', 'AI fallback', 'Template fallback'],
+                datasets: [{
+                    data: fallbackValues,
+                    backgroundColor: ['#2196f3', '#9c27b0', '#ff9800']
+                }]
+            },
+            options: Object.assign({}, opts)
+        });
+    } else { noData('chartFallbackPathSplit'); }
+    var flowComp = (stats.flow_version_comparison || {});
+    var flowLabels = flowComp.labels || ['v1', 'v2'];
+    var flowQual = flowComp.qualification_rate || [0, 0];
+    var flowDeposit = flowComp.deposit_reach_rate || [0, 0];
+    var flowConfirm = flowComp.confirmation_rate || [0, 0];
+    var flowLowConf = flowComp.low_confidence_rate || [0, 0];
+    if (flowQual.some(function(v) { return v > 0; }) || flowDeposit.some(function(v) { return v > 0; }) || flowConfirm.some(function(v) { return v > 0; }) || flowLowConf.some(function(v) { return v > 0; })) {
+        new Chart(document.getElementById('chartFlowVersionComparison'), {
+            type: 'bar',
+            data: {
+                labels: flowLabels,
+                datasets: [
+                    { label: 'Qualification %', data: flowQual, backgroundColor: 'rgba(33,150,243,0.45)', borderColor: '#2196f3', borderWidth: 1, borderRadius: 6 },
+                    { label: 'Deposit reach %', data: flowDeposit, backgroundColor: 'rgba(233,30,99,0.45)', borderColor: '#e91e63', borderWidth: 1, borderRadius: 6 },
+                    { label: 'Confirmation %', data: flowConfirm, backgroundColor: 'rgba(76,175,80,0.45)', borderColor: '#4caf50', borderWidth: 1, borderRadius: 6 },
+                    { label: 'Low confidence %', data: flowLowConf, backgroundColor: 'rgba(255,152,0,0.45)', borderColor: '#ff9800', borderWidth: 1, borderRadius: 6 }
+                ]
+            },
+            options: Object.assign({}, opts, { scales: { x: scaleOpt, y: Object.assign({}, scaleOpt, { beginAtZero: true, max: 100 }) } })
+        });
+    } else { noData('chartFlowVersionComparison'); }
+})();
+</script>
+{% endif %}
+{% endblock %}

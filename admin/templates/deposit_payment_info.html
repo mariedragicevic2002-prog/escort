@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Deposit details{% if escort_name %} — {{ escort_name }}{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #e91e63; --success: #4CAF50; --gold: #FFC107; --dark: #1a1a2e; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 32px;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 560px;
+            width: 100%;
+            text-align: left;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--gold), #ff9800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        p { font-size: 15px; line-height: 1.65; margin-bottom: 14px; color: rgba(255,255,255,0.92); }
+        .muted { color: rgba(255,255,255,0.65); font-size: 14px; }
+        .box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 152, 0, 0.12));
+            border-left: 4px solid var(--gold);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 18px 0;
+        }
+        .box h2 { color: #FFD54F; font-size: 15px; margin-bottom: 10px; }
+        .pay-row { margin: 8px 0; font-size: 15px; }
+        .pay-row .label { color: rgba(255,255,255,0.65); display: block; font-size: 13px; }
+        .pay-row .value { font-weight: 600; color: #FFD54F; word-break: break-all; }
+        .mono { font-family: ui-monospace, monospace; }
+        .upload-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFC107, #FF9800);
+            color: #1a1a2e;
+            padding: 14px 22px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 8px;
+        }
+        .upload-btn:hover { filter: brightness(1.05); }
+        .checklist { margin-top: 14px; padding-left: 0; list-style: none; }
+        .checklist li { margin: 6px 0; padding-left: 1.2em; position: relative; font-size: 14px; color: rgba(255,255,255,0.88); }
+        .checklist li::before { content: '\2713'; position: absolute; left: 0; color: var(--success); }
+        .note { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 20px; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Deposit details</h1>
+
+        {% if not mandatory %}
+        <p>
+            This deposit is <strong>optional</strong> — your booking can stay confirmed either way.
+            If you’d like to contribute a small deposit (${{ deposit_incall }}–${{ deposit_outcall }}), it’s appreciated and helps confirm you’re serious.
+        </p>
+        {% elif is_overnight %}
+        <p>Overnight bookings are confirmed manually once your deposit is received.</p>
+        {% elif is_graphite %}
+        <p>
+            That time is available, but there’s already a pending enquiry for this slot.
+            A deposit secures it — <strong>whoever pays first</strong> gets the confirmed booking.
+        </p>
+        {% elif is_outcall %}
+        <p>Outcall bookings require a deposit before the time is locked in.</p>
+        {% else %}
+        <p>A deposit is required to confirm this booking.</p>
+        {% endif %}
+
+        <div class="box">
+            <h2>Amount</h2>
+            {% if not mandatory %}
+            <p class="mono">${{ deposit_incall }} – ${{ deposit_outcall }} (your choice within this range)</p>
+            {% else %}
+            <p class="mono">${{ amount_str or display_amount }}</p>
+            {% endif %}
+        </div>
+
+        <div class="box">
+            <h2>Payment</h2>
+            <div class="pay-row">
+                <span class="label">PayID</span>
+                <span class="value mono">{{ payid }}</span>
+            </div>
+            <div class="pay-row">
+                <span class="label">Account name</span>
+                <span class="value">{{ account_name }}</span>
+            </div>
+            {% if payment_reference %}
+            <div class="pay-row">
+                <span class="label">Payment reference</span>
+                <span class="value mono">{{ payment_reference }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if is_outcall and outcall_address %}
+        <p>
+            <strong>Outcall address on file:</strong> {{ outcall_address }}<br>
+            <span class="muted">After your deposit is received, arrival time will be confirmed with you for this address.</span>
+        </p>
+        {% endif %}
+
+        {% if upload_url %}
+        <p><strong>Upload your payment screenshot</strong> (shows PayID, amount, and date):</p>
+        {% if payment_reference %}
+        <p class="muted">Use payment reference <strong>{{ payment_reference }}</strong> in your transfer description.</p>
+        {% endif %}
+        <p><a class="upload-btn" href="{{ upload_url }}">Upload screenshot</a></p>
+        {% else %}
+        <p class="muted">Upload link could not be generated — please reply to your SMS with a screenshot of your payment.</p>
+        {% endif %}
+
+        {% if mandatory %}
+        <p class="muted" style="margin-top:12px;">Your screenshot should clearly show:</p>
+        <ul class="checklist">
+            <li>PayID: {{ payid }}</li>
+            <li>Amount{% if amount_str %}: ${{ amount_str }}{% else %} (matching the deposit above){% endif %}</li>
+            <li>Today’s date</li>
+            <li>Account name: {{ account_name }}</li>
+            {% if payment_reference %}
+            <li>Payment reference: {{ payment_reference }}</li>
+            {% endif %}
+        </ul>
+        <p class="note">Payments are verified automatically where possible (at least 2 of these fields should match).</p>
+        {% endif %}
+    </div>
+</body>
+</html>

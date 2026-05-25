@@ -1,0 +1,26 @@
+{% extends "base_admin.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block page_title %}Audit Log{% endblock %}
+{% block content %}
+<div class="settings-section">
+    <h2>Audit Log (Last 20 Actions)</h2>
+    <table style="width:100%;background:rgba(255,255,255,0.04);color:#fff;border-radius:10px;">
+        <thead>
+            <tr style="color:#ffeb3b;background:rgba(233,30,99,0.12);">
+                <th style="padding:8px;">Time</th>
+                <th style="padding:8px;">Action</th>
+                <th style="padding:8px;">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in audit_log %}
+            <tr>
+                <td style="padding:8px;">{{ row.created_at }}</td>
+                <td style="padding:8px;">{{ row.action }}</td>
+                <td style="padding:8px;white-space:pre-wrap;">{{ row.details }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

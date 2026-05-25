@@ -1,0 +1,1186 @@
+{% extends "base_admin.html" %}
+
+{% set active_page = 'health' %}
+
+{% block title %}System Health{% endblock %}
+{% block page_title %}System Health{% endblock %}
+{% block page_subtitle %}Diagnostics, Troubleshooting & Maintenance{% endblock %}
+
+{% block extra_css %}
+/* Health Score */
+.health-score-hero {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+}
+
+.health-score-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shimmer 4s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.health-score-value {
+    font-size: 48px;
+    font-weight: 900;
+    position: relative;
+}
+
+.health-score-label {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.9;
+    position: relative;
+}
+
+.health-summary-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 12px;
+    position: relative;
+}
+
+.health-summary-item {
+    text-align: center;
+}
+
+.health-summary-item .value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.health-summary-item .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+/* Action Buttons — v4 */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.action-btn {
+    padding: 6px 15px !important;
+    background: linear-gradient(135deg, #1976d2, #1565c0) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 7px !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    font-family: 'Poppins', sans-serif !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 3px 10px rgba(25, 118, 210, 0.5) !important;
+    text-decoration: none !important;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+}
+
+.action-btn.success {
+    background: linear-gradient(135deg, #00e676, #1b5e20) !important;
+    box-shadow: 0 3px 10px rgba(0, 230, 118, 0.5) !important;
+}
+.action-btn.warning {
+    background: linear-gradient(135deg, #ff6d00, #e65100) !important;
+    box-shadow: 0 3px 10px rgba(255, 109, 0, 0.5) !important;
+}
+.action-btn.danger {
+    background: linear-gradient(135deg, #f44336, #b71c1c) !important;
+    box-shadow: 0 3px 10px rgba(244, 67, 54, 0.5) !important;
+}
+.action-btn.secondary {
+    background: linear-gradient(135deg, #00b0ff, #0288d1) !important;
+    box-shadow: 0 3px 10px rgba(0, 176, 255, 0.5) !important;
+}
+
+.action-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+/* Health Test Results */
+.health-results {
+    margin-top: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.health-test-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.health-test-item.passed { border-left-color: #ffeb3b; background: rgba(255, 235, 59, 0.1); }
+.health-test-item.failed { border-left-color: #ff69b4; background: rgba(255, 105, 180, 0.1); }
+.health-test-item.warning { border-left-color: #FF9800; background: rgba(255, 152, 0, 0.1); }
+
+.health-icon { font-size: 24px; color: rgba(255, 255, 255, 0.7); font-weight: 700; }
+.health-content { flex: 1; }
+.health-test-name { font-weight: 600; color: white; margin-bottom: 4px; }
+.health-test-message { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+
+/* Troubleshooting Tips */
+.tip-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tip-card h4 {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tip-card p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.tip-card code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+/* Test Form Styles */
+.test-form { margin-top: 16px; }
+.form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+.test-input {
+    flex: 1;
+    min-width: 150px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+.test-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.test-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+.test-select {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+}
+.test-select option { background: var(--dark); color: white; }
+
+/* Error Log Styles */
+.error-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+}
+.error-log-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid rgba(255, 255, 255, 0.2);
+}
+.error-log-item.error { border-left-color: #ff69b4; }
+.error-log-item.warning { border-left-color: #FF9800; }
+.error-log-item.info { border-left-color: #2196f3; }
+.error-log-timestamp {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 4px;
+}
+.error-log-level {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+    text-transform: uppercase;
+}
+.error-log-level.error { background: rgba(255, 105, 180, 0.3); color: #ff69b4; }
+.error-log-level.warning { background: rgba(255, 152, 0, 0.3); color: #FF9800; }
+.error-log-level.info { background: rgba(33, 150, 243, 0.3); color: #2196f3; }
+.error-log-message {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    word-break: break-word;
+}
+
+/* Info box centring */
+.info-box {
+    text-align: center;
+}
+
+/* Uniform square status cards */
+#statusGrid.status-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+}
+
+@media (max-width: 1200px) {
+    #statusGrid.status-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+#statusGrid .status-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    padding: 10px 6px 6px 6px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #1976d2, #1565c0) !important;
+    border: 2px solid rgba(233, 30, 99, 0.7) !important;
+}
+
+#statusGrid .status-icon {
+    font-size: 24px;
+    margin-bottom: 3px;
+}
+
+#statusGrid .status-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+#statusGrid .status-value {
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    word-break: break-word;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .health-score-value { font-size: 60px; }
+    .health-summary-row { gap: 20px; }
+    #statusGrid.status-grid { grid-template-columns: repeat(3, 1fr); }
+}
+{% endblock %}
+
+{% block content %}
+{% if not authenticated %}
+<div class="login-container">
+    <h1>System Health</h1>
+    <p class="subtitle">Secure Access Required</p>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST" action="/health">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="login">
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+    </form>
+</div>
+{% else %}
+<!-- Health Score -->
+<div class="health-score-hero" id="healthScoreHero">
+    <div class="health-score-value" id="healthScoreValue">--</div>
+    <div class="health-score-label">System Health Score</div>
+    <div class="health-summary-row">
+        <div class="health-summary-item">
+            <div class="value" id="passedCount">-</div>
+            <div class="label">Passed</div>
+        </div>
+        <div class="health-summary-item">
+            <div class="value" id="warningCount">-</div>
+            <div class="label">Warnings</div>
+        </div>
+        <div class="health-summary-item">
+            <div class="value" id="failedCount">-</div>
+            <div class="label">Failed</div>
+        </div>
+    </div>
+</div>
+
+<div id="healthCheckResults" class="health-results" style="margin-bottom: 24px;"></div>
+
+<!-- Service Status Grid -->
+<div class="status-grid" id="statusGrid">
+    <div class="status-card">
+        <div class="status-icon">🤖</div>
+        <div class="status-label">Chatbot</div>
+        <div class="status-value" id="chatbotStatus">Checking...</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">🗄️</div>
+        <div class="status-label">Database</div>
+        <div class="status-value" id="dbStatus">Checking...</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">🧠</div>
+        <div class="status-label">AI Services</div>
+        <div class="status-value" id="aiStatus">Checking...</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">📱</div>
+        <div class="status-label">Mobile API</div>
+        <div class="status-value" id="calendarStatus">Checking...</div>
+        <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:4px; word-break:break-all;">/schedule/api/mobile-sync</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">📱</div>
+        <div class="status-label">httpSMS</div>
+        <div class="status-value" id="smsStatus">Checking...</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">🕐</div>
+        <div class="status-label">Last Inbound SMS</div>
+        <div class="status-value" id="lastInboundSms">-</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">📊</div>
+        <div class="status-label">Messages (1h)</div>
+        <div class="status-value" id="messagesCount">-</div>
+    </div>
+    <div class="status-card" style="padding-top:2px;">
+        <div class="status-icon">⚡</div>
+        <div class="status-label">AI Response</div>
+        <div class="status-value" id="aiResponseTime">-</div>
+        <button onclick="testAIResponseQuick()" style="margin-top:2px; padding:4px 10px; font-size:11px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:white; cursor:pointer;">Test Now</button>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">💬</div>
+        <div class="status-label">Conversations (DB)</div>
+        <div class="status-value" id="activeConversations" title="" style="font-size:12px; line-height:1.2;">-</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">📆</div>
+        <div class="status-label">Today's Bookings</div>
+        <div class="status-value" id="todaysBookings">-</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">🕐</div>
+        <div class="status-label">Last Message</div>
+        <div class="status-value" id="lastMessageTime" style="font-size:11px;">-</div>
+    </div>
+    <div class="status-card">
+        <div class="status-icon">🕒</div>
+        <div class="status-label">Working Hours</div>
+        <div class="status-value" id="availableHours" style="font-size:11px;">-</div>
+    </div>
+</div>
+
+<!-- Test Tools Section -->
+<div class="settings-section">
+    <h2><span>🧪</span> Test Tools</h2>
+
+    <div class="settings-card">
+        <h3>Test AI Response</h3>
+        <div class="info-box">
+            <p>Send a test prompt to Claude or Gemini and see the response time.</p>
+        </div>
+        <div class="test-form">
+            <div class="form-row">
+                <select id="aiProvider" class="test-select">
+                    <option value="claude">Claude</option>
+                    <option value="gemini">Gemini</option>
+                </select>
+                <input type="text" id="aiTestPrompt" class="test-input" placeholder="Enter test prompt..." value="Hello, how are you?">
+                <button onclick="testAIResponse()" class="action-btn" id="testAIBtn">Test AI</button>
+            </div>
+        </div>
+        <div id="aiTestResults" class="health-results"></div>
+    </div>
+
+    <div class="settings-card">
+        <h3>Test SMS</h3>
+        <div class="info-box">
+            <p>Send a test SMS to verify httpSMS is working correctly.</p>
+        </div>
+        <div class="test-form">
+            <div class="form-row">
+                <input type="text" id="testPhone" class="test-input" placeholder="Phone number (e.g., 0412345678)">
+                <input type="text" id="testMessage" class="test-input" placeholder="Test message" value="Test SMS from {{ escort_name or 'escort' }}">
+                <button onclick="testSMS()" class="action-btn" id="testSMSBtn">Send Test</button>
+            </div>
+        </div>
+        <div id="smsTestResults" class="health-results"></div>
+    </div>
+
+    <div class="settings-card">
+        <h3>🗑️ Delete All Conversation States</h3>
+        <div class="info-box">
+            <p>Wipes all client conversation states from the database. Use this to reset stuck conversations during testing. <strong>This cannot be undone.</strong></p>
+        </div>
+        <div style="text-align:center;">
+            <button onclick="clearConversationCache()" class="action-btn danger" id="clearCacheBtn">Delete All Conversation States</button>
+        </div>
+        <div id="clearCacheResult" class="health-results" style="margin-top:10px;"></div>
+    </div>
+</div>
+
+<!-- AI Troubleshooter Section -->
+<div class="settings-section">
+    <h2><span>🤖</span> AI Troubleshooter</h2>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 16px; text-align: center;">Uses Claude as first response and Gemini as second. Describe your issue or pick a common one below.</p>
+
+    <div class="settings-card">
+        <h3>Describe the issue</h3>
+        <textarea id="aiTroubleshootIssue" rows="3" placeholder="e.g. Chatbot not sending SMS to client; clients say they never get a reply..." style="width: 100%; padding: 12px; border-radius: 8px; background: #1e1430; border: 2px solid rgba(255,255,255,0.3); color: #ffeb3b; font-family: inherit; margin-bottom: 12px; resize: vertical;"></textarea>
+        <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 12px;">Quick select:</p>
+        <div class="action-buttons" style="flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+            <button type="button" onclick="setTroubleshootIssue('Chatbot not sending SMS to client')" class="action-btn secondary">Chatbot not sending SMS to client</button>
+            <button type="button" onclick="setTroubleshootIssue('Client not receiving replies')" class="action-btn secondary">Client not receiving replies</button>
+            <button type="button" onclick="setTroubleshootIssue('Mobile APK not syncing or bookings not appearing in app')" class="action-btn secondary">Mobile APK not syncing</button>
+            <button type="button" onclick="setTroubleshootIssue('AI not responding or wrong intent classification')" class="action-btn secondary">AI not responding</button>
+            <button type="button" onclick="setTroubleshootIssue('Bookings not creating or confirmation not sent')" class="action-btn secondary">Bookings not creating</button>
+            <button type="button" onclick="setTroubleshootIssue('Webhook not receiving incoming messages')" class="action-btn secondary">Webhook not receiving</button>
+            <button type="button" onclick="setTroubleshootIssue('Database errors or state not saving')" class="action-btn secondary">Database errors</button>
+            <button type="button" onclick="setTroubleshootIssue('Deposit or payment link not working')" class="action-btn secondary">Deposit / payment link</button>
+        </div>
+        <div style="text-align: center;">
+            <button type="button" onclick="runAiTroubleshoot()" class="action-btn success" id="aiTroubleshootBtn">Get AI diagnosis (Claude + Gemini)</button>
+        </div>
+        <div id="aiTroubleshootResults" class="health-results" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Recent Error Log Section -->
+<div class="settings-section">
+    <h2><span>📋</span> Recent Error Log</h2>
+
+    <div class="settings-card">
+        <div class="action-buttons" style="margin-bottom: 16px;">
+            <button onclick="loadErrorLog()" class="action-btn secondary" id="loadErrorLogBtn">
+                Refresh Log
+            </button>
+        </div>
+        <div id="errorLogContainer" class="error-log-container">
+            <p style="color: rgba(255,255,255,0.5); text-align: center;">Click "Refresh Log" to load recent errors</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if authenticated %}
+<script>
+/* Escort-local IANA (admin Location) — for timestamp display, not the browser zone */
+const ESCORT_IANA = {{ (escort_timezone or escort_default_iana) | tojson }};
+
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+
+async function csrfFetch(url, options = {}) {
+    const method = (String(options.method || 'GET')).toUpperCase();
+    const token = getCSRFToken();
+    const h = options.headers;
+    const flat = h && h instanceof Headers
+        ? Object.fromEntries(h.entries())
+        : (h && typeof h === 'object' ? { ...h } : {});
+
+    const headers = { 'X-CSRFToken': token, ...flat };
+    let body = options.body;
+    if (method === 'POST' && (body === undefined || body === null)) {
+        body = new URLSearchParams({ csrf_token: token });
+        if (!headers['Content-Type'] && !headers['content-type']) {
+            headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
+    }
+
+    return fetch(url, {
+        ...options,
+        credentials: options.credentials ?? 'same-origin',
+        headers,
+        ...(body !== undefined ? { body } : {}),
+    });
+}
+
+function updateStatusCard(elementId, status, text) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = text || status?.toUpperCase() || 'UNKNOWN';
+    el.className = 'status-value';
+    if (status === 'healthy' || status === 'configured' || status === 'connected') {
+        el.classList.add('status-healthy');
+    } else if (status === 'error' || status === 'not_configured' || status === 'offline') {
+        el.classList.add('status-error');
+    } else {
+        el.classList.add('status-warning');
+    }
+}
+
+async function runHealthCheck() {
+    const resultsDiv = document.getElementById('healthCheckResults');
+
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.7);">Running health check...</div>';
+
+    try {
+        const response = await csrfFetch('/admin/run-health-check', { method: 'POST' });
+        const result = await response.json();
+
+        if (result.success) {
+            const data = result.results;
+
+            document.getElementById('healthScoreValue').textContent = data.health_score + '%';
+            document.getElementById('passedCount').textContent = data.summary.passed;
+            document.getElementById('warningCount').textContent = data.summary.warnings;
+            document.getElementById('failedCount').textContent = data.summary.failed;
+
+            const hero = document.getElementById('healthScoreHero');
+            if (data.health_score == null) {
+                hero.style.background = 'linear-gradient(135deg, #4CAF50, #2E7D32)';
+            } else if (data.health_score >= 90) {
+                hero.style.background = 'linear-gradient(135deg, #4CAF50, #2E7D32)';
+            } else if (data.health_score >= 50) {
+                hero.style.background = 'linear-gradient(135deg, #FF9800, #F57C00)';
+            } else {
+                hero.style.background = 'linear-gradient(135deg, #f44336, #c62828)';
+            }
+
+            let html = '';
+            data.tests.forEach(test => {
+                const icon = test.status === 'passed' ? 'OK' : test.status === 'warning' ? '!' : 'X';
+                html += `
+                    <div class="health-test-item ${test.status}">
+                        <div class="health-icon">${icon}</div>
+                        <div class="health-content">
+                            <div class="health-test-name">${test.name}</div>
+                            <div class="health-test-message">${test.message}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${result.error}</div></div></div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${error.message}</div></div></div>`;
+    }
+}
+
+async function checkSystemStatus() {
+    try {
+        const response = await csrfFetch('/admin/check-system-status');
+        const result = await response.json();
+
+        if (result.success) {
+            const status = result.status;
+
+            const chatbotStatus = status.chatbot?.status || 'unknown';
+            updateStatusCard('chatbotStatus', chatbotStatus === 'online' ? 'healthy' : 'offline', chatbotStatus.toUpperCase());
+
+            const dbStatus = status.database?.status || 'unknown';
+            updateStatusCard('dbStatus', dbStatus === 'healthy' ? 'healthy' : 'error', dbStatus.toUpperCase());
+
+            const aiStatus = status.ai_services?.status || 'unknown';
+            updateStatusCard('aiStatus', aiStatus === 'available' ? 'healthy' : 'warning', aiStatus.toUpperCase());
+
+            const smsStatus = status.sms?.status || 'unknown';
+            updateStatusCard('smsStatus', smsStatus === 'configured' ? 'healthy' : 'warning', smsStatus.toUpperCase());
+
+            const mobileApiStatus = status.mobile_api?.status || 'unknown';
+            updateStatusCard('calendarStatus', mobileApiStatus === 'operational' ? 'healthy' : 'error', mobileApiStatus.toUpperCase());
+
+            if (status.performance) {
+                const perf = status.performance;
+                const msgCount = document.getElementById('messagesCount');
+                if (msgCount) {
+                    msgCount.textContent = perf.messages_last_hour || '0';
+                    msgCount.className = 'status-value status-healthy';
+                }
+
+                const activeConvsEl = document.getElementById('activeConversations');
+                if (activeConvsEl) {
+                    const total = perf.conversation_states_total;
+                    const active = perf.active_conversations;
+                    if (total != null && total !== undefined) {
+                        const inProg = (active != null && active !== undefined) ? active : 0;
+                        activeConvsEl.textContent = total + ' in DB' + (inProg > 0 ? ' (' + inProg + ' in progress)' : '');
+                        activeConvsEl.title = 'Total client rows. "In progress" counts states other than NEW.';
+                    } else {
+                        activeConvsEl.textContent = '-';
+                        activeConvsEl.removeAttribute('title');
+                    }
+                    activeConvsEl.className = 'status-value ' + ((Number(total) || 0) > 0 ? 'status-healthy' : 'status-warning');
+                }
+
+                const todayEl = document.getElementById('todaysBookings');
+                if (todayEl) {
+                    todayEl.textContent = perf.todays_bookings != null ? perf.todays_bookings : '-';
+                    todayEl.className = 'status-value status-healthy';
+                }
+
+                const lastMsgEl = document.getElementById('lastMessageTime');
+                if (lastMsgEl) {
+                    if (perf.last_message_at) {
+                        const ago = timeSince(new Date(perf.last_message_at));
+                        lastMsgEl.textContent = ago;
+                        lastMsgEl.className = 'status-value status-healthy';
+                        lastMsgEl.title = perf.last_message_at;
+                    } else {
+                        lastMsgEl.textContent = 'No messages';
+                        lastMsgEl.className = 'status-value status-warning';
+                    }
+                }
+
+                const hoursEl = document.getElementById('availableHours');
+                if (hoursEl) {
+                    hoursEl.textContent = perf.available_hours || 'Not set';
+                    hoursEl.className = 'status-value ' + (perf.available_hours ? 'status-healthy' : 'status-warning');
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Status check failed:', e);
+        updateStatusCard('chatbotStatus', 'error', 'ERROR');
+        updateStatusCard('dbStatus', 'error', 'ERROR');
+        updateStatusCard('aiStatus', 'error', 'ERROR');
+        updateStatusCard('smsStatus', 'error', 'ERROR');
+        updateStatusCard('calendarStatus', 'error', 'ERROR');
+    }
+}
+
+async function clearConversationCache() {
+    if (!confirm('This will reset ALL active conversations including any in-progress bookings. Confirmed bookings in the calendar are unaffected. Continue?')) return;
+
+    const btn = document.getElementById('clearCacheBtn');
+    btn.disabled = true;
+    btn.textContent = 'Clearing...';
+
+    try {
+        const response = await csrfFetch('/admin/clear-conversation-cache', { method: 'POST' });
+        const result = await response.json();
+
+        if (result.success) {
+            alert(`Cleared ${result.cleared_count} conversation records.`);
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Clear Conv. Cache';
+    }
+}
+
+
+async function getLastInboundSms() {
+    const el = document.getElementById('lastInboundSms');
+    try {
+        const response = await csrfFetch('/admin/last-inbound-sms');
+        const result = await response.json().catch(() => ({}));
+        if (result.success && result.timestamp) {
+            const ts = new Date(result.timestamp);
+            const diffMs = Date.now() - ts.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            let label;
+            if (diffMins < 1) label = 'Just now';
+            else if (diffMins < 60) label = `${diffMins}m ago`;
+            else if (diffMins < 1440) label = `${Math.floor(diffMins / 60)}h ago`;
+            else label = `${Math.floor(diffMins / 1440)}d ago`;
+            el.textContent = label;
+            el.className = diffMins > 1440 ? 'status-value status-warning' : 'status-value status-healthy';
+            el.title = ts.toLocaleString('en-AU', { timeZone: ESCORT_IANA });
+        } else if (result.success && !result.timestamp) {
+            el.textContent = 'None recorded';
+            el.className = 'status-value status-warning';
+        } else {
+            el.textContent = 'Error';
+            el.className = 'status-value status-warning';
+            el.title = result.error || '';
+        }
+    } catch (e) {
+        el.textContent = 'Error';
+        el.className = 'status-value status-warning';
+    }
+}
+
+async function autoCheckAI() {
+    const rtEl = document.getElementById('aiResponseTime');
+    rtEl.textContent = '...';
+    rtEl.className = 'status-value';
+    rtEl.title = '';
+
+    try {
+        const response = await csrfFetch('/admin/test-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Hi', provider: 'claude' })
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (result.success && result.response_time_ms != null) {
+            rtEl.textContent = result.response_time_ms + 'ms';
+            rtEl.className = 'status-value status-healthy';
+            rtEl.title = '';
+        } else {
+            rtEl.textContent = (result.error && result.error.length < 30) ? result.error : 'N/A';
+            rtEl.className = 'status-value status-warning';
+            rtEl.title = result.error || 'AI test failed';
+        }
+    } catch (e) {
+        rtEl.textContent = 'Error';
+        rtEl.className = 'status-value status-warning';
+        rtEl.title = e.message || 'Request failed';
+    }
+}
+
+async function testAIResponse() {
+    const btn = document.getElementById('testAIBtn');
+    const resultsDiv = document.getElementById('aiTestResults');
+    const prompt = document.getElementById('aiTestPrompt').value;
+    const provider = document.getElementById('aiProvider').value;
+
+    if (!prompt.trim()) {
+        alert('Please enter a test prompt');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.7);">Sending test to ' + provider + '...</div>';
+
+    try {
+        const response = await csrfFetch('/admin/test-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, provider })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            resultsDiv.innerHTML = `
+                <div class="health-test-item passed">
+                    <div class="health-icon">OK</div>
+                    <div class="health-content">
+                        <div class="health-test-name">${result.provider.toUpperCase()} Response (${result.response_time_ms}ms)</div>
+                        <div class="health-test-message">${result.response}</div>
+                    </div>
+                </div>`;
+            const rtEl = document.getElementById('aiResponseTime');
+            rtEl.textContent = result.response_time_ms + 'ms';
+            rtEl.className = 'status-value status-healthy';
+        } else {
+            resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">Test Failed</div><div class="health-test-message">${result.error}</div></div></div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${error.message}</div></div></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test AI';
+    }
+}
+
+async function testSMS() {
+    const btn = document.getElementById('testSMSBtn');
+    const resultsDiv = document.getElementById('smsTestResults');
+    const phone = document.getElementById('testPhone').value;
+    const message = document.getElementById('testMessage').value;
+
+    if (!phone.trim()) {
+        alert('Please enter a phone number');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.7);">Sending test SMS...</div>';
+
+    try {
+        const response = await csrfFetch('/admin/test-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, message })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            resultsDiv.innerHTML = `<div class="health-test-item passed"><div class="health-icon">OK</div><div class="health-content"><div class="health-test-name">SMS Sent</div><div class="health-test-message">${result.message}</div></div></div>`;
+        } else {
+            resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">SMS Failed</div><div class="health-test-message">${result.error}</div></div></div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">X</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${error.message}</div></div></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Test';
+    }
+}
+
+function formatToEscortLocalTime(timestamp) {
+    if (!timestamp) return 'Unknown time';
+    try {
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+            return timestamp;
+        }
+        return date.toLocaleString('en-AU', {
+            timeZone: ESCORT_IANA,
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    } catch (e) {
+        return timestamp;
+    }
+}
+
+async function loadErrorLog() {
+    const btn = document.getElementById('loadErrorLogBtn');
+    const container = document.getElementById('errorLogContainer');
+
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+
+    try {
+        const response = await csrfFetch('/admin/get-error-log');
+        const result = await response.json();
+
+        if (result.success) {
+            if (result.errors && result.errors.length > 0) {
+                let html = '';
+                result.errors.forEach(err => {
+                    const levelClass = err.level.toLowerCase().includes('error') ? 'error' :
+                                      err.level.toLowerCase().includes('warning') ? 'warning' : 'info';
+                    const adelaideTime = formatToEscortLocalTime(err.timestamp);
+                    html += `
+                        <div class="error-log-item ${levelClass}">
+                            <div class="error-log-timestamp">${adelaideTime} (escort local · ${ESCORT_IANA})</div>
+                            <span class="error-log-level ${levelClass}">${err.level}</span>
+                            <div class="error-log-message">${err.message}</div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            } else {
+                const note = result.note ? result.note : 'No recent errors found.';
+                container.innerHTML = `<p style="color: rgba(255,255,255,0.5); text-align: center;">${note}</p>`;
+            }
+        } else {
+            container.innerHTML = `<p style="color: #ff69b4; text-align: center;">Error: ${result.error}</p>`;
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #ff69b4; text-align: center;">Error: ${error.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Refresh Log';
+    }
+}
+
+function setTroubleshootIssue(text) {
+    const el = document.getElementById('aiTroubleshootIssue');
+    if (el) el.value = text;
+}
+
+async function runAiTroubleshoot() {
+    const resultsDiv = document.getElementById('aiTroubleshootResults');
+    const btn = document.getElementById('aiTroubleshootBtn');
+    const issue = (document.getElementById('aiTroubleshootIssue') || {}).value || '';
+
+    if (!issue.trim()) {
+        resultsDiv.innerHTML = '<div class="health-test-item failed"><div class="health-icon">⚠️</div><div class="health-content"><div class="health-test-name">Missing issue</div><div class="health-test-message">Please describe the issue or pick a quick-select option above.</div></div></div>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Asking Claude & Gemini...';
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 24px; color: rgba(255,255,255,0.7);">Running AI troubleshooter (Claude first, then Gemini)...</div>';
+
+    try {
+        const response = await csrfFetch('/admin/ai-troubleshoot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ issue: issue.trim() })
+        });
+        const data = await response.json();
+
+        if (!data.success && data.error && !data.claude_response && !data.gemini_response) {
+            resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">❌</div><div class="health-content"><div class="health-test-name">AI Troubleshooter</div><div class="health-test-message">${data.error}${data.claude_error ? '<br><small>Claude: ' + data.claude_error + '</small>' : ''}${data.gemini_error ? '<br><small>Gemini: ' + data.gemini_error + '</small>' : ''}</div></div></div>`;
+            return;
+        }
+
+        let html = '<div style="margin-bottom: 16px;"><strong style="color: rgba(255,255,255,0.9);">Issue:</strong> ' + escapeHtml(issue) + '</div>';
+
+        if (data.claude_response) {
+            html += `<div style="margin-bottom: 20px; padding: 16px; background: rgba(33,150,243,0.15); border-radius: 12px; border-left: 4px solid #2196F3;">
+                <div style="color: #2196F3; font-weight: 700; margin-bottom: 8px;">🤖 Claude (first response)</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 14px; white-space: pre-wrap;">${escapeHtml(data.claude_response)}</div>
+            </div>`;
+        } else if (data.claude_error) {
+            html += `<div style="margin-bottom: 12px; padding: 12px; background: rgba(244,67,54,0.1); border-radius: 8px;"><strong style="color: #f44336;">Claude:</strong> <span style="color: rgba(255,255,255,0.7);">${escapeHtml(data.claude_error)}</span></div>`;
+        }
+
+        if (data.gemini_response) {
+            html += `<div style="margin-bottom: 20px; padding: 16px; background: rgba(76,175,80,0.15); border-radius: 12px; border-left: 4px solid #4CAF50;">
+                <div style="color: #4CAF50; font-weight: 700; margin-bottom: 8px;">✨ Gemini (second response)</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 14px; white-space: pre-wrap;">${escapeHtml(data.gemini_response)}</div>
+            </div>`;
+        } else if (data.gemini_error) {
+            html += `<div style="margin-bottom: 12px; padding: 12px; background: rgba(244,67,54,0.1); border-radius: 8px;"><strong style="color: #f44336;">Gemini:</strong> <span style="color: rgba(255,255,255,0.7);">${escapeHtml(data.gemini_error)}</span></div>`;
+        }
+
+        resultsDiv.innerHTML = html;
+    } catch (err) {
+        resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">❌</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${escapeHtml(err.message)}</div></div></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Get AI diagnosis (Claude + Gemini)';
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function diagnoseComponent(component) {
+    const resultsDiv = document.getElementById('troubleshooterResults');
+    const btn = document.getElementById('diag' + component.charAt(0).toUpperCase() + component.slice(1) + 'Btn');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Testing...';
+    }
+
+    resultsDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.7);">Running ${component} diagnostics...</div>`;
+
+    try {
+        const response = await csrfFetch('/admin/diagnose-component', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ component: component })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            let html = `<div style="margin-bottom: 16px; padding: 12px; background: rgba(76,175,80,0.2); border-radius: 8px; border-left: 4px solid #4CAF50;">
+                <strong style="color: #4CAF50;">${component.toUpperCase()} Diagnostics Complete</strong>
+            </div>`;
+
+            result.checks.forEach(check => {
+                const icon = check.status === 'pass' ? '✅' : check.status === 'warning' ? '⚠️' : '❌';
+                const bgColor = check.status === 'pass' ? 'rgba(76,175,80,0.1)' : check.status === 'warning' ? 'rgba(255,152,0,0.1)' : 'rgba(244,67,54,0.1)';
+                const borderColor = check.status === 'pass' ? '#4CAF50' : check.status === 'warning' ? '#FF9800' : '#f44336';
+
+                html += `
+                    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: ${bgColor}; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${borderColor};">
+                        <span style="font-size: 18px;">${icon}</span>
+                        <div style="flex: 1;">
+                            <div style="color: white; font-weight: 600;">${check.name}</div>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px;">${check.message}</div>
+                            ${check.fix ? `<div style="color: #FF9800; font-size: 12px; margin-top: 8px;"><strong>Fix:</strong> ${check.fix}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">❌</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${result.error}</div></div></div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="health-test-item failed"><div class="health-icon">❌</div><div class="health-content"><div class="health-test-name">Error</div><div class="health-test-message">${error.message}</div></div></div>`;
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = component.charAt(0).toUpperCase() + component.slice(1);
+        }
+    }
+}
+
+async function diagnoseAll() {
+    const resultsDiv = document.getElementById('troubleshooterResults');
+    const btn = document.getElementById('diagAllBtn');
+    const components = ['database', 'mobile_api', 'ai', 'sms', 'pricing', 'location'];
+
+    btn.disabled = true;
+    btn.textContent = 'Running All...';
+
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.7);">Running all diagnostics... This may take a moment.</div>';
+
+    let allResults = [];
+
+    for (const component of components) {
+        try {
+            const response = await csrfFetch('/admin/diagnose-component', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ component: component })
+            });
+            const result = await response.json();
+            if (result.success) {
+                allResults.push({ component, checks: result.checks });
+            }
+        } catch (e) {
+            allResults.push({ component, checks: [{ name: 'Connection', status: 'fail', message: e.message }] });
+        }
+    }
+
+    let html = '';
+    allResults.forEach(({ component, checks }) => {
+        const passCount = checks.filter(c => c.status === 'pass').length;
+        const total = checks.length;
+        const statusColor = passCount === total ? '#4CAF50' : passCount > 0 ? '#FF9800' : '#f44336';
+
+        html += `<div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <span style="font-size: 16px; font-weight: 700; color: ${statusColor};">${component.toUpperCase()}</span>
+                <span style="color: rgba(255,255,255,0.6); font-size: 12px;">${passCount}/${total} checks passed</span>
+            </div>`;
+
+        checks.forEach(check => {
+            const icon = check.status === 'pass' ? '✅' : check.status === 'warning' ? '⚠️' : '❌';
+            html += `<div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 4px;">
+                <span>${icon}</span>
+                <span style="color: rgba(255,255,255,0.8); font-size: 13px;">${check.name}: ${check.message}</span>
+            </div>`;
+        });
+
+        html += '</div>';
+    });
+
+    resultsDiv.innerHTML = html;
+    btn.disabled = false;
+    btn.textContent = 'Run All Diagnostics';
+}
+
+function timeSince(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return seconds + 's ago';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ago';
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+}
+
+async function testAIResponseQuick() {
+    const rtEl = document.getElementById('aiResponseTime');
+    rtEl.textContent = '...';
+    rtEl.className = 'status-value';
+    try {
+        const response = await csrfFetch('/admin/test-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Hi', provider: 'claude' })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (result.success && result.response_time_ms != null) {
+            rtEl.textContent = result.response_time_ms + 'ms';
+            rtEl.className = 'status-value status-healthy';
+        } else {
+            rtEl.textContent = 'N/A';
+            rtEl.className = 'status-value status-warning';
+            rtEl.title = result.error || 'AI test failed';
+        }
+    } catch (e) {
+        rtEl.textContent = 'Error';
+        rtEl.className = 'status-value status-warning';
+    }
+}
+
+async function runScheduledJobs() {
+    const btn = document.getElementById('runScheduledJobsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+    try {
+        const response = await csrfFetch('/admin/run-scheduled-jobs', { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            alert('Scheduled jobs completed: ' + JSON.stringify(result.summary));
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Scheduled Jobs';
+    }
+}
+
+window.addEventListener('load', () => {
+    setTimeout(checkSystemStatus, 500);
+    setTimeout(runHealthCheck, 1000);
+    setTimeout(getLastInboundSms, 1500);
+
+    setInterval(() => {
+        checkSystemStatus();
+        console.log('[Auto-Refresh] Status updated at ' + new Date().toLocaleTimeString());
+    }, 30000);
+});
+
+const autoRefreshIndicator = document.createElement('div');
+autoRefreshIndicator.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: rgba(76, 175, 80, 0.9); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 1000;';
+autoRefreshIndicator.innerHTML = '🔄 Auto-refresh: 30s';
+document.body.appendChild(autoRefreshIndicator);
+</script>
+{% endif %}
+{% endblock %}

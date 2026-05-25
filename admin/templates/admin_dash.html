@@ -488,8 +488,6 @@
     <div class="settings-card">
         <form method="POST" action="/config/save-escort-sms">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <!-- MASTER TOGGLE -->
             <div class="toggle-container">
                 <span class="toggle-label" style="font-weight:700;" id="lblEscortSmsMaster">All SMS Notifications (Master Switch) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(turns all SMS alerts on or off — individual toggles below are ignored when this is off)</span></span>
                 <label class="toggle-switch" aria-labelledby="lblEscortSmsMaster">
@@ -497,17 +495,13 @@
                     <span class="slider"></span>
                 </label>
             </div>
-
-            <!-- Client Feedback -->
             <div class="toggle-container">
-                <span class="toggle-label" id="lblClientFeedback">Client Feedback Requests <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(sends you an SMS with a link to rate the client ~5 minutes after the booking ends — you can give a star rating and optionally block them)</span></span>
+                <span class="toggle-label" id="lblClientFeedback">Client Feedback Requests <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(sends you an SMS with a link to rate the client within ~1 hour after the booking ends — you can give a star rating and optionally block them)</span></span>
                 <label class="toggle-switch" aria-labelledby="lblClientFeedback">
                     <input type="checkbox" id="clientFeedbackEnabled" name="client_feedback_enabled" aria-labelledby="lblClientFeedback" {% if client_feedback_enabled %}checked{% endif %}>
                     <span class="slider"></span>
                 </label>
             </div>
-
-            <!-- Incall 1h reminder -->
             <div class="toggle-container">
                 <span class="toggle-label" id="lblIncall1h">Incall 1h reminder to clients <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(SMS client ~1 hour before start: intercom/lobby from Location page — Perth = lobby; elsewhere = intercom number)</span></span>
                 <label class="toggle-switch" aria-labelledby="lblIncall1h">
@@ -515,8 +509,6 @@
                     <span class="slider"></span>
                 </label>
             </div>
-
-            <!-- Incall forward replies -->
             <div class="toggle-container">
                 <span class="toggle-label" id="lblIncallForward">All texts go through to your phone number 1 hour prior to booking start time <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(client messages are forwarded; bot does not reply — use the Incall row below to receive the forwards)</span></span>
                 <label class="toggle-switch" aria-labelledby="lblIncallForward">
@@ -524,105 +516,15 @@
                     <span class="slider"></span>
                 </label>
             </div>
-
-            <!-- PER-CATEGORY TOGGLES (explicit, with descriptions) -->
-
+            {% for cat_key, cat_label in ESCORT_SMS_CATEGORIES %}
             <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsDeposit">Deposit validation failed <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client submits a deposit receipt that can't be verified — e.g. wrong amount, wrong PayID, or screenshot rejected)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsDeposit">
-                    <input type="checkbox" id="escortSmsDepositValidationFailed" name="escort_sms_deposit_validation_failed" {% if escort_sms_categories.get('deposit_validation_failed', True) %}checked{% endif %}>
+                <span class="toggle-label" id="lblSmsCat{{ cat_key }}">{{ cat_label }}</span>
+                <label class="toggle-switch" aria-labelledby="lblSmsCat{{ cat_key }}">
+                    <input type="checkbox" id="escortSms{{ cat_key }}" name="escort_sms_{{ cat_key }}" aria-labelledby="lblSmsCat{{ cat_key }}" {% if escort_sms_categories.get(cat_key, True) %}checked{% endif %}>
                     <span class="slider"></span>
                 </label>
             </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsOutcall">Outcall notifications <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client books an outcall — includes their confirmed address and the time, so you can plan travel)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsOutcall">
-                    <input type="checkbox" id="escortSmsOutcall" name="escort_sms_outcall_notifications" {% if escort_sms_categories.get('outcall_notifications', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsEnquiry">Enquiry forwarding <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(when a client texts "ENQUIRY &lt;question&gt;", the bot forwards their question to you so you can respond personally — useful for unusual requests)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsEnquiry">
-                    <input type="checkbox" id="escortSmsEnquiry" name="escort_sms_enquiry_forwarding" {% if escort_sms_categories.get('enquiry_forwarding', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsRefund">Refund forwarding <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you when a client requests a refund — includes their name and booking details so you can review and action it)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsRefund">
-                    <input type="checkbox" id="escortSmsRefund" name="escort_sms_refund_forwarding" {% if escort_sms_categories.get('refund_forwarding', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsDoubles">Doubles booking — source escort alert (MFF/MMF) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(when a client requests a doubles booking, the system sends you an alert with the client's request so you can arrange and confirm the second escort)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsDoubles">
-                    <input type="checkbox" id="escortSmsDoubles" name="escort_sms_doubles_source_escort" {% if escort_sms_categories.get('doubles_source_escort', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsSafety">Safety screening match alerts <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(alerts you immediately if an incoming client's number matches the ugly mugs / safety watchlist — includes their name and the reason they're flagged)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsSafety">
-                    <input type="checkbox" id="escortSmsSafety" name="escort_sms_safety_screening" {% if escort_sms_categories.get('safety_screening', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsSpecial">Extended experience enquiry alerts <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(notifies you immediately when a client enquires about Overnight, Dirty Weekend, or Fly Me To You experiences — so you can personally contact them rather than leaving it to the bot)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsSpecial">
-                    <input type="checkbox" id="escortSmsSpecial" name="escort_sms_special_bookings" {% if escort_sms_categories.get('special_bookings', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsRating">Post-booking client rating <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(~5 minutes after a booking ends, you receive an SMS with a link to rate the client — you can log whether they were easy to deal with and optionally flag them for screening)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsRating">
-                    <input type="checkbox" id="escortSmsRating" name="escort_sms_client_rating" {% if escort_sms_categories.get('client_rating', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsFeedback">Post-booking feedback acknowledgements <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(after a client submits feedback, the bot relays a brief summary to you via SMS — e.g. "Client rated 3 STAR, yes/no/yes on questions")</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsFeedback">
-                    <input type="checkbox" id="escortSmsFeedback" name="escort_sms_feedback_replies" {% if escort_sms_categories.get('feedback_replies', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsIncallFwd">Incall client text forwards (1h before) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(from 1 hour before an incall booking starts, any text the client sends is forwarded directly to your phone — the bot goes silent so you handle communication directly)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsIncallFwd">
-                    <input type="checkbox" id="escortSmsIncallFwd" name="escort_sms_incall_client_forwards" {% if escort_sms_categories.get('incall_client_forwards', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsDepositFollowup">Deposit follow-up reminder <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(if a client has been asked for a deposit but hasn't paid after 4 hours, you receive an SMS reminder with their name and booking details so you can follow up or cancel the slot)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsDepositFollowup">
-                    <input type="checkbox" id="escortSmsDepositFollowup" name="escort_sms_deposit_followup" {% if escort_sms_categories.get('deposit_followup', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-container">
-                <span class="toggle-label" id="lblSmsCheckin">Pre-booking check-in (2h heads-up) <span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;">(approximately 2 hours before a confirmed booking starts, you receive an SMS reminder with the client's name, time, duration, and location — so you can prepare)</span></span>
-                <label class="toggle-switch" aria-labelledby="lblSmsCheckin">
-                    <input type="checkbox" id="escortSmsPrebookingCheckin" name="escort_sms_prebooking_checkin" {% if escort_sms_categories.get('prebooking_checkin', True) %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
+            {% endfor %}
             <button type="submit" class="submit-btn">Save Notification Settings</button>
         </form>
     </div>

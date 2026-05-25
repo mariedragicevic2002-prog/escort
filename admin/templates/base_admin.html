@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Admin Dashboard{% endblock %} - {{ escort_name or 'Admin' }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --dark: #1a1a2e;
+            --dark-secondary: #16213e;
+            --dark-tertiary: #0f0f23;
+            --light: #f8f9fa;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --info: #2196f3;
+            --glass: rgba(255, 255, 255, 0.95);
+            --glass-dark: rgba(30, 30, 50, 0.9);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 50%, var(--dark-tertiary) 100%);
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            color: #ffeb3b;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.08) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            color: #ffeb3b;
+        }
+
+        .container input, .container textarea, .container select {
+            color: #ffeb3b !important;
+        }
+
+        /* Login Form - Dark Theme */
+        .login-container {
+            max-width: 420px;
+            margin: 80px auto;
+            background: var(--glass-dark);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 40px;
+        }
+
+        .login-container h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .login-container .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .login-container .form-group input {
+            background: #1e1430;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #ffeb3b;
+            transition: all 0.3s ease;
+        }
+
+        .login-container .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .login-container .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1);
+        }
+
+        .login-container .form-group label {
+            color: #ff69b4;
+        }
+
+        /* Dashboard Header */
+        /* ============================================================
+           3-COLUMN HEADER: Date/Time | Page Title | Next Booking
+           ============================================================ */
+        .dashboard-header {
+            display: grid;
+            grid-template-columns: minmax(230px, 1fr) 1.2fr minmax(230px, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: stretch;
+        }
+
+        .dash-center {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+        }
+
+        .dash-center h1 {
+            font-size: 30px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .dash-center .subtitle {
+            color: #ffeb3b;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* ---- Side panels (shared) ---- */
+        .dt-panel, .nb-panel {
+            background: transparent;
+            border-radius: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: none;
+            padding: 11px 14px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dt-panel-label, .nb-panel-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ---- DATE & TIME panel ---- */
+        .dt-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cal-icon {
+            flex-shrink: 0;
+            width: 46px;
+            border-radius: 7px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+        }
+
+        .cal-icon-header {
+            background: linear-gradient(135deg, #c62828, #e53935);
+            color: #fff;
+            text-align: center;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            padding: 3px 0 2px;
+            text-transform: uppercase;
+        }
+
+        .cal-icon-body {
+            background: #fff;
+            text-align: center;
+            padding: 3px 0 5px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .cal-icon-day-num {
+            font-size: 21px;
+            font-weight: 900;
+            color: #1a1a2e;
+            line-height: 1.1;
+        }
+
+        .cal-icon-dow {
+            font-size: 6px;
+            font-weight: 700;
+            color: #777;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Flip clock */
+        .flip-clock {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-wrap: nowrap;
+        }
+
+        .flip-digit {
+            width: 26px;
+            height: 37px;
+            background: #111;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #f0f0f0;
+            font-family: 'Courier New', Courier, monospace;
+            position: relative;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+            overflow: hidden;
+            perspective: 150px;
+        }
+
+        .flip-digit::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1.5px;
+            background: rgba(0, 0, 0, 0.75);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .fd-val {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fd-flip {
+            0%   { transform: rotateX(0deg);   opacity: 1; }
+            40%  { transform: rotateX(-90deg);  opacity: 0; }
+            60%  { transform: rotateX(-90deg);  opacity: 0; }
+            100% { transform: rotateX(0deg);    opacity: 1; }
+        }
+
+        .flip-digit.flipping .fd-val {
+            animation: fd-flip 0.36s ease-in-out;
+        }
+
+        .clock-colon {
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 37px;
+            padding: 0 1px;
+            animation: blink-colon 1s step-end infinite;
+        }
+
+        @keyframes blink-colon {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.2; }
+        }
+
+        .clock-ampm {
+            font-size: 10px;
+            font-weight: 800;
+            color: #e91e63;
+            background: rgba(233, 30, 99, 0.1);
+            border: 1px solid rgba(233, 30, 99, 0.35);
+            border-radius: 4px;
+            padding: 2px 5px;
+            margin-left: 2px;
+            align-self: flex-end;
+            margin-bottom: 7px;
+        }
+
+        .dt-year-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        /* ---- Next Booking panel ---- */
+        .nb-countdown {
+            font-size: 21px;
+            font-weight: 800;
+            color: #e91e63;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .nb-client {
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .nb-detail {
+            font-size: 9px;
+            color: rgba(255,255,255,0.75);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nb-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .nb-badge.incall {
+            background: rgba(76,175,80,0.25);
+            color: #a5d6a7;
+            border: 1px solid rgba(76,175,80,0.45);
+        }
+
+        .nb-badge.outcall {
+            background: rgba(33,150,243,0.25);
+            color: #90caf9;
+            border: 1px solid rgba(33,150,243,0.45);
+        }
+
+        .nb-none {
+            font-size: 10px;
+            color: rgba(255,255,255,0.45);
+            font-style: italic;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        /* Responsive: stack panels on smaller screens */
+        @media (max-width: 900px) {
+            .dashboard-header {
+                grid-template-columns: 1fr !important;
+            }
+            .dt-panel, .nb-panel {
+                min-width: unset;
+            }
+        }
+
+        /* Nav Buttons */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            padding: 16px 20px;
+            background: var(--glass-dark);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn .icon {
+            font-size: 20px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(233, 30, 99, 0.3);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+        }
+
+        /* Settings Section */
+        .settings-section {
+            background: var(--glass-dark);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-section h2 {
+            color: #ffeb3b;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .settings-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-card:last-child { margin-bottom: 0; }
+
+        .settings-card h3 {
+            color: #ffeb3b;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffeb3b;
+            margin-bottom: 8px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            background: #1e1430;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            color: #ffeb3b;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: rgba(255, 235, 59, 0.5);
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+        }
+
+        /* All dropdowns site-wide: dark background, yellow text */
+        select, .form-group select {
+            background: #1e1430 !important;
+            color: #ffeb3b !important;
+        }
+        select option, select optgroup {
+            background: #1e1430 !important;
+            color: #ffeb3b !important;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+        }
+
+        .submit-btn.danger { background: linear-gradient(135deg, #f44336, #ff5722); }
+
+        .success-msg {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid var(--success);
+            color: #ffeb3b;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .error-msg {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid var(--danger);
+            color: #ff69b4;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffeb3b;
+        }
+
+        table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        /* Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: var(--glass-dark);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.2);
+        }
+
+        .status-card h3 {
+            color: #ffeb3b;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .status-card .value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        .status-card .value.success { color: #2ecc71; }
+        .status-card .value.danger { color: #e74c3c; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .dashboard-header h1 { font-size: 28px; }
+            .dashboard-header .subtitle { font-size: 14px; }
+            .nav-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .nav-btn { padding: 12px 8px; font-size: 12px; }
+            .settings-section { padding: 20px 16px; }
+            .settings-card { padding: 16px; }
+            .form-group input, .form-group textarea, .form-group select {
+                font-size: 16px !important;
+                min-height: 44px;
+            }
+            .submit-btn { min-height: 48px; font-size: 15px; }
+            .settings-section table, .chart-container table, table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .toggle-container { flex-wrap: wrap; gap: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-grid { grid-template-columns: repeat(2, 1fr); }
+            .settings-section { padding: 16px 12px; }
+        }
+
+        /* ── Shared admin modal / form theme ─────────────────────────── */
+        .admin-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .admin-modal-box {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .admin-modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .admin-modal-title {
+            color: #ffeb3b; font-size: 20px; margin: 0;
+            font-family: 'Poppins', sans-serif; font-weight: 700;
+        }
+        .admin-modal-close {
+            background: none; border: none;
+            color: rgba(255,255,255,0.5); font-size: 28px;
+            cursor: pointer; line-height: 1; transition: color 0.2s;
+        }
+        .admin-modal-close:hover { color: #ffeb3b; }
+        .admin-field { margin-bottom: 18px; }
+        .admin-label {
+            display: block; color: #ffeb3b; margin-bottom: 6px;
+            font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif;
+        }
+        .admin-hint {
+            color: rgba(255,255,255,0.55); font-size: 12px;
+            margin: 5px 0 0; font-family: 'Poppins', sans-serif;
+        }
+        .admin-input,
+        .admin-select,
+        .admin-textarea {
+            width: 100%; padding: 12px 16px;
+            background: #1e1430;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #ffeb3b;
+            font-size: 14px; font-family: 'Poppins', sans-serif;
+            outline: none; box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .admin-input:focus,
+        .admin-select:focus,
+        .admin-textarea:focus { border-color: #ffeb3b; }
+        .admin-input::placeholder,
+        .admin-textarea::placeholder { color: rgba(255,235,59,0.4); }
+        .admin-textarea { min-height: 80px; resize: vertical; }
+        .admin-btn-row { display: flex; gap: 12px; margin-top: 8px; }
+        .admin-btn-primary {
+            flex: 1; padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none; border-radius: 12px;
+            color: white; font-weight: 600; cursor: pointer;
+            font-family: 'Poppins', sans-serif; font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .admin-btn-primary:hover { opacity: 0.9; }
+        .admin-btn-cancel {
+            flex: 1; padding: 14px;
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.25);
+            border-radius: 12px; color: #ffeb3b;
+            font-weight: 600; cursor: pointer;
+            font-family: 'Poppins', sans-serif; font-size: 14px;
+            transition: background 0.2s;
+        }
+        .admin-btn-cancel:hover { background: rgba(255,255,255,0.14); }
+        .admin-btn-danger {
+            flex: 1; padding: 14px;
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            border: none; border-radius: 12px;
+            color: white; font-weight: 600; cursor: pointer;
+            font-family: 'Poppins', sans-serif; font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .admin-btn-danger:hover { opacity: 0.9; }
+        /* ─────────────────────────────────────────────────────────────── */
+    </style>
+    <style>{% block extra_css %}{% endblock %}</style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% if session.get('admin_authenticated') or session.get('stats_authenticated') or session.get('schedule_authenticated') or session.get('database_authenticated') or session.get('health_authenticated') or session.get('config_authenticated') or session.get('location_authenticated') or session.get('rates_authenticated') %}
+        <div class="dashboard-header">
+            <!-- LEFT: Date & Time -->
+            <div class="dt-panel">
+                <div class="dt-panel-label">Date &amp; Time</div>
+                <div class="dt-row">
+                    <div class="cal-icon">
+                        <div class="cal-icon-header" id="calMonth">---</div>
+                        <div class="cal-icon-body">
+                            <div class="cal-icon-day-num" id="calDay">--</div>
+                            <div class="cal-icon-dow" id="calDow">---</div>
+                        </div>
+                    </div>
+                    <div class="flip-clock">
+                        <div class="flip-digit" id="dH0"><span class="fd-val">-</span></div>
+                        <div class="flip-digit" id="dH1"><span class="fd-val">-</span></div>
+                        <div class="clock-colon">:</div>
+                        <div class="flip-digit" id="dM0"><span class="fd-val">-</span></div>
+                        <div class="flip-digit" id="dM1"><span class="fd-val">-</span></div>
+                        <div class="clock-colon">:</div>
+                        <div class="flip-digit" id="dS0"><span class="fd-val">-</span></div>
+                        <div class="flip-digit" id="dS1"><span class="fd-val">-</span></div>
+                        <span class="clock-ampm" id="clockAmPm">--</span>
+                    </div>
+                </div>
+                <div class="dt-year-label" id="calYearLabel">&nbsp;</div>
+            </div>
+
+            <!-- CENTER: Page title -->
+            <div class="dash-center">
+                <h1>{% block page_title %}Admin Dashboard{% endblock %}</h1>
+                <p class="subtitle">{% block page_subtitle %}System Management{% endblock %}</p>
+            </div>
+
+            <!-- RIGHT: Next Booking -->
+            <div class="nb-panel">
+                <div class="nb-panel-label">Next Booking</div>
+                <div id="nbContent">
+                    <div class="nb-none">Loading…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-grid">
+            <a href="/admin" class="nav-btn {% if request.path == '/admin' %}active{% endif %}">
+                <span class="icon">⚙️</span>
+                Admin
+            </a>
+            <a href="/config" class="nav-btn {% if request.path == '/config' %}active{% endif %}">
+                <span class="icon">🔧</span>
+                Config
+            </a>
+            <a href="/stats" class="nav-btn {% if request.path == '/stats' %}active{% endif %}">
+                <span class="icon">📊</span>
+                Statistics
+            </a>
+            <a href="/schedule" class="nav-btn {% if request.path == '/schedule' %}active{% endif %}">
+                <span class="icon">📅</span>
+                Schedule
+            </a>
+            <a href="/location" class="nav-btn {% if request.path == '/location' %}active{% endif %}">
+                <span class="icon">📍</span>
+                Location
+            </a>
+            <a href="/rates" class="nav-btn {% if request.path == '/rates' %}active{% endif %}">
+                <span class="icon">💵</span>
+                Rates
+            </a>
+            <a href="/health" class="nav-btn {% if request.path == '/health' %}active{% endif %}">
+                <span class="icon">💚</span>
+                Health
+            </a>
+            <a href="/database" class="nav-btn {% if request.path.startswith('/database') %}active{% endif %}">
+                <span class="icon">📋</span>
+                Database
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ 'success-msg' if category == 'success' else 'error-msg' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+    /* ============================================================
+       Base widgets: Flip Clock + Calendar + Next Booking banner
+       ============================================================ */
+    (function () {
+        var _tz = 'Australia/Adelaide';
+        var _nb = null;
+
+        function _setDigit(id, v) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var fd = el.querySelector('.fd-val');
+            if (!fd || fd.textContent === v) return;
+            el.classList.remove('flipping');
+            void el.offsetWidth;
+            el.classList.add('flipping');
+            setTimeout(function () { fd.textContent = v; }, 180);
+            setTimeout(function () { el.classList.remove('flipping'); }, 380);
+        }
+
+        function _updateClock() {
+            try {
+                var now = new Date();
+                var tp = new Intl.DateTimeFormat('en-AU', {
+                    timeZone: _tz, hour12: true,
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                }).formatToParts(now);
+                var dp = new Intl.DateTimeFormat('en-AU', {
+                    timeZone: _tz,
+                    day: '2-digit', month: 'short', year: 'numeric', weekday: 'long'
+                }).formatToParts(now);
+                var tg = function (t) { var p = tp.find(function (x) { return x.type === t; }); return p ? p.value : ''; };
+                var dg = function (t) { var p = dp.find(function (x) { return x.type === t; }); return p ? p.value : ''; };
+
+                var h = tg('hour').padStart(2, '0');
+                var m = tg('minute').padStart(2, '0');
+                var s = tg('second').padStart(2, '0');
+                var rawDp = (tg('dayPeriod') || '').toUpperCase();
+                var ampm = rawDp.indexOf('A') >= 0 ? 'AM' : 'PM';
+
+                _setDigit('dH0', h[0]); _setDigit('dH1', h[1]);
+                _setDigit('dM0', m[0]); _setDigit('dM1', m[1]);
+                _setDigit('dS0', s[0]); _setDigit('dS1', s[1]);
+
+                var ap = document.getElementById('clockAmPm');
+                if (ap && ap.textContent !== ampm) ap.textContent = ampm;
+
+                var calDay = document.getElementById('calDay');
+                if (calDay) calDay.textContent = parseInt(dg('day'));
+
+                var calMonth = document.getElementById('calMonth');
+                if (calMonth) calMonth.textContent = dg('month').toUpperCase().substring(0, 3);
+
+                var calDow = document.getElementById('calDow');
+                if (calDow) calDow.textContent = dg('weekday').substring(0, 3).toUpperCase();
+
+                var calYear = document.getElementById('calYearLabel');
+                if (calYear) calYear.textContent = dg('weekday').toUpperCase() + ' · ' + dg('year');
+            } catch (e) { /* silent on tz errors */ }
+        }
+
+        function _fmtCountdown(sec) {
+            if (sec <= 0) return 'NOW ✨';
+            if (sec >= 172800) return Math.floor(sec / 86400) + 'd ' + Math.floor((sec % 86400) / 3600) + 'h';
+            var h = Math.floor(sec / 3600);
+            var m = Math.floor((sec % 3600) / 60);
+            var s = sec % 60;
+            return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        }
+
+        function _updateCountdown() {
+            if (!_nb) return;
+            var el = document.getElementById('nbCountdown');
+            if (el) el.textContent = _fmtCountdown(Math.floor((new Date(_nb.start_iso) - Date.now()) / 1000));
+        }
+
+        function _renderNB(data) {
+            if (data.timezone) _tz = data.timezone;
+            _nb = data.next || null;
+            var el = document.getElementById('nbContent');
+            if (!el) return;
+            if (!_nb) {
+                el.innerHTML = '<div class="nb-none">No upcoming bookings</div>';
+                return;
+            }
+            var startFmt = new Date(_nb.start_iso).toLocaleString('en-AU', {
+                timeZone: _tz, weekday: 'short', day: 'numeric', month: 'short',
+                hour: 'numeric', minute: '2-digit', hour12: true
+            });
+            var loc = (_nb.location_type || '').toLowerCase();
+            var isOut = loc.indexOf('out') >= 0 || loc.indexOf('travel') >= 0;
+            var badge = isOut
+                ? '<span class="nb-badge outcall">🚗 OUTCALL</span>'
+                : '<span class="nb-badge incall">🏠 INCALL</span>';
+            var addrHtml = (isOut && _nb.address)
+                ? '<div class="nb-detail" style="margin-top:3px;">📍 ' + _nb.address + '</div>' : '';
+            var phoneHtml = _nb.phone ? '<span>📱 ' + _nb.phone + '</span>' : '';
+            var expHtml = _nb.experience
+                ? '<span style="margin-left:4px;color:#666;font-size:10px;">· ' + _nb.experience + '</span>' : '';
+            var sec = Math.floor((new Date(_nb.start_iso) - Date.now()) / 1000);
+            el.innerHTML =
+                '<div class="nb-countdown" id="nbCountdown">' + _fmtCountdown(sec) + '</div>' +
+                '<div class="nb-client">👤 ' + (_nb.client_name || 'Client') + '</div>' +
+                '<div class="nb-detail">' + phoneHtml + (phoneHtml ? '<span>·</span>' : '') + '<span>🕐 ' + startFmt + '</span></div>' +
+                '<div class="nb-detail" style="margin-top:3px;">' + badge + expHtml + '</div>' +
+                addrHtml;
+        }
+
+        var _nbEtag = null;
+        function _fetchNB() {
+            var _h = {};
+            if (_nbEtag) _h['If-None-Match'] = _nbEtag;
+            fetch('/admin/api/next-booking', { headers: _h })
+                .then(function (r) {
+                    if (r.status === 304) return null;
+                    _nbEtag = r.headers.get('ETag') || null;
+                    return r.ok ? r.json() : null;
+                })
+                .then(function (d) { if (d) _renderNB(d); })
+                .catch(function () {});
+        }
+
+        _updateClock();
+        setInterval(_updateClock, 1000);
+        setInterval(_updateCountdown, 1000);
+        _fetchNB();
+        setInterval(_fetchNB, 60000);
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) _fetchNB();
+        });
+    }());
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

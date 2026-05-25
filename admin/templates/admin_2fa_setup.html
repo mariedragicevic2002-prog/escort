@@ -1,0 +1,69 @@
+{% extends "base_admin.html" %}
+{% block title %}Enable Two-Factor Authentication{% endblock %}
+{% block extra_css %}
+.login-container.twofa-setup { max-width: 560px; margin-top: 32px; margin-bottom: 48px; }
+.twofa-setup h2.twofa-step {
+    font-size: 1rem; font-weight: 700; color: #ffeb3b; margin-top: 24px; margin-bottom: 10px; text-align: left;
+}
+.twofa-setup p { color: rgba(255, 255, 255, 0.75); font-size: 14px; line-height: 1.55; margin-bottom: 12px; }
+.twofa-setup .sms-alt {
+    display: block; text-align: center; margin-bottom: 20px; font-size: 14px;
+}
+.twofa-setup .sms-alt a { color: #ffeb3b; text-decoration: none; font-weight: 500; }
+.twofa-setup .sms-alt a:hover { color: var(--accent); text-decoration: underline; }
+.twofa-qr {
+    text-align: center; margin: 20px 0; padding: 16px; background: rgba(255, 255, 255, 0.96);
+    border-radius: 16px; border: 2px solid rgba(255, 255, 255, 0.35);
+}
+.twofa-qr img { max-width: 240px; }
+.twofa-secret {
+    display: block; word-break: break-all; background: #1e1430; color: var(--success); padding: 14px 16px;
+    border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.28); font-family: ui-monospace, monospace;
+    font-size: 0.9rem; user-select: all; margin-top: 8px;
+}
+.twofa-setup input.twofa-totp-code {
+    width: 100%; padding: 14px 18px; background: #1e1430; border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px; font-size: 1.15rem; letter-spacing: 6px; text-align: center; color: #ffeb3b;
+    font-family: 'Poppins', sans-serif;
+}
+.twofa-setup input.twofa-totp-code:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+}
+.twofa-setup input.twofa-totp-code::placeholder { color: rgba(255, 235, 59, 0.45); letter-spacing: normal; }
+.twofa-back { display: inline-block; margin-top: 22px; color: #ffeb3b; text-decoration: none; font-size: 14px; font-weight: 500; }
+.twofa-back:hover { color: var(--accent); text-decoration: underline; }
+.twofa-warn { color: var(--warning); font-size: 14px; }
+{% endblock %}
+{% block content %}
+<div class="login-container twofa-setup">
+    <h1>Enable two-factor authentication</h1>
+    <p class="subtitle">Authenticator app (TOTP)</p>
+
+    <p class="sms-alt"><a href="{{ url_for('admin.two_factor_setup', flow='sms') }}">Prefer SMS codes instead of an app? Set up text-message 2FA →</a></p>
+
+    <h2 class="twofa-step">1. Scan the QR code</h2>
+    <p>Open Google Authenticator, Authy, 1Password, or any TOTP app, then scan:</p>
+    {% if qr_data_uri %}
+      <div class="twofa-qr"><img src="{{ qr_data_uri }}" alt="2FA QR code"></div>
+    {% else %}
+      <p class="twofa-warn">QR rendering unavailable (qrcode dep missing). Use the manual setup below.</p>
+    {% endif %}
+
+    <h2 class="twofa-step">2. Or enter the secret manually</h2>
+    <p>If your device can't scan, paste this into the app:</p>
+    <code class="twofa-secret">{{ secret }}</code>
+
+    <h2 class="twofa-step">3. Verify the 6-digit code</h2>
+    <p>Enter the code your app shows right now:</p>
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label for="totp-verify-code">Code</label>
+        <input type="text" id="totp-verify-code" name="code" class="twofa-totp-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autofocus required>
+      </div>
+      <button type="submit" class="submit-btn">Verify and enable</button>
+    </form>
+
+    <a href="/admin" class="twofa-back">&larr; Cancel and go back</a>
+</div>
+{% endblock %}

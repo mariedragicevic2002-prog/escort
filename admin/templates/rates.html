@@ -1,0 +1,691 @@
+{% extends "base_admin.html" %}
+
+{% set active_page = 'rates' %}
+
+{% block title %}Rates Management{% endblock %}
+{% block page_title %}Rates Management{% endblock %}
+{% block page_subtitle %}Update your service pricing below{% endblock %}
+
+{% block extra_css %}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Pricing Sections */
+.section {
+    background: var(--glass-dark);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 24px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(233, 30, 99, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.4s ease;
+}
+
+.section:hover {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(233, 30, 99, 0.1);
+    border-color: rgba(233, 30, 99, 0.3);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.section-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffeb3b;
+    text-align: center;
+}
+
+/* Price Grid */
+.price-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.price-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.price-item:hover {
+    background: rgba(255, 105, 180, 0.2);
+    transform: translateY(-2px);
+}
+
+.price-item .service-info {
+    flex: 1;
+}
+
+.price-item .service-name {
+    font-weight: 600;
+    color: #ff69b4;
+    font-size: 14px;
+}
+
+.price-item .service-duration {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.price-item input {
+    width: 100px;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    text-align: right;
+    background: #1e1430;
+    color: #ffeb3b;
+}
+
+.price-item input:focus {
+    outline: none;
+    border-color: #ff69b4;
+}
+
+.price-item .currency {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ff69b4;
+}
+
+/* Save Button */
+.save-container {
+    position: sticky;
+    bottom: 20px;
+    background: var(--glass-dark);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.save-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.save-btn {
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    color: white;
+    background: linear-gradient(135deg, #ff69b4, #c2185b);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.5), 0 0 30px rgba(255, 105, 180, 0.3);
+}
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .price-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .save-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .save-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .price-item { flex-wrap: wrap; }
+    .price-item .service-info { flex-basis: 100%; }
+    .price-item input { width: 100% !important; max-width: 160px; }
+    .save-container { padding: 12px; }
+}
+{% endblock %}
+
+{% block content %}
+{% if not authenticated %}
+<div class="login-container">
+    <h1>Rates Management</h1>
+    <p class="subtitle">Secure Access Required</p>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST" action="/rates">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="login">
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+    </form>
+</div>
+{% else %}
+{% if success %}<div class="success-msg">{{ success }}</div>{% endif %}
+{% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+{% set incall = (pricing and pricing.incall) or {} %}
+{% set outcall = (pricing and pricing.outcall) or {} %}
+
+<!-- Standard Services -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">💕</div>
+        <h2 class="section-title">Standard Services</h2>
+    </div>
+    <div class="price-grid">
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">GFE (Girlfriend Experience)</div>
+                <div class="service-duration">15 minutes (Incall only)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="gfe_15" value="{{ incall.get('gfe_15', 250) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">GFE (Girlfriend Experience)</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="gfe_30" value="{{ incall.get('gfe_30', 400) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">GFE (Girlfriend Experience)</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="gfe_60" value="{{ incall.get('gfe_60', 700) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">DGFE (Dirty Girlfriend)</div>
+                <div class="service-duration">15 minutes (Incall only)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="dgfe_15" value="{{ incall.get('dgfe_15', 300) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">DGFE (Dirty Girlfriend)</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="dgfe_30" value="{{ incall.get('dgfe_30', 500) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">DGFE (Dirty Girlfriend)</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="dgfe_60" value="{{ incall.get('dgfe_60', 800) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE (Pornstar Experience)</div>
+                <div class="service-duration">15 minutes (Incall only)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_15" value="{{ incall.get('pse_15', 350) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE (Pornstar Experience)</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_30" value="{{ incall.get('pse_30', 600) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE (Pornstar Experience)</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_60" value="{{ incall.get('pse_60', 1000) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE with Filming</div>
+                <div class="service-duration">15 minutes (Incall only)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_filming_15" value="{{ incall.get('pse_filming_15', 550) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE with Filming</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_filming_30" value="{{ incall.get('pse_filming_30', 800) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">PSE with Filming</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="pse_filming" value="{{ incall.get('pse_filming', 1200) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Dinner Date</div>
+                <div class="service-duration">2 hours (dinner + dessert)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="dinner_date" value="{{ incall.get('dinner_date', 1000) }}" min="0" step="50">
+        </div>
+    </div>
+</div>
+
+<!-- Group Experiences -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">👥</div>
+        <h2 class="section-title">Group Experiences</h2>
+    </div>
+    <div class="price-grid">
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">MFF Threesome (Couples)</div>
+                <div class="service-duration">60 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="mff" value="{{ incall.get('mff', 1000) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">MMF Threesome</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="mmf_30" value="{{ incall.get('mmf_30', 900) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">MMF Threesome</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="mmf_60" value="{{ incall.get('mmf_60', 1500) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Doubles MFF (other provider organised by the client)</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="couples_mff_30" value="{{ incall.get('couples_mff_30', 400) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Doubles MFF (other provider organised by the client)</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="couples_mmf_60" value="{{ incall.get('couples_mmf_60', 800) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">MFF — (I'll supply the other female escort)</div>
+                <div class="service-duration">30 minutes</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="mff_supplied_30" value="{{ incall.get('mff_supplied_30', 800) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">MFF — (I'll supply the other female escort)</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="mff_supplied_60" value="{{ incall.get('mff_supplied_60', 1600) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Filming surcharge (PSE only)</div>
+                <div class="service-duration">Add-on to any PSE duration</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="filming_surcharge" value="{{ incall.get('filming_surcharge', 200) }}" min="0" step="50">
+        </div>
+    </div>
+</div>
+
+<!-- Extended Experiences -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">🌟</div>
+        <h2 class="section-title">Extended Experiences</h2>
+    </div>
+    <div class="price-grid">
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Overnight</div>
+                <div class="service-duration">12 hours</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="overnight" value="{{ incall.get('overnight', 5000) }}" min="0" step="100">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Dirty Weekend</div>
+                <div class="service-duration">48 hours</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="weekend" value="{{ incall.get('weekend', 9000) }}" min="0" step="100">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Fly Me To You</div>
+                <div class="service-duration">Flights + Overnight</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="fly_me" value="{{ incall.get('fly_me', 5500) }}" min="0" step="100">
+        </div>
+    </div>
+</div>
+
+<!-- Outcall Rates -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">🚗</div>
+        <h2 class="section-title">Outcall Rates</h2>
+    </div>
+    <div class="price-grid">
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall GFE</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_gfe_60" value="{{ outcall.get('gfe_60', 800) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall DGFE</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_dgfe_60" value="{{ outcall.get('dgfe_60', 950) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall PSE</div>
+                <div class="service-duration">1 hour</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_pse_60" value="{{ outcall.get('pse_60', 1100) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall Dinner Date</div>
+                <div class="service-duration">2 hours (dinner + dessert)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_dinner_date" value="{{ outcall.get('dinner_date', 1200) }}" min="0" step="50">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall Overnight</div>
+                <div class="service-duration">12 hours</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_overnight" value="{{ outcall.get('overnight', 5500) }}" min="0" step="100">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall Dirty Weekend</div>
+                <div class="service-duration">48 hours</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_weekend" value="{{ outcall.get('weekend', 9500) }}" min="0" step="100">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall Fly Me To You</div>
+                <div class="service-duration">Flights + overnight</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="outcall_fly_me" value="{{ outcall.get('fly_me', 6000) }}" min="0" step="100">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall Surcharge</div>
+                <div class="service-duration">Added to other services</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="surcharge" value="{{ (pricing and pricing.surcharge) or 100 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Doubles outcall — escort arranges second provider</div>
+                <div class="service-duration">Doubles MMF/MFF when you source the other escort (two escorts travel)</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="surcharge_doubles_escort_supplied_outcall" value="{{ (pricing and pricing.get('surcharge_doubles_escort_supplied_outcall', 200)) or 200 }}" min="0" step="10">
+        </div>
+    </div>
+</div>
+
+<!-- Deposit Amounts (used in chatbot messages) -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">💳</div>
+        <h2 class="section-title">Deposit Amounts</h2>
+    </div>
+    <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 16px; text-align: center;">
+        These amounts appear in automated messages (outcall, Doubles MFF, overnight, dinner date outcall, extended outcall, optional incall).
+    </p>
+    <div class="price-grid">
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Outcall deposit</div>
+                <div class="service-duration">Mandatory for outcall</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_outcall" value="{{ (pricing and pricing.get('deposit_outcall', 100)) or 100 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Incall optional deposit</div>
+                <div class="service-duration">Optional / peacock bump</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_incall" value="{{ (pricing and pricing.get('deposit_incall', 50)) or 50 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Doubles MFF deposit</div>
+                <div class="service-duration">Mandatory for Doubles MFF</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_mff_pair" value="{{ (pricing and pricing.get('deposit_mff_pair', 200)) or 200 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Overnight deposit</div>
+                <div class="service-duration">Mandatory for overnight</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_overnight" value="{{ (pricing and pricing.get('deposit_overnight', 200)) or 200 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Dinner date outcall deposit</div>
+                <div class="service-duration">Mandatory for dinner date when outcall</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_dinner_date_outcall" value="{{ (pricing and pricing.get('deposit_dinner_date_outcall', 100)) or 100 }}" min="0" step="10">
+        </div>
+        <div class="price-item">
+            <div class="service-info">
+                <div class="service-name">Extended experiences outcall deposit</div>
+                <div class="service-duration">Overnight (4+ hrs) when outcall</div>
+            </div>
+            <span class="currency">$</span>
+            <input type="number" id="deposit_extended_experience_outcall" value="{{ (pricing and pricing.get('deposit_extended_experience_outcall', 200)) or 200 }}" min="0" step="10">
+        </div>
+    </div>
+</div>
+
+<!-- Save Button -->
+<div class="save-container">
+    <div class="save-status" id="saveStatus">
+        <span>Last saved: Just now</span>
+    </div>
+    <button class="save-btn" id="saveBtn" onclick="saveRates()">
+        Save All Changes
+    </button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if authenticated %}
+<script>
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+async function saveRates() {
+    const btn = document.getElementById('saveBtn');
+    const status = document.getElementById('saveStatus');
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    function val(id) { return document.getElementById(id).valueAsNumber || 0; }
+    const pricing = {
+        incall: {
+            gfe_15: val('gfe_15'),
+            gfe_30: val('gfe_30'),
+            gfe_60: val('gfe_60'),
+            dgfe_15: val('dgfe_15'),
+            dgfe_30: val('dgfe_30'),
+            dgfe_60: val('dgfe_60'),
+            pse_15: val('pse_15'),
+            pse_30: val('pse_30'),
+            pse_60: val('pse_60'),
+            pse_filming_15: val('pse_filming_15'),
+            pse_filming_30: val('pse_filming_30'),
+            pse_filming: val('pse_filming'),
+            filming_surcharge: val('filming_surcharge'),
+            mff: val('mff'),
+            mmf_30: val('mmf_30'),
+            mmf_60: val('mmf_60'),
+            couples_mff_30: val('couples_mff_30'),
+            couples_mmf_60: val('couples_mmf_60'),
+            mff_supplied_30: val('mff_supplied_30'),
+            mff_supplied_60: val('mff_supplied_60'),
+            dinner_date: val('dinner_date'),
+            overnight: val('overnight'),
+            weekend: val('weekend'),
+            fly_me: val('fly_me')
+        },
+        outcall: {
+            gfe_60: val('outcall_gfe_60'),
+            dgfe_60: val('outcall_dgfe_60'),
+            pse_60: val('outcall_pse_60'),
+            dinner_date: val('outcall_dinner_date'),
+            overnight: val('outcall_overnight'),
+            weekend: val('outcall_weekend'),
+            fly_me: val('outcall_fly_me')
+        },
+        surcharge: val('surcharge') || 100,
+        surcharge_doubles_escort_supplied_outcall: val('surcharge_doubles_escort_supplied_outcall') || 200,
+        deposit_outcall: val('deposit_outcall') || 100,
+        deposit_incall: val('deposit_incall') || 50,
+        deposit_mff_pair: val('deposit_mff_pair') || 200,
+        deposit_overnight: val('deposit_overnight') || 200,
+        deposit_dinner_date_outcall: val('deposit_dinner_date_outcall') || 100,
+        deposit_extended_experience_outcall: val('deposit_extended_experience_outcall') || 200
+    };
+
+    try {
+        const response = await fetch('/rates/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(pricing)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            status.innerHTML = '<span style="color: #ffeb3b;">✓ Saved successfully!</span>';
+            btn.textContent = 'Saved!';
+            setTimeout(() => {
+                btn.textContent = 'Save All Changes';
+                btn.disabled = false;
+            }, 2000);
+        } else {
+            throw new Error(result.error || 'Unknown error');
+        }
+    } catch (error) {
+        status.innerHTML = '<span style="color: #ff69b4;">✗ Error: ' + error.message + '</span>';
+        btn.textContent = 'Save All Changes';
+        btn.disabled = false;
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

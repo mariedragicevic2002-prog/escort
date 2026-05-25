@@ -1,0 +1,90 @@
+{% extends "base_admin.html" %}
+{% block title %}Two-Factor Verification{% endblock %}
+{% block extra_css %}
+.login-container.twofa-card { max-width: 440px; margin-top: 48px; margin-bottom: 48px; }
+.twofa-card p { color: rgba(255, 255, 255, 0.75); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+.twofa-card input[type="text"].twofa-code {
+    width: 100%; padding: 14px 18px; background: #1e1430; border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px; font-size: 1.1rem; letter-spacing: 6px; text-align: center; color: #ffeb3b;
+    font-family: 'Poppins', sans-serif;
+}
+.twofa-card input.twofa-code:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+}
+.twofa-card input.twofa-code::placeholder { color: rgba(255, 235, 59, 0.45); letter-spacing: normal; }
+.submit-btn.secondary-twofa {
+    background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.28); margin-top: 10px;
+    box-shadow: none;
+}
+.submit-btn.secondary-twofa:hover:not(:disabled) {
+    background: rgba(233, 30, 99, 0.25); border-color: var(--primary); transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(233, 30, 99, 0.25);
+}
+.submit-btn.secondary-twofa:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+.twofa-link {
+    display: block; text-align: center; margin-top: 18px; color: #ffeb3b; font-size: 14px;
+    text-decoration: none; opacity: 0.95;
+}
+.twofa-link:hover { color: var(--accent); text-decoration: underline; }
+.twofa-remaining { text-align: center; color: rgba(255, 235, 59, 0.65); font-size: 13px; margin-top: 14px; }
+.flash-inline.info {
+    background: rgba(33, 150, 243, 0.15); border: 1px solid var(--info); color: #ffeb3b;
+    padding: 14px; border-radius: 12px; margin-bottom: 16px; font-size: 14px;
+}
+.flash-inline.error {
+    background: rgba(244, 67, 54, 0.15); border: 1px solid var(--danger); color: #ff69b4;
+    padding: 14px; border-radius: 12px; margin-bottom: 16px; font-size: 14px;
+}
+.twofa-card strong { color: #ffeb3b; }
+{% endblock %}
+{% block content %}
+<div class="login-container twofa-card">
+    <h1>Two-factor verification</h1>
+    <p class="subtitle">{% if delivery == 'sms' %}SMS code{% else %}Authenticator app{% endif %}</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="flash-inline {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if delivery == 'sms' %}
+    <p>Enter the 6-digit code we sent to <strong>{{ sms_hint }}</strong>.</p>
+    {% else %}
+    <p>Enter the 6-digit code from your authenticator app.</p>
+    {% endif %}
+
+    {% if request.args.get('backup') == '1' %}
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="use_backup" value="1">
+      <p>Enter a backup code (10 characters, letters + digits).</p>
+      <div class="form-group">
+        <label for="twofa-backup-code">Backup code</label>
+        <input type="text" id="twofa-backup-code" name="code" class="twofa-code" style="letter-spacing: 2px;" autofocus maxlength="20" placeholder="xxxxxxxxxx" required>
+      </div>
+      <button type="submit" class="submit-btn">Use backup code</button>
+      <div class="twofa-remaining">{{ backup_remaining }} backup codes remaining</div>
+    </form>
+    <a href="{{ url_for('admin.two_factor_verify') }}" class="twofa-link">&larr; Back to {% if delivery == 'sms' %}SMS{% else %}authenticator{% endif %} code</a>
+    {% else %}
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label for="twofa-code">Code</label>
+        <input type="text" id="twofa-code" name="code" class="twofa-code" inputmode="numeric" pattern="[0-9]*" autofocus maxlength="6" placeholder="000000" required>
+      </div>
+      <button type="submit" class="submit-btn">Verify</button>
+    </form>
+    {% if delivery == 'sms' %}
+    <form method="POST" action="{{ url_for('admin.two_factor_resend_sms') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="submit-btn secondary-twofa" {% if not can_resend_sms %}disabled title="Please wait about a minute between texts (spam protection)."{% endif %}>Resend SMS code</button>
+    </form>
+    {% endif %}
+    {% if backup_remaining > 0 %}
+    <a href="?backup=1" class="twofa-link">Use a backup code instead</a>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

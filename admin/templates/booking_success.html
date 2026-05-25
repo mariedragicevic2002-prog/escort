@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Booking Confirmed - {{ escort_name or 'escort' }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --dark: #1a1a2e;
+            --success: #4CAF50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.6s ease-out;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(76, 175, 80, 0.1);
+            max-width: 550px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(76, 175, 80, 0.15);
+            border-color: rgba(76, 175, 80, 0.4);
+        }
+
+        h1 {
+            background: linear-gradient(135deg, var(--success), #66bb6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        p {
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            color: #ff69b4;
+            font-weight: 600;
+        }
+
+        .success {
+            font-size: 72px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.5));
+        }
+
+        .booking-details {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(139, 195, 74, 0.15));
+            border-left: 4px solid var(--success);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .booking-details h3 {
+            color: #81c784;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .booking-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .booking-details .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .booking-details .detail-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .booking-details .detail-value {
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .booking-details .total-row {
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .booking-details .total-row .detail-value {
+            color: #81c784;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .location-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .location-info p {
+            margin: 0;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .deposit-section {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 152, 0, 0.15));
+            border-left: 4px solid #FFC107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .deposit-section h3 {
+            color: #FFD54F;
+            font-size: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .deposit-section p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 0;
+            line-height: 1.7;
+        }
+
+        .deposit-section .payid-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .deposit-section .payid {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #FFD54F;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #FFD54F;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 193, 7, 0.3);
+            border-color: #FFD54F;
+        }
+
+        .copy-btn.copied {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+            color: #81c784;
+        }
+
+        .deposit-section .upload-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFC107, #FF9800);
+            color: #1a1a2e;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .deposit-section .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+        }
+
+        .closing-message {
+            margin-top: 25px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(156, 39, 176, 0.2));
+            border: 2px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+        }
+
+        .closing-message p {
+            color: #ff69b4;
+            font-weight: 500;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .calendar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(3, 169, 244, 0.3));
+            border: 2px solid rgba(33, 150, 243, 0.5);
+            color: #64b5f6;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .calendar-btn:hover {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.4), rgba(3, 169, 244, 0.4));
+            border-color: #2196F3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .calendar-btn.added {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(139, 195, 74, 0.3));
+            border-color: #4CAF50;
+            color: #81c784;
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 15px;
+            }
+
+            .success {
+                font-size: 60px;
+            }
+
+            .booking-details {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 25px 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+
+            .success {
+                font-size: 52px;
+            }
+
+            .booking-details .detail-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Booking confirmed -->
+        <div class="success">✅</div>
+        <h1>Booking Confirmed!</h1>
+        <p>Thanks <span class="highlight">{{ client_name or 'babe' }}</span>! Your booking has been confirmed.</p>
+
+        <!-- Booking Details -->
+        <div class="booking-details">
+            <h3>Your Booking Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">{{ booking_date or 'Confirmed' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">{{ booking_time or 'As requested' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{{ booking_duration or 'As requested' }}</span>
+            </div>
+            {% if booking_address %}
+            <div class="detail-row">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ booking_address }}</span>
+            </div>
+            {% endif %}
+            <div class="detail-row">
+                <span class="detail-label">Type</span>
+                <span class="detail-value">{{ booking_type or 'Incall' }}</span>
+            </div>
+            <div class="detail-row total-row">
+                <span class="detail-label">Total</span>
+                <span class="detail-value">{{ booking_price or 'As quoted' }}</span>
+            </div>
+        </div>
+
+        <!-- Add to Calendar Button -->
+        <button class="calendar-btn" onclick="addToCalendar()" id="calendar-btn">
+            <span id="calendar-icon">📅</span>
+            <span id="calendar-text">Add to Calendar</span>
+        </button>
+
+        <!-- Location Info -->
+        <div class="location-info">
+            {% set city_text = (city or 'Adelaide') %}
+            {% set hotel_text = (hotel or 'my location') %}
+            {% if city_text|lower in hotel_text|lower %}
+            <p>I'm currently in <span class="highlight">{{ city_text }}</span>.</p>
+            {% else %}
+            <p>I'm currently in <span class="highlight">{{ city_text }}</span> staying at <span class="highlight">{{ hotel_text }}</span>.</p>
+            {% endif %}
+            <p style="margin-top: 10px; font-size: 14px;">I will send you further details 1 hour prior to your booking.</p>
+        </div>
+
+        <!-- Non-Mandatory Deposit Section -->
+        <div class="deposit-section">
+            <h3>💳 Optional Deposit</h3>
+            <p>Do you mind paying a small deposit? It's not mandatory, but it's appreciated as it helps reassure me my time won't be wasted when I reserve my time for you.</p>
+            <p style="margin-top: 10px;">If you could please pay ${{ deposit_incall }}-${{ deposit_outcall }} to my PayID:</p>
+            <div class="payid-wrapper">
+                <div class="payid" id="payid-text">{{ payid or '[PayID not configured - contact admin]' }}</div>
+                <button class="copy-btn" onclick="copyPayID()" id="copy-btn">
+                    <span id="copy-icon">📋</span>
+                    <span id="copy-text">Copy</span>
+                </button>
+            </div>
+            {% if account_name %}
+            <p style="margin-top: 10px;">Account Name: <strong>{{ account_name }}</strong></p>
+            {% endif %}
+            {% if payment_reference %}
+            <p style="margin-top: 10px;">Payment Reference: <strong>{{ payment_reference }}</strong></p>
+            <p style="margin-top: 8px;">Use this payment reference in your transfer description.</p>
+            {% endif %}
+            <p style="margin-top: 12px; color: #81c784; font-weight: 500;">By paying a deposit, your requested date and time is locked in and won't be subject to being rescheduled.</p>
+            {% if upload_url %}
+            <a href="{{ upload_url }}" class="upload-btn" target="_blank">Upload Payment Screenshot</a>
+            {% else %}
+            <p style="margin-top: 10px; font-size: 13px;">
+                If you do pay, please text me a screenshot showing the payment amount, my PayID{% if payment_reference %}, and reference {{ payment_reference }}{% endif %}.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Closing Message -->
+        <div class="closing-message">
+            <p>See you then x</p>
+        </div>
+
+        <p class="note">You can close this window now.</p>
+    </div>
+
+    <script>
+    // Calendar data from template
+    const bookingData = {
+        date: "{{ booking_date_raw or '' }}",
+        time: "{{ booking_time_raw or '' }}",
+        duration: "{{ booking_duration_minutes or '60' }}",
+        experience: "{{ booking_experience or 'GFE' }}",
+        city: "{{ city or 'Adelaide' }}",
+        escortName: {{ (escort_name or 'escort') | tojson }}
+    };
+
+    function addToCalendar() {
+        const btn = document.getElementById('calendar-btn');
+        const icon = document.getElementById('calendar-icon');
+        const text = document.getElementById('calendar-text');
+
+        // Parse date and time
+        let startDate;
+        try {
+            // Try to parse the date and time
+            const dateStr = bookingData.date;
+            const timeStr = bookingData.time;
+
+            if (dateStr && timeStr) {
+                // Expected format: "Friday 10 January 2025" and "7:00 PM"
+                const dateMatch = dateStr.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+                const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+
+                if (dateMatch && timeMatch) {
+                    const day = parseInt(dateMatch[1]);
+                    const month = dateMatch[2];
+                    const year = parseInt(dateMatch[3]);
+
+                    let hour = parseInt(timeMatch[1]);
+                    const minute = parseInt(timeMatch[2]);
+                    const ampm = timeMatch[3].toUpperCase();
+
+                    if (ampm === 'PM' && hour !== 12) hour += 12;
+                    if (ampm === 'AM' && hour === 12) hour = 0;
+
+                    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                    const monthIndex = months.indexOf(month);
+
+                    startDate = new Date(year, monthIndex, day, hour, minute);
+                }
+            }
+        } catch (e) {
+            console.error('Date parsing error:', e);
+        }
+
+        if (!startDate || isNaN(startDate.getTime())) {
+            // Fallback: use tomorrow at 7pm
+            startDate = new Date();
+            startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(19, 0, 0, 0);
+        }
+
+        // Calculate end time
+        const durationMins = parseInt(bookingData.duration) || 60;
+        const endDate = new Date(startDate.getTime() + durationMins * 60000);
+
+        // Format dates for ICS (YYYYMMDDTHHMMSS)
+        function formatICSDate(date) {
+            const pad = n => n.toString().padStart(2, '0');
+            return date.getFullYear() +
+                   pad(date.getMonth() + 1) +
+                   pad(date.getDate()) + 'T' +
+                   pad(date.getHours()) +
+                   pad(date.getMinutes()) +
+                   pad(date.getSeconds());
+        }
+
+        // Generate ICS content
+        const escortName = bookingData.escortName || 'escort';
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//' + escortName.replace(/\s+/g, ' ') + '//Booking//EN',
+            'BEGIN:VEVENT',
+            'UID:' + Date.now() + '@booking',
+            'DTSTAMP:' + formatICSDate(new Date()),
+            'DTSTART:' + formatICSDate(startDate),
+            'DTEND:' + formatICSDate(endDate),
+            'SUMMARY:Booking with ' + escortName,
+            'DESCRIPTION:' + bookingData.experience + ' experience in ' + bookingData.city,
+            'LOCATION:' + bookingData.city,
+            'STATUS:CONFIRMED',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+
+        // Create and download file
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'booking-' + (escortName.replace(/\s+/g, '-').toLowerCase()) + '.ics';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Visual feedback
+        btn.classList.add('added');
+        icon.innerText = '✓';
+        text.innerText = 'Downloaded!';
+
+        setTimeout(function() {
+            btn.classList.remove('added');
+            icon.innerText = '📅';
+            text.innerText = 'Add to Calendar';
+        }, 3000);
+    }
+
+    function copyPayID() {
+        const payidText = document.getElementById('payid-text').innerText;
+        const copyBtn = document.getElementById('copy-btn');
+        const copyIcon = document.getElementById('copy-icon');
+        const copyText = document.getElementById('copy-text');
+
+        navigator.clipboard.writeText(payidText).then(function() {
+            // Success feedback
+            copyBtn.classList.add('copied');
+            copyIcon.innerText = '✓';
+            copyText.innerText = 'Copied!';
+
+            // Reset after 2 seconds
+            setTimeout(function() {
+                copyBtn.classList.remove('copied');
+                copyIcon.innerText = '📋';
+                copyText.innerText = 'Copy';
+            }, 2000);
+        }).catch(function(err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = payidText;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                copyBtn.classList.add('copied');
+                copyIcon.innerText = '✓';
+                copyText.innerText = 'Copied!';
+                setTimeout(function() {
+                    copyBtn.classList.remove('copied');
+                    copyIcon.innerText = '📋';
+                    copyText.innerText = 'Copy';
+                }, 2000);
+            } catch (e) {
+                copyText.innerText = 'Failed';
+            }
+            document.body.removeChild(textArea);
+        });
+    }
+    </script>
+</body>
+</html>

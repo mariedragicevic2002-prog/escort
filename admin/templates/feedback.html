@@ -1,0 +1,193 @@
+{% extends "base_admin.html" %}
+{% block title %}Client Feedback{% endblock %}
+{% block page_title %}Client Feedback{% endblock %}
+{% block page_subtitle %}Rate this client after the booking{% endblock %}
+{% block extra_css %}
+.feedback-summary {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    color: #ffeb3b;
+    font-size: 15px;
+}
+.feedback-summary strong { color: #ff69b4; }
+.feedback-q {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+.feedback-q label.q-text { display: block; margin-bottom: 10px; color: #ffeb3b; font-weight: 500; }
+.feedback-q .yesno { display: flex; gap: 16px; align-items: center; }
+.feedback-q input[type="radio"] { margin-right: 6px; accent-color: var(--primary); }
+.feedback-q label.radio { cursor: pointer; color: rgba(255, 255, 255, 0.9); }
+.feedback-shortcuts { display: flex; gap: 12px; margin: 24px 0; flex-wrap: wrap; }
+.feedback-shortcuts .btn-shortcut {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+}
+.feedback-shortcuts .btn-3star {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #1a1a2e;
+    border-color: #ffc107;
+}
+.feedback-shortcuts .btn-block {
+    background: rgba(244, 67, 54, 0.3);
+    color: #ffeb3b;
+    border-color: var(--danger);
+}
+.feedback-shortcuts .btn-shortcut:hover { opacity: 0.95; transform: translateY(-1px); }
+.stars-row { margin: 20px 0; min-height: 40px; display: flex; align-items: center; gap: 8px; }
+.stars-row .star { font-size: 36px; color: rgba(255, 255, 255, 0.25); transition: color 0.2s; padding: 4px 6px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.stars-row .star.gold { color: #ffc107; }
+.stars-row .block-label { font-size: 22px; font-weight: 700; color: var(--danger); display: none; }
+.stars-row.block-mode .star { display: none; }
+.stars-row.block-mode .block-label { display: inline; }
+.feedback-standalone .container { max-width: 560px; margin: 80px auto; }
+.feedback-shortcuts .btn-shortcut { min-height: 44px; flex: 1; }
+
+@media (max-width: 480px) {
+    .feedback-shortcuts { flex-direction: column; }
+    .feedback-shortcuts .btn-shortcut { width: 100%; }
+}
+{% endblock %}
+{% block content %}
+<div class="feedback-standalone">
+    <div class="container">
+        {% if error %}
+        <div class="error-msg">{{ error }}</div>
+        {% else %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ 'success-msg' if category == 'success' else 'error-msg' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="settings-section">
+            <h2>⭐ Client Feedback</h2>
+            <div class="feedback-summary">
+                <strong>{{ client_name }}</strong>
+                {% if booking_summary %}<br>{{ booking_summary }}{% endif %}
+            </div>
+
+            <form method="POST" action="{{ url_for('feedback.feedback_form') }}" id="feedbackForm">
+                <input type="hidden" name="pending_id" value="{{ pending_id }}">
+                <input type="hidden" name="tok" value="{{ tok }}">
+                <input type="hidden" name="action" id="formAction" value="">
+
+                <fieldset class="feedback-q" style="border:none;padding:0;margin:0 0 1rem 0;min-width:0;">
+                    <legend class="q-text">1. Did the client arrive on time?</legend>
+                    <div class="yesno">
+                        <label class="radio"><input type="radio" name="q1" value="yes" id="q1_yes"> Yes</label>
+                        <label class="radio"><input type="radio" name="q1" value="no" id="q1_no"> No</label>
+                    </div>
+                </fieldset>
+                <fieldset class="feedback-q" style="border:none;padding:0;margin:0 0 1rem 0;min-width:0;">
+                    <legend class="q-text">2. Was the client respectful in the booking?</legend>
+                    <div class="yesno">
+                        <label class="radio"><input type="radio" name="q2" value="yes" id="q2_yes"> Yes</label>
+                        <label class="radio"><input type="radio" name="q2" value="no" id="q2_no"> No</label>
+                    </div>
+                </fieldset>
+                <fieldset class="feedback-q" style="border:none;padding:0;margin:0 0 1rem 0;min-width:0;">
+                    <legend class="q-text">3. Would you be ok to see this client again in the future?</legend>
+                    <div class="yesno">
+                        <label class="radio"><input type="radio" name="q3" value="yes" id="q3_yes"> Yes</label>
+                        <label class="radio"><input type="radio" name="q3" value="no" id="q3_no"> No</label>
+                    </div>
+                </fieldset>
+
+                <div class="feedback-shortcuts">
+                    <button type="button" class="btn-shortcut btn-3star" id="btn3star">Give 3 stars</button>
+                    <button type="button" class="btn-shortcut btn-block" id="btnBlock">Block client</button>
+                </div>
+
+                <div class="stars-row" id="starsRow">
+                    <span class="star" id="star1" data-q="1">★</span>
+                    <span class="star" id="star2" data-q="2">★</span>
+                    <span class="star" id="star3" data-q="3">★</span>
+                    <span class="block-label" id="blockLabel">BLOCK</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="comments">Comments (optional)</label>
+                    <textarea id="comments" name="comments" rows="4" placeholder="Any notes about this client or booking..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="btnSubmit">Submit feedback</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+(function() {
+    var form = document.getElementById('feedbackForm');
+    if (!form) return;
+    var formAction = document.getElementById('formAction');
+    var starsRow = document.getElementById('starsRow');
+    var blockLabel = document.getElementById('blockLabel');
+    var star1 = document.getElementById('star1'), star2 = document.getElementById('star2'), star3 = document.getElementById('star3');
+
+    function updateStars() {
+        var q1 = document.querySelector('input[name="q1"]:checked');
+        var q2 = document.querySelector('input[name="q2"]:checked');
+        var q3 = document.querySelector('input[name="q3"]:checked');
+        var isBlock = document.getElementById('btnBlock').dataset.selected === '1';
+        if (isBlock) {
+            starsRow.classList.add('block-mode');
+            return;
+        }
+        starsRow.classList.remove('block-mode');
+        star1.classList.toggle('gold', q1 && q1.value === 'yes');
+        star2.classList.toggle('gold', q2 && q2.value === 'yes');
+        star3.classList.toggle('gold', q3 && q3.value === 'yes');
+    }
+
+    document.getElementById('btn3star').onclick = function() {
+        document.getElementById('q1_yes').checked = true;
+        document.getElementById('q2_yes').checked = true;
+        document.getElementById('q3_yes').checked = true;
+        document.getElementById('btnBlock').dataset.selected = '';
+        formAction.value = '3star';
+        updateStars();
+        form.submit();
+    };
+
+    document.getElementById('btnBlock').onclick = function() {
+        document.getElementById('q1_no').checked = true;
+        document.getElementById('q2_no').checked = true;
+        document.getElementById('q3_no').checked = true;
+        this.dataset.selected = '1';
+        formAction.value = 'block';
+        updateStars();
+        form.submit();
+    };
+
+    form.querySelectorAll('input[name="q1"], input[name="q2"], input[name="q3"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            document.getElementById('btnBlock').dataset.selected = '';
+            formAction.value = '';
+            updateStars();
+        });
+    });
+
+    form.onsubmit = function() {
+        if (formAction.value !== '3star' && formAction.value !== 'block') {
+            formAction.value = '';
+        }
+        return true;
+    };
+
+    updateStars();
+})();
+</script>
+{% endblock %}

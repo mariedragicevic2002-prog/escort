@@ -1,0 +1,852 @@
+{% extends "base_admin.html" %}
+{% block title %}Configuration{% endblock %}
+{% block page_title %}Configuration{% endblock %}
+{% block page_subtitle %}Developer settings, API keys & integrations{% endblock %}
+{% block extra_css %}
+        .form-group small {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .current-value {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        .current-value strong { color: #ffeb3b; }
+        .info-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .info-box p { color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-bottom: 8px; }
+        .info-box p:last-child { margin-bottom: 0; }
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+        .toggle-label { color: rgba(255, 255, 255, 0.9); font-weight: 500; font-size: 14px; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2); transition: .4s; border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        /* Ugly Mugs — compact layout */
+        .ugly-mugs-compact .info-box {
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+        .ugly-mugs-compact .info-box p {
+            font-size: 13px;
+            margin-bottom: 0;
+        }
+        .ugly-mugs-compact .um-status {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+            align-items: baseline;
+            font-size: 12px;
+            line-height: 1.45;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        .ugly-mugs-compact .um-status strong { color: #ffeb3b; font-weight: 600; }
+        .ugly-mugs-compact .um-status span { opacity: 0.95; }
+        .ugly-mugs-compact .um-divider { opacity: 0.35; margin: 0 2px; }
+        .ugly-mugs-compact .toggle-container {
+            margin-bottom: 12px;
+            padding: 8px 10px;
+        }
+        .ugly-mugs-compact .form-group { margin-bottom: 10px; }
+        .ugly-mugs-compact .form-group label { font-size: 13px; }
+        /* Grids keep labels + inputs aligned across columns (matches tidy mockup layout). */
+        .ugly-mugs-compact .um-grid {
+            display: grid;
+            gap: 14px 20px;
+            align-items: start;
+            margin-top: 16px;
+        }
+        .ugly-mugs-compact form .toggle-container + .um-grid {
+            margin-top: 12px;
+        }
+        .ugly-mugs-compact .um-grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .ugly-mugs-compact .um-grid-schedule {
+            grid-template-columns: minmax(0, 110px) minmax(0, 110px) minmax(0, 1fr);
+        }
+        .ugly-mugs-compact .um-grid-output {
+            grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+        }
+        .ugly-mugs-compact .um-grid .form-group {
+            margin-bottom: 0;
+            min-width: 0;
+        }
+        .ugly-mugs-compact .um-grid .form-group input,
+        .ugly-mugs-compact .um-grid .form-group textarea {
+            width: 100%;
+        }
+        @media (max-width: 640px) {
+            .ugly-mugs-compact .um-grid-2,
+            .ugly-mugs-compact .um-grid-schedule,
+            .ugly-mugs-compact .um-grid-output {
+                grid-template-columns: 1fr;
+            }
+        }
+        .ugly-mugs-compact input[type="number"] { width: 100%; }
+        .secret-fingerprint {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            font-family: ui-monospace, Consolas, monospace;
+            color: rgba(200, 220, 255, 0.75);
+            letter-spacing: 0.02em;
+        }
+{% endblock %}
+{% block content %}
+{% if not authenticated %}
+        <div class="login-container">
+            <h1>Configuration</h1>
+            <p class="subtitle">Secure Access Required</p>
+            {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+            <form method="POST" action="/config">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+{% else %}
+<!-- Ugly Mugs Daily Sync Configuration -->
+<div class="settings-section ugly-mugs-compact">
+    <h2>☕ Ugly Mugs Daily Sync</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p><strong>Daily sync</strong> pulls Ugly Mugs data with your lookup account — typical schedule <strong>09:00 Australia/Adelaide</strong>.</p>
+            <p style="margin-top:10px;font-size:13px;line-height:1.45;">
+                <strong>Automating the run:</strong> In-process scheduling runs by default; set <code style="font-size:12px;">RUN_STARTUP_BACKGROUND_JOBS=false</code>
+                (long-lived worker). On PythonAnywhere, add a <strong>daily</strong> scheduled task that runs
+                <code style="font-size:11px;">python /home/YOURUSER/newbot/scripts/run_ugly_mugs_sync.py</code>
+                (activate your venv first), or HTTP GET
+                <code style="font-size:11px;word-break:break-all;">https://YOURSITE/admin/run-ugly-mugs-sync?secret=…</code>
+                with <code style="font-size:12px;">CRON_SECRET</code> in the Web environment matching the query string.
+            </p>
+        </div>
+        <div class="current-value um-status">
+            <span><strong>Sync</strong> {{ 'On' if ugly_mugs_sync_enabled else 'Off' }}</span><span class="um-divider">|</span>
+            <span><strong>User</strong> {{ ugly_mugs_lookup_username or '—' }}</span><span class="um-divider">|</span>
+            <span><strong>Pass</strong> {{ ugly_mugs_lookup_password_masked if ugly_mugs_lookup_password_masked else ('set' if ugly_mugs_lookup_password_set else '—') }}</span><span class="um-divider">|</span>
+            <span><strong>Time</strong> {{ '%02d' % ugly_mugs_sync_hour_local }}:{{ '%02d' % ugly_mugs_sync_minute_local }} {{ ugly_mugs_sync_timezone }}</span><span class="um-divider">|</span>
+            <span><strong>Pages</strong> {{ ugly_mugs_lookup_total_pages }}</span><span class="um-divider">|</span>
+            <span><strong>Out</strong> {{ ugly_mugs_sync_output_xlsx or '—' }}</span>
+        </div>
+        <div class="current-value um-status">
+            <span><strong>Last run</strong> {{ ugly_mugs_sync_last_run_at or 'Never' }}</span><span class="um-divider">|</span>
+            <span><strong>Status</strong> {{ ugly_mugs_sync_last_status or '—' }}</span><span class="um-divider">|</span>
+            <span><strong>Count</strong> {{ ugly_mugs_sync_last_count or '0' }}</span><span class="um-divider">|</span>
+            <span><strong>Error</strong> {{ ugly_mugs_sync_last_error or 'None' }}</span>
+        </div>
+        <form method="POST" action="/config/save-ugly-mugs-sync">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="enabled_present" value="1">
+            <div class="toggle-container">
+                <span class="toggle-label" id="lblUglyMugsDaily">Enable daily sync</span>
+                <label class="toggle-switch" aria-labelledby="lblUglyMugsDaily">
+                    <input type="checkbox" id="uglyMugsDailyEnabled" name="enabled" aria-labelledby="lblUglyMugsDaily" {% if ugly_mugs_sync_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="um-grid um-grid-2">
+                <div class="form-group">
+                    <label for="umLookupUsername">Lookup username</label>
+                    <input type="text" id="umLookupUsername" name="lookup_username" placeholder="Username" value="{{ ugly_mugs_lookup_username or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="umLookupPassword">Lookup password</label>
+                    <input type="text" id="umLookupPassword" name="lookup_password" placeholder="Blank = keep current" autocomplete="off">
+                    {% if ugly_mugs_lookup_password_masked %}<span class="secret-fingerprint" title="Last 4 characters shown">Saved: {{ ugly_mugs_lookup_password_masked }}</span>{% endif %}
+                    <small>Blank keeps current password.</small>
+                </div>
+            </div>
+            <div class="um-grid um-grid-schedule">
+                <div class="form-group">
+                    <label for="umSyncHour">Hour</label>
+                    <input type="number" id="umSyncHour" name="sync_hour_local" min="0" max="23" value="{{ ugly_mugs_sync_hour_local }}">
+                </div>
+                <div class="form-group">
+                    <label for="umSyncMin">Min</label>
+                    <input type="number" id="umSyncMin" name="sync_minute_local" min="0" max="59" value="{{ ugly_mugs_sync_minute_local }}">
+                </div>
+                <div class="form-group">
+                    <label for="umSyncTz">Timezone</label>
+                    <input type="text" id="umSyncTz" name="sync_timezone" value="{{ ugly_mugs_sync_timezone or 'Australia/Adelaide' }}" placeholder="Australia/Adelaide">
+                </div>
+            </div>
+            <div class="um-grid um-grid-output">
+                <div class="form-group">
+                    <label for="umTotalPages">Total pages</label>
+                    <input type="number" id="umTotalPages" name="lookup_total_pages" min="1" value="{{ ugly_mugs_lookup_total_pages or 14935 }}">
+                    <small>Default 14935</small>
+                </div>
+                <div class="form-group">
+                    <label for="umOutputXlsx">Output XLSX (optional)</label>
+                    <input type="text" id="umOutputXlsx" name="sync_output_xlsx" value="{{ ugly_mugs_sync_output_xlsx or '' }}" placeholder="e.g. data/ugly_mugs_snapshot.xlsx">
+                </div>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:12px;">Save</button>
+        </form>
+    </div>
+</div>
+
+<!-- Safety Screening Configuration -->
+<div class="settings-section">
+    <h2>🛡️ Safety Screening</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p><strong>Client screening</strong> checks inbound phone numbers against your uploaded flagged-number watchlist.</p>
+            <p style="margin-top:8px;font-size:13px;opacity:0.9;">
+                If a number matches, the bot can either <strong>warn only</strong> (escort reviews Ugly Mugs) or
+                <strong>auto-block</strong> the number immediately.
+            </p>
+        </div>
+        <div class="current-value">
+            <strong>Screening Enabled:</strong> {{ 'On' if safety_screening_enabled else 'Off' }}<br>
+            <strong>Action Mode:</strong> {{ 'Auto-block matched numbers' if safety_screening_mode == 'auto_block' else 'Warn escort only' }}<br>
+            <strong>Watchlist Count:</strong> {{ safety_watchlist_count or 0 }}<br>
+            <strong>Last Upload:</strong>
+            {% if safety_watchlist_last_uploaded_at %}
+                {{ safety_watchlist_last_uploaded_at }}{% if safety_watchlist_last_uploaded_filename %} ({{ safety_watchlist_last_uploaded_filename }}){% endif %}
+            {% else %}
+                Never uploaded
+            {% endif %}
+        </div>
+
+        <form method="POST" action="/config/save-safety-screening">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="enabled_present" value="1">
+            <div class="toggle-container" style="margin-bottom:10px;">
+                <span class="toggle-label" id="lblSafetyScreening">Enable Client Safety Screening</span>
+                <label class="toggle-switch" aria-labelledby="lblSafetyScreening">
+                    <input type="checkbox" id="safetyScreeningEnabled" name="enabled" aria-labelledby="lblSafetyScreening" {% if safety_screening_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="safetyScreeningMode">Match Action</label>
+                <select id="safetyScreeningMode" name="screening_mode">
+                    <option value="warn_only" {% if safety_screening_mode != 'auto_block' %}selected{% endif %}>Warn escort only (recommended)</option>
+                    <option value="auto_block" {% if safety_screening_mode == 'auto_block' %}selected{% endif %}>Auto-block matched numbers</option>
+                </select>
+                <small>Warn-only keeps chats running and prompts manual Ugly Mugs checking. Auto-block silently stops matched clients.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save Safety Screening Settings</button>
+        </form>
+
+        <form method="POST" action="/config/upload-safety-watchlist" enctype="multipart/form-data" style="margin-top:16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="safetyWatchlistFile">Upload Flagged Number Watchlist (.xlsx / .xlsm)</label>
+                <input type="file" id="safetyWatchlistFile" name="watchlist_file" accept=".xlsx,.xlsm" required>
+                <small>Uploading replaces the current watchlist. Include a column with mobile numbers (e.g., phone/mobile/contact).</small>
+            </div>
+            <button type="submit" class="submit-btn">Upload and Replace Watchlist</button>
+        </form>
+    </div>
+</div>
+
+<!-- SMS: httpSMS Gateway (Android phone via httpsms.com) -->
+<div class="settings-section">
+    <h2>📲 SMS Gateway (httpSMS)</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p><strong>httpSMS</strong> sends and receives SMS via an Android phone connected to the <a href="https://httpsms.com" target="_blank" rel="noopener" style="color:var(--primary)">httpsms.com</a> cloud gateway.</p>
+            <p style="margin-top:8px;font-size:13px;opacity:0.9;">Save your API key and the Android phone number below. Inbound SMS arrives via httpSMS webhooks — no Pi or modem required.</p>
+        </div>
+        {% if httpsms_configured %}
+        <div class="current-value">
+            <strong>Status:</strong> Configured ✓<br>
+            <strong>Gateway Enabled:</strong> {{ 'On' if httpsms_enabled else 'Off' }}<br>
+            <strong>Phone Number:</strong> {{ httpsms_phone }}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;">
+            <strong>Status:</strong> Not configured — enter your httpSMS API key and phone number below
+        </div>
+        {% endif %}
+        <form method="POST" action="/config/save-httpsms">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="enabled_present" value="1">
+            <div class="toggle-container" style="margin-bottom:10px;">
+                <span class="toggle-label" id="lblHttpSmsEnabled">Enable httpSMS Gateway</span>
+                <label class="toggle-switch" aria-labelledby="lblHttpSmsEnabled">
+                    <input type="checkbox" id="httpSmsEnabled" name="enabled" aria-labelledby="lblHttpSmsEnabled" {% if httpsms_enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="httpsmsApiKey">httpSMS API Key</label>
+                <input type="password" id="httpsmsApiKey" name="httpsms_api_key" placeholder="{{ httpsms_api_key_masked if httpsms_api_key_set else 'Paste API key from httpsms.com' }}" autocomplete="new-password">
+                <small>Find your API key at <a href="https://httpsms.com/settings" target="_blank" rel="noopener" style="color:var(--primary)">httpsms.com/settings</a>. Leave blank to keep the current key.</small>
+            </div>
+            <div class="form-group">
+                <label for="httpsmsPhone">Android Phone Number (E.164)</label>
+                <input type="tel" id="httpsmsPhone" name="phone_number" placeholder="+61412345678" value="{{ httpsms_phone }}">
+                <small>The phone number of the Android device registered in httpSMS (E.164 format, e.g. +61412345678).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="webhookSecretInput">Webhook Signing Secret (advanced, optional)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="password" id="webhookSecretInput" name="httpsms_webhook_signature_secret" placeholder="{{ webhook_signature_secret_masked if webhook_signature_secret_set else 'Click Generate or paste existing secret' }}" autocomplete="new-password" style="flex:1;">
+                    <button type="button" onclick="generateWebhookSecret()" style="white-space:nowrap;padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;">🎲 Generate</button>
+                </div>
+                {% if webhook_signature_secret_set %}<span class="secret-fingerprint" title="Last 4 characters shown">Currently saved: {{ webhook_signature_secret_masked }}</span>{% endif %}
+                <small>Custom HMAC signing secret for advanced webhook verification. <strong>Not required for standard httpSMS setups</strong> — httpSMS does not send the required timestamp headers. Only enable this if you have a custom gateway that sends <code>X-Webhook-Timestamp</code> and <code>X-Webhook-Signature</code> headers.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Webhook Signature Verification</label>
+                <input type="hidden" name="sig_req_present" value="1">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:normal;cursor:pointer;">
+                    <input type="checkbox" name="httpsms_webhook_signature_required" {% if httpsms_webhook_signature_required %}checked{% endif %} style="width:18px;height:18px;">
+                    Require signature on inbound webhooks
+                </label>
+                <small>⚠️ <strong>Keep this OFF</strong> for standard httpSMS use. httpSMS does not send the custom HMAC headers this app expects, so enabling this will block all inbound messages with a 401 error. Only enable if using a custom gateway that sends the correct signature headers.</small>
+            </div>
+
+            <div class="info-box" style="margin-top:12px;">
+                <p><strong>httpSMS setup:</strong></p>
+                <p style="margin:6px 0 0;">
+                    1) Install the <a href="https://play.google.com/store/apps/details?id=com.httpsms" target="_blank" rel="noopener" style="color:var(--primary)">httpSMS Android app</a> on the phone<br>
+                    2) Sign in at <a href="https://httpsms.com" target="_blank" rel="noopener" style="color:var(--primary)">httpsms.com</a> and copy your API key<br>
+                    3) Configure the inbound webhook URL in httpSMS to point to <code>{{ base_url }}/webhook</code><br>
+                    4) Leave <em>Signature Verification</em> <strong>OFF</strong> (httpSMS does not send the required headers)<br>
+                    5) Save the API key and phone number above
+                </p>
+            </div>
+            <button type="submit" class="submit-btn">Save httpSMS Settings</button>
+        </form>
+    </div>
+</div>
+
+<!-- Escort Phone Number (read-only status — configured via Admin page) -->
+<div class="settings-section">
+    <h2>📞 Escort Phone Number</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p>The escort's personal phone number for SMS forwarding. Configured from the <strong>Admin → My Profile</strong> page.</p>
+        </div>
+        {% if escort_phone %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓ &nbsp;—&nbsp; {{ escort_phone }}</div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not set — configure via Admin → My Profile</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Site URL (Base URL) -->
+<div class="settings-section">
+    <h2>🔗 Site URL (Base URL)</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p>Must match your app’s public URL (no trailing slash). Used for deposit screenshot upload links and feedback links.</p>
+        </div>
+        {% if base_url %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓ &nbsp;—&nbsp; {{ base_url }}</div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not set</div>
+        {% endif %}
+        <form method="POST" action="/config/save-base-url">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="base_url">Site URL (for deposit upload links and feedback links)</label>
+                <input type="url" id="base_url" name="base_url" placeholder="https://www.(site_url_)" value="{{ base_url or '' }}">
+                <small>Leave blank to use the default. Deposit links will always show a real URL.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save Site URL</button>
+        </form>
+    </div>
+</div>
+
+<!-- Flask Secret Key -->
+<div class="settings-section">
+    <h2>🔐 Flask Secret Key</h2>
+    <div class="settings-card">
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:10px;">
+            Used to sign session cookies and CSRF tokens. Must be a long random string — never share it or commit it to source control.
+        </p>
+        {% if secret_key_set %}
+        <div class="current-value"><strong>Status:</strong> Secret key set ✓
+            {% if flask_secret_key_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Fingerprint: {{ flask_secret_key_masked }}</span>{% endif %}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not set — sessions will not persist across app restarts</div>
+        {% endif %}
+        <form method="POST" action="/config/save-flask-secret">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="flaskSecretInput">Secret Key</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="flaskSecretInput" name="flask_secret_key" placeholder="Generate one or paste existing key" style="flex:1;font-family:monospace;">
+                    <button type="button" onclick="generateFlaskSecret()" style="white-space:nowrap;padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;">🎲 Generate</button>
+                </div>
+                <small>Click <strong>Generate</strong> to create a cryptographically secure 64-character key. Copy the key and also save it in your WSGI file (see WSGI Generator below) — changing it will log all users out.</small>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:8px;">Save Secret Key</button>
+        </form>
+    </div>
+</div>
+
+<!-- Redis URL -->
+<div class="settings-section">
+    <h2>⚡ Redis URL</h2>
+    <div class="settings-card">
+        <div class="info-box">
+            <p>Optional — enables persistent cross-worker rate limiting. Without Redis, rate limits reset on every app reload.<br>
+            Use <strong>Upstash</strong> (free tier) and paste your <code>rediss://</code> URL here.<br>
+            If set in your <strong>.env file</strong>, the .env value takes priority over this field.</p>
+        </div>
+        {% if redis_url_set %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓ (source: {{ redis_url_source }})
+            {% if redis_url_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;">{{ redis_url_masked }}</span>{% endif %}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not set — using in-memory fallback (rate limits reset on reload)</div>
+        {% endif %}
+        <form method="POST" action="/config/save-redis-url">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="redis_url">Redis URL</label>
+                <input type="text" id="redis_url" name="redis_url" placeholder="rediss://default:PASSWORD@host.upstash.io:6379" style="font-family:monospace;">
+                <small>Must start with <code>rediss://</code> for Upstash (TLS). Leave blank to clear and revert to in-memory. After saving, reload the app from the Admin panel.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save Redis URL</button>
+        </form>
+    </div>
+</div>
+
+<!-- AI Keys Configuration -->
+<div class="settings-section">
+    <h2>🤖 AI Service Keys</h2>
+    <div class="settings-card">
+        <h3>Claude API (Anthropic)</h3>
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:10px;">
+            Powers the chatbot's AI responses, intent classification, and conversation handling.
+        </p>
+        {% if claude_key %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓
+            {% if claude_key_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Saved: {{ claude_key_masked }}</span>{% endif %}
+        </div>
+        {% endif %}
+        <form method="POST" action="/config/save-ai-keys">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="claudeApiKey">Claude API Key</label>
+                <input type="text" id="claudeApiKey" name="claude_key" placeholder="{% if claude_key %}Leave blank to keep current key{% else %}sk-ant-api03-xxxxx{% endif %}" autocomplete="off">
+                <small>Leave blank to keep current key. Keys start with <code>sk-ant-</code>.</small>
+            </div>
+            <div class="form-group" style="background:rgba(255,255,255,0.05);border-left:3px solid #7c3aed;padding:12px 14px;border-radius:4px;">
+                <strong style="font-size:0.9em;color:#ce93d8;">How to generate a Claude API key:</strong>
+                <ol style="font-size:0.85em;margin:8px 0 0 16px;color:rgba(255,255,255,0.7);line-height:1.7;">
+                    <li>Go to <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" style="color:#ce93d8;">console.anthropic.com</a> and sign in (or create a free account).</li>
+                    <li>Navigate to <strong style="color:rgba(255,255,255,0.9);">API Keys</strong> in the left sidebar.</li>
+                    <li>Click <strong style="color:rgba(255,255,255,0.9);">Create Key</strong>, give it a name (e.g. "Escort Bot"), and copy the key immediately — it won't be shown again.</li>
+                    <li>Add billing credits under <strong style="color:rgba(255,255,255,0.9);">Plans &amp; Billing</strong> if prompted (pay-as-you-go, no subscription required).</li>
+                    <li>Paste the key above and click Save.</li>
+                </ol>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:14px;">Save Claude Key</button>
+        </form>
+    </div>
+    <div class="settings-card">
+        <h3>Gemini API (Google)</h3>
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:10px;">
+            Used as a fallback AI provider when Claude is unavailable or for specific tasks requiring Google's language models.
+        </p>
+        {% if gemini_key %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓
+            {% if gemini_key_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Saved: {{ gemini_key_masked }}</span>{% endif %}
+        </div>
+        {% endif %}
+        <form method="POST" action="/config/save-ai-keys">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="geminiApiKey">Gemini API Key</label>
+                <input type="text" id="geminiApiKey" name="gemini_key" placeholder="{% if gemini_key %}Leave blank to keep current key{% else %}AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxx{% endif %}" autocomplete="off">
+                <small>Leave blank to keep current key. Keys start with <code>AIzaSy</code>.</small>
+            </div>
+            <div class="form-group" style="background:rgba(255,255,255,0.05);border-left:3px solid #4285F4;padding:12px 14px;border-radius:4px;">
+                <strong style="font-size:0.9em;color:#90caf9;">How to generate a Gemini API key:</strong>
+                <ol style="font-size:0.85em;margin:8px 0 0 16px;color:rgba(255,255,255,0.7);line-height:1.7;">
+                    <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:#90caf9;">Google AI Studio → API Keys</a> and sign in with your Google account.</li>
+                    <li>Click <strong style="color:rgba(255,255,255,0.9);">Create API Key</strong> and select an existing Google Cloud project or create a new one.</li>
+                    <li>Copy the generated key (starts with <code style="color:#ffeb3b;">AIzaSy</code>).</li>
+                    <li>Optionally restrict the key in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:#90caf9;">Google Cloud Console → Credentials</a> to only allow the <em>Generative Language API</em>.</li>
+                    <li>Paste the key above and click Save.</li>
+                </ol>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:14px;">Save Gemini Key</button>
+        </form>
+    </div>
+</div>
+
+<!-- Schedule API -->
+<div class="settings-section">
+    <h2>📅 Schedule API</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-calendar" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="scheduleApiEndpoint"><strong>Schedule API Endpoint</strong></label>
+                <input type="text" id="scheduleApiEndpoint" readonly value="{{ base_url }}/schedule/api/mobile-sync">
+                <small>Mobile sync endpoint — returns bookings for a date range (GET). Requires a valid API key. Use <code>?start_date=YYYY-MM-DD&amp;end_date=YYYY-MM-DD</code> params.</small>
+            </div>
+            <div class="form-group">
+                <label for="scheduleApiKey"><strong>Schedule API Key</strong></label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="text" id="scheduleApiKey" name="schedule_api_key" placeholder="{% if schedule_api_key_masked %}Leave blank to keep current key{% else %}Enter or generate API key{% endif %}" style="font-family:monospace;flex:1;">
+                    <button type="button" onclick="generateScheduleApiKey()" style="white-space:nowrap;padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;">🎲 Generate</button>
+                </div>
+                {% if schedule_api_key_masked %}<span class="secret-fingerprint" title="Last 4 characters shown">Currently saved: {{ schedule_api_key_masked }}</span>{% endif %}
+                <small>Required for accessing the schedule API endpoint. Save after generating or entering a new key.</small>
+            </div>
+            <script>
+            function generateScheduleApiKey() {
+                document.getElementById('scheduleApiKey').value = _randomString(48);
+            }
+            </script>
+            <button type="submit" class="submit-btn">Save Schedule Settings</button>
+        </form>
+    </div>
+</div>
+
+<!-- PythonAnywhere API Token -->
+<div class="settings-section">
+    <h2>🛠️ PythonAnywhere API Token (PA_TOKEN)</h2>
+    <div class="settings-card">
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:10px;">
+            Used for PythonAnywhere API actions like webapp reload/deploy integrations.
+        </p>
+        {% if pa_token_set %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓
+            {% if pa_token_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Saved: {{ pa_token_masked }}</span>{% endif %}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not configured</div>
+        {% endif %}
+        <form method="POST" action="/config/save-pa-token">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="paTokenInput">PA_TOKEN</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="text" id="paTokenInput" name="pa_token" placeholder="{% if pa_token_set %}Enter new token to replace current{% else %}Paste token or generate one{% endif %}" style="font-family:monospace;flex:1;" autocomplete="off">
+                    <button type="button" onclick="generatePaToken()" style="white-space:nowrap;padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;">🎲 Generate</button>
+                </div>
+                <small>You can paste your existing token or generate a random one, then save.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save PA Token</button>
+        </form>
+    </div>
+</div>
+
+<!-- Google Vision -->
+<div class="settings-section">
+    <h2>👁️ Google Vision</h2>
+    <div class="settings-card">
+        <p style="margin-bottom:12px;color:rgba(255,255,255,0.8);font-size:14px;">
+            Google Vision API provides OCR (optical character recognition) to automatically verify deposit screenshots sent by clients. When enabled, the chatbot reads the deposit receipt image and confirms the payment amount and reference.
+        </p>
+        {% if vision_configured %}
+        <div class="current-value">
+            <strong>Google Vision:</strong> Configured ✓ &nbsp;—&nbsp; credentials.json found
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;">
+            <strong>Google Vision:</strong> Not configured — credentials.json not found
+        </div>
+        {% endif %}
+        <form method="POST" action="/config/save-calendar" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="googleCredentialsFile">Upload credentials.json</label>
+                <input type="file" id="googleCredentialsFile" name="credentials_file" accept=".json">
+                <small>Upload your Google Cloud service account credentials file to enable Vision deposit screenshot verification.</small>
+            </div>
+            <div class="form-group" style="background:rgba(255,255,255,0.05);border-left:3px solid #5c6bc0;padding:12px 14px;border-radius:4px;margin-top:4px;">
+                <strong style="font-size:0.9em;color:#9fa8da;">How to set up Google Vision:</strong>
+                <ol style="font-size:0.85em;margin:8px 0 0 16px;color:rgba(255,255,255,0.7);line-height:1.9;">
+                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" style="color:#9fa8da;">Google Cloud Console</a> and create or select a project.</li>
+                    <li>In the left menu go to <strong style="color:rgba(255,255,255,0.9);">APIs &amp; Services → Library</strong>, search for <em>Cloud Vision API</em> and click <strong style="color:rgba(255,255,255,0.9);">Enable</strong>.</li>
+                    <li>Go to <strong style="color:rgba(255,255,255,0.9);">APIs &amp; Services → Credentials</strong> and click <strong style="color:rgba(255,255,255,0.9);">Create Credentials → Service Account</strong>.</li>
+                    <li>Give it a name (e.g. <em>chatbot-vision</em>), click <strong style="color:rgba(255,255,255,0.9);">Create and Continue</strong>, skip optional steps, then click <strong style="color:rgba(255,255,255,0.9);">Done</strong>.</li>
+                    <li>Click on the new service account, go to the <strong style="color:rgba(255,255,255,0.9);">Keys</strong> tab, click <strong style="color:rgba(255,255,255,0.9);">Add Key → Create new key</strong>, choose <strong style="color:rgba(255,255,255,0.9);">JSON</strong> and click <strong style="color:rgba(255,255,255,0.9);">Create</strong>.</li>
+                    <li>A <code>credentials.json</code> file will download automatically — upload it using the field above.</li>
+                    <li>The Vision API has a generous free tier (1,000 requests/month). No billing is required for typical usage.</li>
+                </ol>
+                <p style="margin-top:10px;font-size:0.82em;color:rgba(255,255,255,0.5);">Need more help? See the <a href="https://cloud.google.com/vision/docs/setup" target="_blank" rel="noopener noreferrer" style="color:#9fa8da;">official Google Cloud Vision setup guide</a>.</p>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:14px;">Save Vision Credentials</button>
+        </form>
+    </div>
+</div>
+
+<!-- Google Maps API Keys -->
+<div class="settings-section">
+    <h2>🗺️ Google Maps API Keys</h2>
+    <div class="settings-card">
+        <p style="margin-bottom:12px;color:rgba(255,255,255,0.8);font-size:14px;">
+            Two separate API keys are used — one for the booking webform (browser) and one for server-side distance checks (server).
+        </p>
+        {% if google_maps_browser_key and google_maps_server_key %}
+        <div class="current-value"><strong>Status:</strong> Both keys configured ✓
+            {% if google_maps_browser_key_masked or google_maps_server_key_masked %}
+            <br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Browser: {{ google_maps_browser_key_masked or '—' }} &nbsp;·&nbsp; Server: {{ google_maps_server_key_masked or '—' }}</span>
+            {% endif %}
+        </div>
+        {% elif google_maps_browser_key or google_maps_server_key %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Partially configured — {{ 'server' if not google_maps_server_key else 'browser' }} key missing
+            {% if google_maps_browser_key_masked or google_maps_server_key_masked %}
+            <br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Browser: {{ google_maps_browser_key_masked or '—' }} &nbsp;·&nbsp; Server: {{ google_maps_server_key_masked or '—' }}</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not configured</div>
+        {% endif %}
+        <form method="POST" action="/config/save-google-maps">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="googleMapsBrowserKey">Google Browser API Key</label>
+                <input type="text" id="googleMapsBrowserKey" name="google_maps_browser_api_key" placeholder="{% if google_maps_browser_key %}Leave blank to keep current key{% else %}AIza...{% endif %}" autocomplete="off">
+                {% if google_maps_browser_key_masked %}<span class="secret-fingerprint" title="Last 4 characters shown">Saved: {{ google_maps_browser_key_masked }}</span>{% endif %}
+                <small>Leave blank to keep current key. <strong>Used for:</strong> Address autocomplete in the booking webform (Maps JavaScript API + Places API).</small>
+                <small><strong>Restriction:</strong> Set to <em>HTTP referrers</em> in Google Cloud Console and add <code>https://www.(site_url_)/*</code>.</small>
+            </div>
+            <div class="form-group">
+                <label for="googleMapsServerKey">Google Server API Key</label>
+                <input type="text" id="googleMapsServerKey" name="google_maps_server_api_key" placeholder="{% if google_maps_server_key %}Leave blank to keep current key{% else %}AIza...{% endif %}" autocomplete="off">
+                {% if google_maps_server_key_masked %}<span class="secret-fingerprint" title="Last 4 characters shown">Saved: {{ google_maps_server_key_masked }}</span>{% endif %}
+                <small>Leave blank to keep current key. <strong>Used for:</strong> Server-side geocoding and 15 km outcall distance verification (Geocoding API + Distance Matrix API).</small>
+                <small><strong>Restriction:</strong> Set to <em>IP addresses</em> in Google Cloud Console and add <code>{{ server_ip or 'unable to detect — see setup instructions below' }}</code>{% if server_ip %} (current PythonAnywhere server IP){% endif %}.</small>
+            </div>
+            <div class="form-group" style="background:rgba(255,255,255,0.05);border-left:3px solid #4285F4;padding:12px 14px;border-radius:4px;margin-top:4px;">
+                <strong style="font-size:0.9em;color:#90caf9;">Setup instructions:</strong>
+                <ol style="font-size:0.85em;margin:8px 0 0 16px;color:rgba(255,255,255,0.7);line-height:1.7;">
+                    <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="color:#90caf9;">Google Cloud Console → APIs &amp; Services → Credentials</a>.</li>
+                    <li>Create two API keys (or edit existing ones): one for browser use, one for server use.</li>
+                    <li>For the <strong style="color:rgba(255,255,255,0.9);">browser key</strong>: enable <em>Maps JavaScript API</em> and <em>Places API</em>; restrict by HTTP referrer to your domain.</li>
+                    <li>For the <strong style="color:rgba(255,255,255,0.9);">server key</strong>: enable <em>Geocoding API</em> and <em>Distance Matrix API</em>; restrict by IP to <code style="color:#ffeb3b;">{{ server_ip or 'your server IP' }}</code>.{% if not server_ip %} <em style="color:#ff9800;">Could not auto-detect — run <code>curl https://api.ipify.org</code> in a PythonAnywhere Bash console to find it.</em>{% endif %}</li>
+                    <li>Paste both keys above and click Save.</li>
+                </ol>
+                {% if server_ip %}
+                <p style="margin-top:10px;font-size:0.8em;color:rgba(255,255,255,0.5);">Note: PythonAnywhere server IPs can change when your app moves between servers. If the Maps server key suddenly stops working, revisit this page to check the current IP and update your Google Cloud Console restriction.</p>
+                {% endif %}
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:14px;">Save Google Maps Keys</button>
+        </form>
+    </div>
+</div>
+
+<!-- OpenCage Geocoding -->
+<div class="settings-section">
+    <h2>📍 OpenCage Geocoding API Key</h2>
+    <div class="settings-card">
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:10px;">
+            OpenCage is a fallback geocoder used when Google Maps server-side lookups are unavailable. It converts suburb/city names into coordinates for the 15 km outcall distance check.
+        </p>
+        {% if opencage_key %}
+        <div class="current-value"><strong>Status:</strong> Configured ✓
+            {% if opencage_key_masked %}<br><span class="secret-fingerprint" style="margin-top:4px;" title="Last 4 characters shown">Saved: {{ opencage_key_masked }}</span>{% endif %}
+        </div>
+        {% else %}
+        <div class="current-value" style="border-left:4px solid #ff9800;"><strong>Status:</strong> Not set — geocoding will fall back to Google Maps only</div>
+        {% endif %}
+        <form method="POST" action="/config/save-opencage">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="opencageApiKey">OpenCage API Key</label>
+                <input type="text" id="opencageApiKey" name="opencage_api_key" placeholder="{% if opencage_key %}Leave blank to keep current key{% else %}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx{% endif %}" autocomplete="off">
+                {% if opencage_key_masked %}<span class="secret-fingerprint" title="Last 4 characters shown">Saved: {{ opencage_key_masked }}</span>{% endif %}
+                <small>Leave blank to keep current key.</small>
+            </div>
+            <div class="form-group" style="background:rgba(255,255,255,0.05);border-left:3px solid #e67e22;padding:12px 14px;border-radius:4px;">
+                <strong style="font-size:0.9em;color:#ffb74d;">How to get an OpenCage API key:</strong>
+                <ol style="font-size:0.85em;margin:8px 0 0 16px;color:rgba(255,255,255,0.7);line-height:1.7;">
+                    <li>Go to <a href="https://opencagedata.com/users/sign_up" target="_blank" rel="noopener noreferrer" style="color:#ffb74d;">opencagedata.com → Sign Up</a> (free tier: 2,500 requests/day).</li>
+                    <li>After signing in, go to <strong style="color:rgba(255,255,255,0.9);">Dashboard → API Keys</strong>.</li>
+                    <li>Copy your key (32 lowercase hex characters) and paste it above.</li>
+                    <li>No IP restriction needed — the key is used server-side only.</li>
+                </ol>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:14px;">Save OpenCage Key</button>
+        </form>
+    </div>
+</div>
+
+
+<div class="info-box">
+    <p><strong>Note:</strong> Changes to API keys require a web app reload to take effect. Other settings update immediately.</p>
+</div>
+
+<!-- Startup DB Migrations -->
+<div class="settings-section">
+    <h2>🗄️ Startup Database Migrations</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-startup-db-migrations">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="toggle-container" style="margin-bottom:10px;">
+                <span class="toggle-label" id="lblStartupDbMigrations">Run startup database migrations on next app startup/reload</span>
+                <label class="toggle-switch" aria-labelledby="lblStartupDbMigrations">
+                    <input type="checkbox" id="runStartupDbMigrations" name="run_startup_db_migrations" aria-labelledby="lblStartupDbMigrations" {% if run_startup_db_migrations %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <small style="color:#ffd54f;display:block;margin-bottom:12px;">
+                Turn this ON only when needed, reload the web app once, then change it back to OFF (not set).
+            </small>
+            <button type="submit" class="submit-btn">Save Startup Migration Setting</button>
+        </form>
+    </div>
+</div>
+
+<!-- Flow Version Rollout -->
+<div class="settings-section">
+    <h2>🧭 Conversation Flow Rollout</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-flow-version-rollout">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="flowVersionDefault">Default flow mode for new conversations</label>
+                <select id="flowVersionDefault" name="flow_version_default" class="styled-select" style="max-width:280px;">
+                    <option value="rollout" {% if flow_version_default == 'rollout' %}selected{% endif %}>Rollout by percentage</option>
+                    <option value="v1" {% if flow_version_default == 'v1' %}selected{% endif %}>Force v1</option>
+                    <option value="v2" {% if flow_version_default == 'v2' %}selected{% endif %}>Force v2</option>
+                </select>
+                <small>Force v1/v2 applies immediately to all conversations. Rollout mode uses the flow version saved when a conversation row is first created.</small>
+            </div>
+            <div class="form-group">
+                <label for="flowVersionV2RolloutPercent">v2 rollout percentage (0–100)</label>
+                <input
+                    type="number"
+                    id="flowVersionV2RolloutPercent"
+                    name="flow_version_v2_rollout_percent"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="{{ flow_version_v2_rollout_percent }}"
+                    style="max-width:180px;"
+                >
+                <small>Only used when mode is “Rollout by percentage”. Deterministic per phone number.</small>
+                <small style="display:block;margin-top:4px;">If <code>FLOW_VERSION_DEFAULT</code> or <code>FLOW_VERSION_V2_ROLLOUT_PERCENT</code> are set in the host environment, those values override these saved settings.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save Flow Rollout Settings</button>
+        </form>
+    </div>
+</div>
+
+<div class="settings-section">
+    <h2>🎯 AI Fallback Confidence Gate</h2>
+    <div class="settings-card">
+        <form method="POST" action="/config/save-ai-fallback-threshold">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="aiFallbackConfidenceThreshold">Fallback confidence threshold (0.00–1.00)</label>
+                <input
+                    type="number"
+                    id="aiFallbackConfidenceThreshold"
+                    name="ai_fallback_confidence_threshold"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="{{ ai_fallback_confidence_threshold }}"
+                    style="max-width:180px;"
+                >
+                <small>When fallback confidence is below this threshold, the bot uses deterministic template fallback instead of AI generation.</small>
+            </div>
+            <div class="form-group">
+                <label>Per-funnel-step threshold overrides (0.00–1.00)</label>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Qualification</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_qualification" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_qualification }}">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Availability</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_availability" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_availability }}">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Screening</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_screening" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_screening }}">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Deposit</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_deposit" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_deposit }}">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Confirmation</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_confirmation" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_confirmation }}">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:6px;">
+                        <span>Follow-up</span>
+                        <input type="number" name="ai_fallback_confidence_threshold_follow_up" min="0" max="1" step="0.01" value="{{ ai_fallback_confidence_threshold_follow_up }}">
+                    </label>
+                </div>
+                <small>These override the global threshold for each funnel stage.</small>
+            </div>
+            <button type="submit" class="submit-btn">Save AI Fallback Threshold</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function _randomString(length) {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var array = new Uint8Array(length);
+    window.crypto.getRandomValues(array);
+    return Array.from(array).map(function(b) { return chars[b % chars.length]; }).join('');
+}
+
+function generateWebhookSecret() {
+    var input = document.getElementById('webhookSecretInput');
+    input.value = _randomString(32);
+    input.type = 'text';
+}
+
+function generateFlaskSecret() {
+    var input = document.getElementById('flaskSecretInput');
+    input.value = _randomString(64);
+}
+
+function generatePaToken() {
+    var chars = 'abcdef0123456789';
+    var array = new Uint8Array(40);
+    window.crypto.getRandomValues(array);
+    var token = Array.from(array).map(function(b) { return chars[b % chars.length]; }).join('');
+    var input = document.getElementById('paTokenInput');
+    if (input) input.value = token;
+}
+
+</script>
+{% endblock %}

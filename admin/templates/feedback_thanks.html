@@ -1,0 +1,19 @@
+{% extends "base_admin.html" %}
+{% block title %}Feedback submitted{% endblock %}
+{% block page_title %}Thank you{% endblock %}
+{% block page_subtitle %}Your feedback has been saved{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 560px; margin: 80px auto;">
+    <div class="settings-section">
+        <h2>✅ Feedback submitted</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ 'success-msg' if category == 'success' else 'error-msg' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <p style="color: rgba(255, 255, 255, 0.9); font-size: 15px; margin-top: 16px;">You can close this page.</p>
+    </div>
+</div>
+{% endblock %}

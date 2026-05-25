@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Book with {{ escort_name or 'escort' }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.css') }}">
+    <style>
+        :root {
+            color-scheme: dark;
+            --primary: #e91e63;
+            --primary-dark: #c2185b;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --dark: #1a1a2e;
+            --dark-card: #1e1e32;
+            --light: #f8f9fa;
+            --success: #ffeb3b;
+            --glass: rgba(255, 255, 255, 0.95);
+            --label-pink: #ff69b4;
+        }
+        /* Hint browser to use dark native widgets (date picker, dropdown list where supported) */
+        html { color-scheme: dark; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233, 30, 99, 0.1) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes neonPulse {
+            0%, 100% { box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(233, 30, 99, 0.1); }
+            50% { box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(233, 30, 99, 0.2); }
+        }
+
+        .container {
+            animation: fadeInUp 0.6s ease-out;
+            max-width: 520px;
+            width: 100%;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(233, 30, 99, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s ease;
+        }
+
+        .container:hover {
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 50px rgba(233, 30, 99, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-color: rgba(233, 30, 99, 0.4);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .header h1 .title-emoji {
+            -webkit-text-fill-color: initial;
+            background: none;
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .location-card {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(30, 30, 50, 0.9));
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .location-card .location-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 0;
+            text-align: center;
+        }
+
+        .location-card .location-item:first-child {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .location-card .icon {
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            box-shadow: none;
+            margin: 0 auto;
+        }
+
+        .location-card .location-text {
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .location-card .location-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .price-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.3);
+        }
+
+        .price-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .price-card h2 {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .price-card .price {
+            font-size: 48px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .price-card .breakdown {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        label.group-cb {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+            font-weight: 500;
+            font-size: 15px;
+            color: #ffeb3b;
+            cursor: pointer;
+        }
+        /* Hide the native checkbox completely */
+        label.group-cb input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            margin: 0;
+            pointer-events: none;
+        }
+        /* Custom box */
+        label.group-cb .cb-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 17px;
+            height: 17px;
+            margin-right: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 900;
+            color: transparent;
+            line-height: 1;
+        }
+        label.group-cb .cb-box.is-checked {
+            border-color: #4caf50 !important;
+            background: rgba(76, 175, 80, 0.15) !important;
+            color: #4caf50 !important;
+        }
+        label.group-cb:hover .cb-box {
+            border-color: #ffeb3b;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ff69b4;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #ffeb3b;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background: var(--dark-card);
+            color: #fff;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* Date input – match site; dark picker where supported */
+        .form-group input[type="date"] {
+            color-scheme: dark;
+        }
+        .form-group input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(58%) sepia(100%) saturate(3000%) hue-rotate(310deg) brightness(110%);
+            cursor: pointer;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group select {
+            background-color: var(--dark-card);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 44px;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        /* Dropdown options – match site (dark card, white text, pink optgroups) */
+        .form-group select option {
+            background: var(--dark-card);
+            color: #fff;
+            padding: 10px 16px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+        }
+
+        .form-group select option:disabled {
+            background: var(--dark-card);
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+
+        .form-group select optgroup {
+            background: var(--dark-card);
+            color: var(--label-pink);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 0;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.2);
+        }
+
+        .form-group select:disabled {
+            background-color: var(--dark-card);
+            color: rgba(255, 255, 255, 0.4);
+            cursor: not-allowed;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            color: #ffeb3b;
+            margin-top: 6px;
+        }
+
+        .form-group .verified {
+            background-color: rgba(255, 235, 59, 0.2);
+            border-color: var(--success);
+            color: #ffeb3b;
+        }
+
+        #outcallAddress {
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.5), 0 0 30px rgba(233, 30, 99, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
+            transform: translateX(-100%);
+        }
+
+        .submit-btn:hover:not(:disabled)::after {
+            animation: btnShimmer 0.6s forwards;
+        }
+
+        @keyframes btnShimmer {
+            to { transform: translateX(100%); }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+                border-radius: 20px;
+            }
+
+            .header h1 {
+                font-size: 26px;
+            }
+
+            .price-card .price {
+                font-size: 38px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px 14px;
+                font-size: 16px;
+            }
+
+            .pac-container,
+            .pac-item {
+                font-size: 16px !important;
+            }
+
+            .place-autocomplete-mount gmp-place-autocomplete::part(input) {
+                font-size: 16px;
+                padding: 12px 14px;
+            }
+        }
+
+        /* Fixed duration indicator (matches doubles MMF/MFF hint colour — yellow on dark card) */
+        .duration-locked {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(255, 235, 59, 0.08);
+            border: 1px solid rgba(255, 235, 59, 0.35);
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #ffeb3b;
+        }
+
+        .duration-locked.show {
+            display: flex;
+        }
+
+
+        /* Google Places — legacy Autocomplete dropdown (.pac-*), matches .form-group inputs */
+        .pac-container {
+            z-index: 10050 !important;
+            background-color: var(--dark-card) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 12px !important;
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.06) inset !important;
+            margin-top: 4px !important;
+            font-family: 'Poppins', sans-serif !important;
+            font-size: 15px !important;
+            color: #fff !important;
+            overflow: hidden;
+        }
+
+        .pac-item {
+            padding: 12px 16px !important;
+            color: #fff !important;
+            background: var(--dark-card) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+            cursor: pointer !important;
+            font-size: 15px !important;
+            line-height: 1.4 !important;
+        }
+
+        .pac-item:first-child {
+            border-top: none !important;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .pac-item:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+
+        .pac-item:hover,
+        .pac-item-selected {
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+            color: #fff !important;
+        }
+
+        .pac-item-query {
+            color: var(--label-pink) !important;
+            font-weight: 500 !important;
+        }
+
+        .pac-matched {
+            color: var(--success) !important;
+            font-weight: 600 !important;
+        }
+
+        .pac-icon {
+            display: none !important;
+        }
+
+        .pac-container:after {
+            display: none !important;
+        }
+
+        /* Places API (New) — PlaceAutocompleteElement (Places UI Kit tokens + host chrome) */
+        .place-autocomplete-mount {
+            width: 100%;
+            display: block;
+            min-height: 52px;
+        }
+
+        .place-autocomplete-mount gmp-place-autocomplete {
+            width: 100%;
+            display: block;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            color-scheme: dark;
+            /* Align with form inputs + dark card */
+            --gmp-mat-font-family: 'Poppins', sans-serif;
+            --gmp-mat-color-surface: #1e1e32;
+            --gmp-mat-color-on-surface: #ffffff;
+            --gmp-mat-color-on-surface-variant: rgba(255, 255, 255, 0.72);
+            --gmp-mat-color-primary: var(--primary);
+            --gmp-mat-color-outline-decorative: rgba(255, 255, 255, 0.3);
+            --gmp-mat-color-secondary-container: rgba(233, 30, 99, 0.22);
+            --gmp-mat-color-on-secondary-container: #ffffff;
+            --gmp-mat-color-neutral-container: rgba(255, 255, 255, 0.08);
+            --gmp-mat-color-on-neutral-container: rgba(255, 255, 255, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background-color: var(--dark-card);
+            box-shadow: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .place-autocomplete-mount gmp-place-autocomplete:focus-within {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.2);
+        }
+
+        /* Exposed shadow parts (when supported) — mirror .form-group input padding & type */
+        .place-autocomplete-mount gmp-place-autocomplete::part(input-container) {
+            background: transparent;
+            border-radius: 12px;
+        }
+
+        .place-autocomplete-mount gmp-place-autocomplete::part(input) {
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            line-height: 1.4;
+            padding: 14px 16px;
+            color: #fff;
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+
+        .place-autocomplete-mount gmp-place-autocomplete::part(input)::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* Booking webform visual theme system + custom picker/select styling */
+        /* ------------------------------------------------------------------ */
+        :root {
+            --scene-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            --scene-overlay: none;
+            --scene-overlay-opacity: 0;
+            --scene-container-bg: rgba(30, 30, 50, 0.95);
+            --scene-container-border: rgba(255, 255, 255, 0.3);
+            --scene-input-bg: var(--dark-card);
+            --scene-input-border: rgba(255, 255, 255, 0.3);
+            --scene-input-text: #ffffff;
+            --scene-menu-bg: rgba(18, 26, 45, 0.98);
+            --scene-menu-border: rgba(160, 210, 255, 0.45);
+            --scene-menu-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+            --scene-accent-blue: #9fd9ff;
+            --dawn-progress: 0;
+        }
+
+        body {
+            background: var(--scene-bg);
+            transition: background 0.65s ease;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image: var(--scene-overlay);
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: var(--scene-overlay-opacity);
+            transition: opacity 0.55s ease, background-image 0.55s ease;
+        }
+
+        body.booking-theme-default {
+            --scene-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            --scene-overlay: none;
+            --scene-overlay-opacity: 0;
+        }
+
+        body.booking-theme-night-deep {
+            --scene-bg: linear-gradient(160deg, #081022 0%, #10203f 52%, #1f2d57 100%);
+            --scene-overlay:
+                radial-gradient(circle at 78% 17%, rgba(248, 252, 255, 0.95) 0 34px, rgba(255, 255, 255, 0.15) 36px 44px, transparent 46px),
+                radial-gradient(circle at 15% 24%, rgba(255, 255, 255, 0.78) 0 1.3px, transparent 2px),
+                radial-gradient(circle at 28% 15%, rgba(255, 255, 255, 0.84) 0 1.4px, transparent 2.2px),
+                radial-gradient(circle at 42% 29%, rgba(255, 255, 255, 0.74) 0 1.2px, transparent 2px),
+                radial-gradient(circle at 56% 20%, rgba(255, 255, 255, 0.82) 0 1.4px, transparent 2.1px),
+                radial-gradient(circle at 68% 34%, rgba(255, 255, 255, 0.68) 0 1.1px, transparent 1.9px),
+                radial-gradient(circle at 84% 31%, rgba(255, 255, 255, 0.75) 0 1.2px, transparent 2px),
+                radial-gradient(circle at 90% 46%, rgba(255, 255, 255, 0.62) 0 1px, transparent 1.8px);
+            --scene-overlay-opacity: 0.4;
+            --scene-container-bg: rgba(14, 22, 45, 0.92);
+            --scene-container-border: rgba(116, 164, 228, 0.45);
+            --scene-input-bg: rgba(18, 31, 58, 0.96);
+            --scene-input-border: rgba(129, 178, 245, 0.52);
+            --scene-menu-bg: rgba(11, 26, 53, 0.98);
+            --scene-menu-border: rgba(150, 198, 255, 0.42);
+        }
+
+        body.booking-theme-night-soft {
+            --scene-bg: linear-gradient(160deg, #0d1a33 0%, #1b2f57 56%, #2a4476 100%);
+            --scene-overlay:
+                radial-gradient(circle at 76% 19%, rgba(244, 250, 255, 0.92) 0 30px, rgba(255, 255, 255, 0.12) 32px 40px, transparent 42px),
+                radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.72) 0 1.2px, transparent 2px),
+                radial-gradient(circle at 33% 31%, rgba(255, 255, 255, 0.7) 0 1.1px, transparent 1.9px),
+                radial-gradient(circle at 49% 18%, rgba(255, 255, 255, 0.8) 0 1.3px, transparent 2px),
+                radial-gradient(circle at 65% 27%, rgba(255, 255, 255, 0.66) 0 1.1px, transparent 1.8px),
+                radial-gradient(circle at 83% 35%, rgba(255, 255, 255, 0.68) 0 1.1px, transparent 1.8px);
+            --scene-overlay-opacity: 0.34;
+            --scene-container-bg: rgba(18, 31, 56, 0.9);
+            --scene-input-bg: rgba(21, 36, 66, 0.95);
+        }
+
+        body.booking-theme-dawn {
+            --scene-bg: linear-gradient(165deg, #1a2f5f 0%, #3e629b 55%, #b4dfff 100%);
+            --scene-overlay:
+                radial-gradient(circle at 77% 21%, rgba(255, 252, 232, 0.88) 0 24px, rgba(255, 255, 255, 0.12) 26px 34px, transparent 36px),
+                radial-gradient(circle at 16% 19%, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.8px),
+                radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.58) 0 0.9px, transparent 1.7px),
+                radial-gradient(circle at 61% 26%, rgba(255, 255, 255, 0.56) 0 0.9px, transparent 1.6px);
+            --scene-overlay-opacity: calc(0.3 - (var(--dawn-progress) * 0.16));
+            --scene-container-bg: rgba(26, 44, 76, 0.86);
+            --scene-container-border: rgba(154, 201, 255, 0.5);
+            --scene-input-bg: rgba(30, 52, 87, 0.9);
+            --scene-input-border: rgba(154, 201, 255, 0.5);
+        }
+
+        body.booking-theme-sunrise {
+            --scene-bg: linear-gradient(160deg, #74b8ee 0%, #a5d8ff 45%, #d8f0ff 100%);
+            --scene-overlay:
+                radial-gradient(circle at 80% 14%, rgba(255, 232, 160, 0.92) 0 44px, rgba(255, 216, 130, 0.52) 46px 68px, transparent 70px),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 55%);
+            --scene-overlay-opacity: 0.34;
+            --scene-container-bg: rgba(27, 62, 108, 0.82);
+            --scene-container-border: rgba(175, 224, 255, 0.64);
+            --scene-input-bg: rgba(36, 73, 117, 0.86);
+            --scene-input-border: rgba(175, 224, 255, 0.58);
+            --scene-menu-bg: rgba(32, 77, 127, 0.95);
+            --scene-menu-border: rgba(180, 228, 255, 0.64);
+        }
+
+        body.booking-theme-day {
+            --scene-bg: linear-gradient(160deg, #8fd2ff 0%, #c7ecff 55%, #e7f8ff 100%);
+            --scene-overlay:
+                radial-gradient(circle at 82% 14%, rgba(255, 238, 165, 0.93) 0 40px, rgba(255, 219, 128, 0.45) 42px 66px, transparent 68px),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 52%);
+            --scene-overlay-opacity: 0.28;
+            --scene-container-bg: rgba(27, 74, 122, 0.8);
+            --scene-container-border: rgba(192, 236, 255, 0.68);
+            --scene-input-bg: rgba(39, 86, 136, 0.84);
+            --scene-input-border: rgba(197, 238, 255, 0.62);
+            --scene-menu-bg: rgba(33, 87, 140, 0.96);
+            --scene-menu-border: rgba(195, 236, 255, 0.68);
+        }
+
+        body.booking-theme-evening {
+            --scene-bg: linear-gradient(160deg, #2a4779 0%, #42649f 52%, #6388bf 100%);
+            --scene-overlay:
+                radial-gradient(circle at 78% 18%, rgba(255, 227, 160, 0.88) 0 30px, rgba(255, 217, 132, 0.35) 32px 50px, transparent 52px),
+                linear-gradient(180deg, rgba(255, 172, 214, 0.08), transparent 58%);
+            --scene-overlay-opacity: 0.24;
+            --scene-container-bg: rgba(21, 41, 73, 0.88);
+            --scene-input-bg: rgba(25, 48, 84, 0.94);
+        }
+
+        .container {
+            background: var(--scene-container-bg);
+            border-color: var(--scene-container-border);
+            transition: background 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            background: var(--scene-input-bg);
+            border-color: var(--scene-input-border);
+            color: var(--scene-input-text);
+        }
+
+        .selected-date-preview {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(10, 20, 34, 0.32);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.015em;
+            color: #ff69b4;
+        }
+
+        .selected-date-preview .date-main,
+        .selected-date-preview .date-year {
+            color: #ff69b4;
+            font-weight: 800;
+        }
+
+        .native-select-hidden {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        .themed-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .themed-select__trigger {
+            width: 100%;
+            min-height: 52px;
+            border: 2px solid var(--scene-input-border);
+            border-radius: 12px;
+            background: var(--scene-input-bg);
+            color: #ffffff;
+            padding: 13px 44px 13px 14px;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            line-height: 1.35;
+        }
+
+        .themed-select__trigger::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid rgba(255, 255, 255, 0.92);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.92);
+            transform: translateY(-62%) rotate(45deg);
+            transition: transform 0.2s ease;
+        }
+
+        .themed-select.is-open .themed-select__trigger::after {
+            transform: translateY(-38%) rotate(-135deg);
+        }
+
+        .themed-select__trigger.is-placeholder {
+            color: #ff69b4;
+            font-weight: 600;
+        }
+
+        .themed-select__trigger:focus-visible {
+            outline: none;
+            border-color: var(--scene-accent-blue);
+            box-shadow: 0 0 0 4px rgba(145, 205, 255, 0.25);
+        }
+
+        .themed-select.is-open .themed-select__trigger {
+            border-color: var(--scene-accent-blue);
+            box-shadow: 0 0 0 4px rgba(145, 205, 255, 0.2);
+        }
+
+        .themed-select__menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow: auto;
+            border-radius: 14px;
+            border: 2px solid var(--scene-menu-border);
+            background: var(--scene-menu-bg);
+            box-shadow: var(--scene-menu-shadow);
+            padding: 6px;
+            display: none;
+            z-index: 1200;
+            scrollbar-width: thin;
+        }
+
+        .themed-select.is-open .themed-select__menu {
+            display: block;
+        }
+
+        .themed-select__group-label {
+            color: #ff69b4;
+            font-weight: 900;
+            font-size: 14px;
+            letter-spacing: 0.04em;
+            padding: 10px 10px 7px;
+        }
+
+        .themed-select__trigger .label {
+            font-weight: 500;
+        }
+
+        .themed-select__trigger .price {
+            color: #ffeb3b;
+            font-weight: 700;
+        }
+
+        .themed-select__option {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: #f8fbff;
+            text-align: left;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            line-height: 1.38;
+            padding: 10px 11px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .themed-select__option .label {
+            color: inherit;
+            font-weight: 500;
+        }
+
+        .themed-select__option .price {
+            color: #ffeb3b;
+            font-weight: 700;
+        }
+
+        .themed-select__option.is-placeholder {
+            color: #ff69b4;
+            font-weight: 600;
+        }
+
+        .themed-select__option.is-selected {
+            background: rgba(255, 105, 180, 0.2);
+            color: #ffd6ec;
+        }
+
+        .themed-select__option:hover:not(:disabled),
+        .themed-select__option:focus-visible:not(:disabled) {
+            outline: none;
+            background: rgba(159, 217, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .themed-select__option:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            font-style: italic;
+        }
+
+        .flatpickr-calendar {
+            border: 2px solid rgba(255, 105, 180, 0.56);
+            border-radius: 16px;
+            background: linear-gradient(165deg, #0b1430 0%, #101a3d 52%, #15224a 100%);
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.62);
+            color: #f3f7ff;
+            overflow: hidden;
+        }
+
+        .flatpickr-selected-banner {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(5, 11, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 105, 180, 0.35);
+            font-weight: 800;
+        }
+
+        .flatpickr-selected-banner .main,
+        .flatpickr-selected-banner .year {
+            color: #ff69b4;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+        }
+
+        .flatpickr-months,
+        .flatpickr-weekdays {
+            background: rgba(11, 19, 44, 0.92);
+        }
+
+        .flatpickr-months .flatpickr-month {
+            color: #ff69b4;
+            fill: #ff69b4;
+        }
+
+        .flatpickr-weekday {
+            color: rgba(225, 234, 255, 0.82) !important;
+        }
+
+        .flatpickr-current-month .cur-month {
+            color: #ff69b4 !important;
+            font-weight: 800 !important;
+        }
+
+        .flatpickr-current-month input.cur-year {
+            color: #ff69b4 !important;
+            font-weight: 800 !important;
+        }
+
+        .flatpickr-day {
+            color: #edf3ff;
+            border-radius: 8px;
+        }
+
+        .flatpickr-day.today {
+            border-color: #ff69b4;
+            color: #ff9cd2;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange {
+            background: rgba(255, 105, 180, 0.34);
+            border-color: rgba(255, 105, 180, 0.7);
+            color: #ffd9ef;
+        }
+
+        .flatpickr-day:hover {
+            background: rgba(255, 105, 180, 0.2);
+        }
+
+        .flatpickr-day.flatpickr-disabled,
+        .flatpickr-day.flatpickr-disabled:hover {
+            color: rgba(160, 172, 202, 0.46);
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public_mobile.css') }}">
+    <script defer src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="title-emoji" aria-hidden="true">🍑</span>
+                <span>Book with {{ escort_name or 'escort' }}</span>
+                <span class="title-emoji" aria-hidden="true">🍒</span>
+            </h1>
+            <p class="subtitle">Select your preferences below</p>
+        </div>
+
+        <div class="location-card">
+            <div class="location-item">
+                <div class="icon" aria-hidden="true">&#x1F4CD;</div>
+                <div>
+                    <div class="location-label">Currently in</div>
+                    <div class="location-text">{{ location.city|title }}</div>
+                </div>
+            </div>
+            <div class="location-item">
+                <div class="icon" aria-hidden="true">&#x1F3E8;</div>
+                <div>
+                    <div class="location-label">Hotel</div>
+                    <div class="location-text">{% if location.hotel_name and location.hotel_name.lower() not in ['private accommodation', 'my hotel', 'private', 'n/a', 'na', 'none', 'tba', 'tbc', ''] %}{{ location.hotel_name }}{% elif location.address %}{{ location.address.split(',')[0] }}{% else %}Central location{% endif %}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-card">
+            <h2>Total Cost</h2>
+            <div class="price" id="totalPrice">$0</div>
+            <div class="breakdown" id="priceBreakdown">Select service and duration to see price</div>
+        </div>
+
+        <form method="POST" action="/booking" id="bookingForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="total_price" id="totalPriceInput" value="">
+            {%- if token %}
+            <input type="hidden" name="token" value="{{ token }}">
+            {%- endif %}
+
+            <!-- Phone Number -->
+            <div class="form-group">
+                <label for="bookingPhone">Phone Number <span class="required">*</span></label>
+                {%- if phone and phone_locked %}
+                <input type="tel" id="bookingPhone" value="{{ phone }}" disabled class="verified">
+                <input type="hidden" name="phone" value="{{ phone }}">
+                <p class="hint" style="color: #2e7d32;">&#x2713; Verified and securely linked</p>
+                {%- elif phone %}
+                <input type="tel" id="bookingPhone" value="{{ phone }}" disabled style="background:#f5f5f5;">
+                <input type="hidden" name="phone" value="{{ phone }}">
+                {%- else %}
+                <input type="tel" id="bookingPhone" name="phone" required placeholder="+61412345678">
+                <p class="hint">Include country code (e.g., +61)</p>
+                {%- endif %}
+            </div>
+
+            <!-- Date - FIRST -->
+            <div class="form-group">
+                <label for="dateInput">Date <span class="required">*</span></label>
+                <div class="selected-date-preview" id="selectedDatePreview" aria-live="polite">
+                    <span class="date-main">Select a date</span>
+                    <span class="date-year">----</span>
+                </div>
+                <input type="text" name="date" id="dateInput" required autocomplete="off" placeholder="Select date..." onchange="_doUpdateAvailableTimeSlots()">
+            </div>
+
+            <!-- Time - SECOND (dynamically populated from available hours) -->
+            <div class="form-group">
+                <label for="timeInput">Time <span class="required">*</span></label>
+                <select name="time" id="timeInput" class="js-enhance-select" data-select-kind="time" required>
+                    <option value="">Select time...</option>
+                </select>
+                <p id="bookingTimesCalendarError" class="hint" style="display:none; color: #c62828; margin-top: 6px; font-size: 13px;" role="alert"></p>
+            </div>
+
+            <!-- Experience Type - THIRD -->
+            <div class="form-group">
+                <label for="experience">Experience <span class="required">*</span></label>
+                <select name="experience" id="experience" class="js-enhance-select" data-select-kind="experience" required onchange="onExperienceChange()">
+                    <option value="">Select experience...</option>
+                    <optgroup label="Standard Services">
+                        <option value="GFE">Girlfriend Experience (GFE) — ${{ rates.gfe_15 }} – ${{ rates.gfe_60 }}/hr</option>
+                        <option value="DGFE">Dirty GFE (DGFE) — ${{ rates.dgfe_15 }} – ${{ rates.dgfe_60 }}/hr</option>
+                        <option value="PSE">Pornstar Experience (PSE) — ${{ rates.pse_15 }} – ${{ rates.pse_60 }}/hr</option>
+                        <option value="PSE with filming">PSE with Filming — ${{ rates.pse_filming_15 | default(0) }} – ${{ rates.pse_filming | default(0) }}</option>
+                        <option value="Dinner Date">Dinner Date (2 hrs) — ${{ outcall_rates.get('dinner_date', rates.dinner_date) }} (outcall)</option>
+                    </optgroup>
+                    <optgroup label="Group Experiences">
+                        <option value="Couples MFF">Couples MFF — ${{ rates.mff }}/hr</option>
+                        <option value="Doubles MFF">Doubles MFF — ${{ rates.couples_mff_30 }} – ${{ rates.couples_mmf_60 }}/hr (other provider organised by the client, or I'll supply the other female escort)</option>
+                        <option value="Doubles MMF">Doubles MMF — ${{ rates.mmf_30 }} – ${{ rates.mmf_60 }}/hr</option>
+                    </optgroup>
+                    <optgroup label="Extended Experiences">
+                        <option value="Overnight">Overnight (12 hrs) — ${{ rates.overnight }} incall / ${{ outcall_rates.get('overnight', rates.overnight) }} outcall</option>
+                        <option value="Weekend">Dirty Weekend (48 hrs) — ${{ rates.weekend }} incall / ${{ outcall_rates.get('weekend', rates.weekend) }} outcall</option>
+                        <option value="Fly Me To You">Fly Me To You (overnight) — ${{ rates.fly_me }} incall / ${{ outcall_rates.get('fly_me', rates.fly_me) }} outcall</option>
+                    </optgroup>
+
+                </select>
+            </div>
+
+            <!-- Couples MFF: description only -->
+            <div class="form-group" id="couplesMffSection" style="display:none;">
+                <p class="hint" style="opacity:0.9; color:#ff69b4; font-size:15px;">
+                    You and your partner join me for a 3 sum.
+                </p>
+            </div>
+
+            <!-- Doubles MFF: self-provider checkbox -->
+            <div class="form-group" id="doublesMffSection" style="display:none;">
+                <p class="form-section-heading" style="font-weight:600;margin-bottom:8px;">Doubles MFF — Female Escort</p>
+                <p class="hint" style="opacity:0.9;">
+                    Tick the box below only if you need <strong>me to source the other female escort</strong>
+                    (<strong>4 hours notice</strong> required; rate doubled). Leave it unticked if you are bringing her yourself.
+                </p>
+                <label class="group-cb">
+                    <input type="checkbox" name="self_provider_female" id="selfProviderFemale" value="1"
+                           onchange="onProviderChange()">
+                    <span class="cb-box"></span>
+                    Please source the other female escort for me
+                </label>
+            </div>
+
+            <!-- Doubles MMF: self-provider checkbox -->
+            <div class="form-group" id="doublesMMFSection" style="display:none;">
+                <p class="form-section-heading" style="font-weight:600;margin-bottom:8px;">Doubles MMF — Male Provider</p>
+                <p class="hint" style="opacity:0.9;">
+                    Tick the box below only if you need <strong>me to arrange the other male</strong>.
+                    <strong>4 hours notice is required.</strong> Leave it unticked if you are bringing him yourself.
+                </p>
+                <label class="group-cb">
+                    <input type="checkbox" name="self_provider_male" id="selfProviderMale" value="1"
+                           onchange="onProviderChange()">
+                    <span class="cb-box"></span>
+                    Please source the other male escort for me
+                </label>
+                <div id="mmfExplorationArrangeBlock" style="display:none; margin-top:16px;">
+                    <p class="form-section-heading" style="font-weight:600;margin-bottom:8px;">MMF — what you'd like to explore</p>
+                    <p class="hint" style="opacity:0.9;margin-bottom:10px;">
+                        Tick <strong>all</strong> that apply — I need this to source the right male escort.
+                        Please note: double penetration is not offered in MMF bookings.
+                    </p>
+                    <label class="group-cb">
+                        <input type="checkbox" name="mmf_exploration_humiliation" id="mmf_exploration_humiliation" value="1" onchange="_updateCbBox(this);">
+                        <span class="cb-box"></span>
+                        Humiliation (have me or both of us humiliate you)
+                    </label>
+                    <label class="group-cb">
+                        <input type="checkbox" name="mmf_exploration_voyeurism" id="mmf_exploration_voyeurism" value="1" onchange="_updateCbBox(this);">
+                        <span class="cb-box"></span>
+                        Voyeurism (watch me get fucked by male bull)
+                    </label>
+                    <label class="group-cb">
+                        <input type="checkbox" name="mmf_exploration_bisexual" id="mmf_exploration_bisexual" value="1" onchange="_updateCbBox(this);">
+                        <span class="cb-box"></span>
+                        Bisexual (get fucked/sucked by both of us)
+                    </label>
+                    <label class="group-cb">
+                        <input type="checkbox" name="mmf_exploration_heterosexual" id="mmf_exploration_heterosexual" value="1" onchange="_updateCbBox(this);">
+                        <span class="cb-box"></span>
+                        Heterosexual (just touch and fuck me only)
+                    </label>
+                </div>
+            </div>
+
+            <div id="doublesEscortSourcedOutcallDisclaimer" class="form-group" style="display:none;">
+                <div id="doublesEscortSourcedTravelSurchargeWrap" style="display:none;">
+                <p class="hint" style="opacity:0.95; color:#ffeb3b; font-size:14px;">
+                    <strong>Outcall travel:</strong> If you've asked me to source the second provider and you choose <strong>outcall</strong>,
+                    both escorts travel - the travel surcharge is <strong>${{ surcharge_doubles_pair }}</strong>
+                    (when only I travel for an outcall, the usual fee is <strong>${{ surcharge }}</strong>).
+                </p>
+                </div>
+                <p id="doublesEscortSourcedDepositNoticeMMF" class="hint" style="display:none; margin-top:10px; opacity:0.95; color:#ffeb3b; font-size:14px;">
+                    <strong>Deposit before sourcing:</strong> {{ escort_name or 'I' }} will not actively begin sourcing or arranging the other male escort until your deposit has been paid and verified.
+                </p>
+                <p id="doublesEscortSourcedDepositNoticeMFF" class="hint" style="display:none; margin-top:10px; opacity:0.95; color:#ffeb3b; font-size:14px;">
+                    <strong>Deposit before sourcing:</strong> {{ escort_name or 'I' }} will not actively begin sourcing or arranging the other female escort until your deposit has been paid and verified.
+                </p>
+            </div>
+
+            <!-- Duration - FOURTH -->
+            <div class="form-group">
+                <label for="duration">Duration <span class="required">*</span></label>
+                <select name="duration" id="duration" class="js-enhance-select" data-select-kind="duration" required onchange="calculatePrice(); updateAvailableTimeSlots();">
+                    <option value="">Select duration...</option>
+                    <option value="15 minutes" data-incall-only>15 mins (Incall only)</option>
+                    <option value="30 minutes" data-outcall-disabled>30 mins (Incall only)</option>
+                    <option value="1 hour">1 hour</option>
+                    <option value="1 hour 30 minutes">1.5 hours</option>
+                    <option value="2 hours">2 hours</option>
+                    <option value="3 hours">3 hours</option>
+                    <option value="4 hours">4 hours</option>
+                    <option value="12 hours">12 hours (Overnight)</option>
+                    <option value="48 hours">48 hours (Weekend)</option>
+                </select>
+                <div class="duration-locked" id="durationLocked">
+                    Duration is fixed for this experience
+                </div>
+            </div>
+
+            <div id="standardLocationBlock">
+            <!-- Incall/Outcall - FIFTH -->
+            <div class="form-group">
+                <label for="incallOutcall">Location <span class="required">*</span></label>
+                <select name="incall_outcall" id="incallOutcall" class="js-enhance-select" data-select-kind="location" required onchange="toggleOutcallAddress(); calculatePrice(); _doUpdateAvailableTimeSlots();">
+                    <option value="">Select location...</option>
+                    <option value="Incall">Incall (Visit me at my hotel)</option>
+                    <option value="Outcall">Outcall (I'll come to you)</option>
+                </select>
+            </div>
+
+            <!-- Outcall Address with Autocomplete - Hotels/Addresses Only -->
+            <div class="form-group" id="outcallAddress">
+                <label for="addressInput">Hotel/Address <span class="required">*</span></label>
+                <input type="text" name="outcall_address" id="addressInput"
+                       placeholder="Type hotel name or address...">
+                <p class="hint">Hotels and street addresses — must be within 15 km of {{ location.city|title }}.</p>
+            </div>
+            </div><!-- /standardLocationBlock -->
+
+            <!-- Dinner Date: restaurant + optional after-dinner address (5pm–9pm start times only; duration fixed 2h in JS) -->
+            <div id="dinnerDateSection" style="display:none;">
+                <div class="form-group">
+                    <label for="dinnerRestaurant">Restaurant name &amp; suburb <span class="required">*</span></label>
+                    <input type="text" name="dinner_restaurant" id="dinnerRestaurant" maxlength="200"
+                           autocomplete="off"
+                           placeholder="e.g. Windy Point Restaurant, Belair">
+                    <p class="hint">Search restaurants, cafés, and bars — must be within 15 km of {{ location.city|title }}.</p>
+                </div>
+                <div class="form-group">
+                    <label class="group-cb">
+                        <input type="checkbox" name="dinner_after_my_address" id="dinnerAfterAddressCb" value="1"
+                               onchange="onDinnerAfterCheckboxChange()">
+                        <span class="cb-box"></span>
+                        After dinner go to your hotel/home address
+                    </label>
+                    <p class="hint" style="margin-top:8px; opacity:0.85;">If ticked enter your address below for after dinner</p>
+                </div>
+                <div class="form-group" id="dinnerClientAddressWrap" style="display:none;">
+                    <label for="dinnerClientAddressInput">Your hotel or home address after dinner <span class="required">*</span></label>
+                    <input type="text" name="dinner_client_address" id="dinnerClientAddressInput" maxlength="300"
+                           autocomplete="off"
+                           placeholder="Hotel name and suburb, or street address">
+                    <p class="hint">Hotels and home/street addresses — must be within 15 km of {{ location.city|title }}.</p>
+                </div>
+            </div>
+
+            <!-- Client Name - LAST (before submit) -->
+            <div class="form-group">
+                <label for="clientName">Your Name <span class="required">*</span></label>
+                <input type="text" name="client_name" id="clientName" required placeholder="First name or preferred name" maxlength="50">
+                <p class="hint">How would you like me to address you?</p>
+            </div>
+
+            <!-- Special Requests (Optional) -->
+            <div class="form-group">
+                <label for="specialRequests">Special Requests <span style="color: rgba(255,255,255,0.5); font-weight: normal;">(Optional)</span></label>
+                <textarea name="special_requests" id="specialRequests" rows="3" maxlength="500" placeholder="Any preferences or special requests? (e.g., outfit, music, specific desires...)" style="width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-family: 'Poppins', sans-serif; font-size: 15px; resize: vertical; transition: all 0.3s ease;"></textarea>
+                <p class="hint">Let me know if you have any preferences to make our time extra special</p>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                Submit Booking Request
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Pricing loaded from Rates admin page via template variables.
+        const pricing = {
+            'GFE': {
+                '15 minutes': {{ rates.gfe_15 | default(0) }},
+                '30 minutes': {{ rates.gfe_30 | default(0) }},
+                '1 hour': {{ rates.gfe_60 | default(0) }}
+            },
+            'DGFE': {
+                '15 minutes': {{ rates.dgfe_15 | default(0) }},
+                '30 minutes': {{ rates.dgfe_30 | default(0) }},
+                '1 hour': {{ rates.dgfe_60 | default(0) }}
+            },
+            'PSE': {
+                '15 minutes': {{ rates.pse_15 | default(0) }},
+                '30 minutes': {{ rates.pse_30 | default(0) }},
+                '1 hour': {{ rates.pse_60 | default(0) }}
+            },
+            'PSE with filming': {
+                '15 minutes': {{ rates.pse_filming_15 | default(0) }},
+                '30 minutes': {{ rates.pse_filming_30 | default(0) }},
+                '1 hour': {{ rates.pse_filming | default(0) }}
+            },
+            'Couples MFF': {
+                '1 hour': {{ rates.mff | default(0) }}
+            },
+            'Doubles MFF': {
+                '30 minutes': {{ rates.couples_mff_30 | default(0) }},
+                '1 hour': {{ rates.couples_mmf_60 | default(0) }}
+            },
+            'Doubles MMF': {
+                '30 minutes': {{ rates.mmf_30 | default(0) }},
+                '1 hour': {{ rates.mmf_60 | default(0) }}
+            },
+            'Dinner Date': {
+                '2 hours': {{ rates.dinner_date | default(0) }}
+            },
+            'Overnight': {
+                '12 hours': {{ rates.overnight | default(0) }}
+            },
+            'Weekend': {
+                '48 hours': {{ rates.weekend | default(0) }}
+            },
+            'Fly Me To You': {
+                '12 hours': {{ rates.fly_me | default(0) }}
+            },
+        };
+
+        // Outcall prices loaded from Rates admin page (hourly + packages)
+        const outcallPrices = {
+            'GFE': { '1 hour': {{ outcall_rates.gfe_60 | default(0) }} },
+            'DGFE': { '1 hour': {{ outcall_rates.dgfe_60 | default(0) }} },
+            'PSE': { '1 hour': {{ outcall_rates.pse_60 | default(0) }} },
+            'Dinner Date': { '2 hours': {{ outcall_rates.get('dinner_date', rates.dinner_date) | default(0) }} },
+            'Overnight': { '12 hours': {{ outcall_rates.get('overnight', rates.overnight) | default(0) }} },
+            'Weekend': { '48 hours': {{ outcall_rates.get('weekend', rates.weekend) | default(0) }} },
+            'Fly Me To You': { '12 hours': {{ outcall_rates.get('fly_me', rates.fly_me) | default(0) }} }
+        };
+
+        // Outcall surcharge from Rates admin page
+        const outcallSurcharge = {{ surcharge | default(100) }};
+        const outcallSurchargeDoublesPair = {{ surcharge_doubles_pair | default(200) }};
+
+        // Fixed durations for certain experiences (duration <select> is disabled — not posted in HTML).
+        // Server applies the same mapping in webform_routes._WEBFORM_FIXED_DURATION_BY_EXPERIENCE on POST.
+        const fixedDurations = {
+            'Dinner Date': '2 hours',
+            'Overnight': '12 hours',
+            'Weekend': '48 hours',
+            'Fly Me To You': '12 hours',
+            'Couples MFF': '1 hour',
+        };
+
+        var WEBFORM_GROUP_EXPERIENCES = ['Couples MFF', 'Doubles MFF', 'Doubles MMF'];
+
+        // Escort IANA zone (admin Location tab) — "today" and buffer minutes must not use the visitor's PC timezone.
+        window.ESCORT_IANA = {{ (escort_timezone or escort_default_iana) | tojson }};
+
+        function doublesEscortSourcesSecondProvider() {
+            var expEl = document.getElementById('experience');
+            var exp = expEl ? expEl.value : '';
+            var sf = document.getElementById('selfProviderFemale');
+            var sm = document.getElementById('selfProviderMale');
+            return (exp === 'Doubles MFF' && sf && sf.checked) ||
+                (exp === 'Doubles MMF' && sm && sm.checked);
+        }
+
+        /** Grey out 15 min when Doubles + escort arranges second provider; respect outcall (incall-only). */
+        function applyDoublesEscortSourcedDurationRules() {
+            var expEl = document.getElementById('experience');
+            var exp = expEl ? expEl.value : '';
+            var isDoubles = (exp === 'Doubles MFF' || exp === 'Doubles MMF');
+            var arrange = doublesEscortSourcesSecondProvider();
+            var opt15 = document.querySelector('#duration option[value="15 minutes"]');
+            if (!opt15) return;
+            var grey15EscortArranges = isDoubles && arrange;
+            var isOutcall = getEffectiveLocationType() === 'Outcall';
+            opt15.disabled = grey15EscortArranges || isOutcall;
+            opt15.style.color = (grey15EscortArranges || isOutcall) ? '#999' : '';
+            opt15.textContent = grey15EscortArranges
+                ? '15 mins — Not available (escort arranges second provider)'
+                : '15 mins (Incall only)';
+            var durSel = document.getElementById('duration');
+            if ((grey15EscortArranges || isOutcall) && durSel && durSel.value === '15 minutes') durSel.value = '';
+        }
+
+        function escortCalendarYmd() {
+            return new Date().toLocaleDateString('en-CA', { timeZone: window.ESCORT_IANA });
+        }
+        function escortMinsFromMidnight() {
+            var fmt = new Intl.DateTimeFormat('en-GB', {
+                timeZone: window.ESCORT_IANA,
+                hour: '2-digit', minute: '2-digit', hour12: false, hourCycle: 'h23',
+            });
+            var parts = fmt.formatToParts(new Date());
+            var h = 0, m = 0;
+            for (var i = 0; i < parts.length; i++) {
+                if (parts[i].type === 'hour') h = parseInt(parts[i].value, 10);
+                if (parts[i].type === 'minute') m = parseInt(parts[i].value, 10);
+            }
+            return h * 60 + m;
+        }
+        /** Wall time in the escort zone (booking date + time) → epoch ms, for 4h notice across DST. */
+        function escortWallToUtcMs(dateYmd, hhmm) {
+            var p = String(hhmm).split(':');
+            var th = parseInt(p[0], 10) || 0, tmin = parseInt(p[1], 10) || 0;
+            var dp = String(dateYmd).split('-');
+            var y = parseInt(dp[0], 10), mo = parseInt(dp[1], 10) - 1, d = parseInt(dp[2], 10);
+            if (isNaN(y) || dp.length < 3) return NaN;
+            var targetMins = th * 60 + tmin;
+            var lo = Date.UTC(y, mo, d, 0, 0, 0) - 36 * 3600 * 1000;
+            var hi = Date.UTC(y, mo, d, 0, 0, 0) + 36 * 3600 * 1000;
+            var fmt = new Intl.DateTimeFormat('en-CA', {
+                timeZone: window.ESCORT_IANA, year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, hourCycle: 'h23',
+            });
+            for (var iter = 0; iter < 40; iter++) {
+                if (lo > hi) break;
+                var mid = Math.floor((lo + hi) / 2);
+                var parts = fmt.formatToParts(new Date(mid));
+                var got = {};
+                for (var j = 0; j < parts.length; j++) {
+                    if (parts[j].type && parts[j].type !== 'literal') got[parts[j].type] = parts[j].value;
+                }
+                var py = parseInt(got.year, 10), pm = parseInt(got.month, 10), pd = parseInt(got.day, 10);
+                var ph = parseInt(got.hour, 10), pmi = parseInt(got.minute, 10);
+                if (isNaN(py)) return NaN;
+                var cmp = (py - y) || (pm - (mo + 1)) || (pd - d) || ((ph * 60 + pmi) - targetMins);
+                if (cmp === 0) return mid;
+                if (cmp < 0) lo = mid + 1; else hi = mid - 1;
+            }
+            return NaN;
+        }
+
+        function toggleMmfExplorationArrangeBlock() {
+            var expEl = document.getElementById('experience');
+            var sm = document.getElementById('selfProviderMale');
+            var blk = document.getElementById('mmfExplorationArrangeBlock');
+            if (!blk) return;
+            var exp = expEl ? expEl.value : '';
+            var show = exp === 'Doubles MMF' && sm && sm.checked;
+            blk.style.display = show ? 'block' : 'none';
+            if (!show) {
+                ['humiliation', 'voyeurism', 'bisexual', 'heterosexual'].forEach(function(s) {
+                    var el = document.getElementById('mmf_exploration_' + s);
+                    if (el) {
+                        el.checked = false;
+                        _updateCbBox(el);
+                    }
+                });
+            }
+        }
+
+        function updateDoublesEscortSourcedOutcallDisclaimer() {
+            var box = document.getElementById('doublesEscortSourcedOutcallDisclaimer');
+            if (!box) return;
+            var escortSources = doublesEscortSourcesSecondProvider();
+            var travelWrap = document.getElementById('doublesEscortSourcedTravelSurchargeWrap');
+            var mmfNote = document.getElementById('doublesEscortSourcedDepositNoticeMMF');
+            var mffNote = document.getElementById('doublesEscortSourcedDepositNoticeMFF');
+            var expEl = document.getElementById('experience');
+            var exp = expEl ? expEl.value : '';
+
+            if (!escortSources) {
+                box.style.display = 'none';
+                if (travelWrap) travelWrap.style.display = 'none';
+                if (mmfNote) mmfNote.style.display = 'none';
+                if (mffNote) mffNote.style.display = 'none';
+                return;
+            }
+
+            var outcall = getEffectiveLocationType() === 'Outcall';
+            if (travelWrap) {
+                travelWrap.style.display = outcall ? 'block' : 'none';
+            }
+            if (mmfNote) mmfNote.style.display = (exp === 'Doubles MMF') ? 'block' : 'none';
+            if (mffNote) mffNote.style.display = (exp === 'Doubles MFF') ? 'block' : 'none';
+            box.style.display = 'block';
+        }
+
+        function toggleGroupEscortSection() {
+            var exp = document.getElementById('experience').value;
+            document.getElementById('couplesMffSection').style.display  = (exp === 'Couples MFF')  ? 'block' : 'none';
+            document.getElementById('doublesMffSection').style.display  = (exp === 'Doubles MFF')  ? 'block' : 'none';
+            document.getElementById('doublesMMFSection').style.display  = (exp === 'Doubles MMF')  ? 'block' : 'none';
+            if (exp !== 'Doubles MFF' && document.getElementById('selfProviderFemale'))
+                document.getElementById('selfProviderFemale').checked = false;
+            if (exp !== 'Doubles MMF' && document.getElementById('selfProviderMale'))
+                document.getElementById('selfProviderMale').checked = false;
+
+            toggleMmfExplorationArrangeBlock();
+            updateDoublesEscortSourcedOutcallDisclaimer();
+            applyDoublesEscortSourcedDurationRules();
+        }
+
+        function _updateCbBox(cb) {
+            var box = cb && cb.nextElementSibling;
+            while (box && !box.classList.contains('cb-box')) box = box.nextElementSibling;
+            if (!box) return;
+            if (cb.checked) {
+                box.textContent = '\u2713';
+                box.classList.add('is-checked');
+            } else {
+                box.textContent = '';
+                box.classList.remove('is-checked');
+            }
+        }
+
+        function onProviderChange() {
+            var sf = document.getElementById('selfProviderFemale');
+            var sm = document.getElementById('selfProviderMale');
+            if (sf) _updateCbBox(sf);
+            if (sm) _updateCbBox(sm);
+            toggleMmfExplorationArrangeBlock();
+            updateDoublesEscortSourcedOutcallDisclaimer();
+            applyDoublesEscortSourcedDurationRules();
+            calculatePrice();
+            _doUpdateAvailableTimeSlots(); // Bypass debounce — checkbox state affects 4-hour grace period
+        }
+
+        function isDinnerDateExperience() {
+            return document.getElementById('experience').value === 'Dinner Date';
+        }
+
+        function getEffectiveLocationType() {
+            if (isDinnerDateExperience()) return 'Outcall';
+            return document.getElementById('incallOutcall').value;
+        }
+
+        function onDinnerAfterCheckboxChange() {
+            var cb = document.getElementById('dinnerAfterAddressCb');
+            var wrap = document.getElementById('dinnerClientAddressWrap');
+            var inp = document.getElementById('dinnerClientAddressInput');
+            if (!cb || !wrap || !inp) return;
+            _updateCbBox(cb);
+            if (cb.checked) {
+                wrap.style.display = 'block';
+                setTimeout(function() {
+                    if (typeof bindPlaceAutocomplete === 'function') {
+                        bindPlaceAutocomplete(document.getElementById('dinnerClientAddressInput'), 'Hotel name and suburb, or street address', 'address');
+                    }
+                }, 0);
+            } else {
+                wrap.style.display = 'none';
+                inp.value = '';
+            }
+        }
+
+        function applyDinnerDateMode() {
+            var std = document.getElementById('standardLocationBlock');
+            var din = document.getElementById('dinnerDateSection');
+            var sel = document.getElementById('incallOutcall');
+            var hid = document.getElementById('incallOutcallHidden');
+            var dr = document.getElementById('dinnerRestaurant');
+            if (!std || !din || !sel) return;
+
+            if (isDinnerDateExperience()) {
+                std.style.display = 'none';
+                din.style.display = 'block';
+                sel.removeAttribute('name');
+                sel.disabled = true;
+                sel.value = 'Outcall';
+                if (!hid) {
+                    hid = document.createElement('input');
+                    hid.type = 'hidden';
+                    hid.name = 'incall_outcall';
+                    hid.id = 'incallOutcallHidden';
+                    hid.value = 'Outcall';
+                    document.getElementById('bookingForm').appendChild(hid);
+                } else {
+                    hid.value = 'Outcall';
+                }
+                if (dr) dr.required = true;
+                if (typeof bindDinnerPlacesLazy === 'function') bindDinnerPlacesLazy();
+            } else {
+                std.style.display = 'block';
+                din.style.display = 'none';
+                sel.setAttribute('name', 'incall_outcall');
+                sel.disabled = false;
+                if (hid) hid.remove();
+                if (dr) { dr.required = false; dr.value = ''; }
+                var dcb = document.getElementById('dinnerAfterAddressCb');
+                var dwrap = document.getElementById('dinnerClientAddressWrap');
+                var dinp = document.getElementById('dinnerClientAddressInput');
+                if (dcb) { dcb.checked = false; _updateCbBox(dcb); }
+                if (dwrap) dwrap.style.display = 'none';
+                if (dinp) dinp.value = '';
+                setTimeout(function() {
+                    if (typeof bindPlaceAutocomplete === 'function') {
+                        bindPlaceAutocomplete(document.getElementById('addressInput'), 'Type hotel name or address...', 'address');
+                    }
+                }, 0);
+            }
+            toggleOutcallAddress();
+            calculatePrice();
+            _doUpdateAvailableTimeSlots();
+        }
+
+        function onExperienceChange() {
+            const experience = document.getElementById('experience').value;
+            const durationSelect = document.getElementById('duration');
+            const durationLocked = document.getElementById('durationLocked');
+
+            if (fixedDurations[experience]) {
+                // Lock duration
+                const fixedDur = fixedDurations[experience];
+
+                if (fixedDur === 'enquire') {
+                    durationSelect.value = '';
+                    durationSelect.disabled = true;
+                    durationLocked.textContent = 'Please enquire for this experience';
+                } else {
+                    durationSelect.value = fixedDur;
+                    durationSelect.disabled = true;
+                    durationLocked.textContent = 'Duration is fixed for this experience';
+                }
+                durationLocked.classList.add('show');
+            } else {
+                // Unlock duration
+                durationSelect.disabled = false;
+                durationLocked.classList.remove('show');
+            }
+
+            toggleGroupEscortSection();
+            applyDinnerDateMode();
+            updateAvailableTimeSlots();
+        }
+
+        function calculatePrice() {
+            const experience = document.getElementById('experience').value;
+            const duration = document.getElementById('duration').value;
+            const incallOutcall = getEffectiveLocationType();
+
+            if (!experience || !duration) {
+                document.getElementById('totalPrice').textContent = '$0';
+                document.getElementById('priceBreakdown').textContent = 'Select service and duration';
+                document.getElementById('submitBtn').disabled = true;
+                return;
+            }
+
+            // Check for specific outcall pricing first
+            let basePrice = 0;
+            let usingOutcallPrice = false;
+
+            if (incallOutcall === 'Outcall' && outcallPrices[experience] && outcallPrices[experience][duration]) {
+                basePrice = outcallPrices[experience][duration];
+                usingOutcallPrice = true;
+            } else if (pricing[experience] && pricing[experience][duration]) {
+                basePrice = pricing[experience][duration];
+            } else {
+                // Try multi-hour calculation — match "X hours" or "X hour Y minutes" (not "15 minutes")
+                const hoursMatch = duration.match(/^(\d+(?:\.\d+)?)\s*hours?(?:\s+(\d+)\s*min(?:utes?)?)?/i);
+                const hours = hoursMatch ? parseFloat(hoursMatch[1]) + (hoursMatch[2] ? parseInt(hoursMatch[2]) / 60 : 0) : 0;
+                if (hours >= 1 && pricing[experience] && pricing[experience]['1 hour']) {
+                    basePrice = Math.round(pricing[experience]['1 hour'] * hours);
+                } else {
+                    document.getElementById('totalPrice').textContent = 'N/A';
+                    document.getElementById('priceBreakdown').textContent = 'Duration not available for this service';
+                    document.getElementById('submitBtn').disabled = true;
+                    return;
+                }
+            }
+
+            // Doubles MFF: double the rate if client is NOT providing the other female escort
+            let doubledRate = false;
+            if (experience === 'Doubles MFF') {
+                var selfFemale = document.getElementById('selfProviderFemale');
+                if (!selfFemale || !selfFemale.checked) {
+                    basePrice = basePrice * 2;
+                    doubledRate = true;
+                }
+            }
+
+            let totalPrice = basePrice;
+            let breakdown = '';
+
+            // Add outcall surcharge if not using specific outcall price
+            if (incallOutcall === 'Outcall' && !usingOutcallPrice) {
+                var escortSourcesSecond = doublesEscortSourcesSecondProvider();
+                var travelFee = escortSourcesSecond ? outcallSurchargeDoublesPair : outcallSurcharge;
+                totalPrice += travelFee;
+                breakdown = `$${basePrice} + $${travelFee} outcall travel`;
+            } else if (usingOutcallPrice) {
+                breakdown = `Outcall rate`;
+            } else {
+                breakdown = doubledRate ? `Incall rate (×2 — escort arranged)` : `Incall rate`;
+            }
+
+            document.getElementById('totalPrice').textContent = `$${totalPrice}`;
+            document.getElementById('priceBreakdown').textContent = breakdown;
+            document.getElementById('totalPriceInput').value = totalPrice;
+            var calErr = document.getElementById('bookingTimesCalendarError');
+            document.getElementById('submitBtn').disabled = !!(calErr && calErr.textContent && calErr.textContent.trim());
+        }
+
+        // Outcall minimum 1 hour: hide 15 mins and 30 mins when Outcall selected. 15 mins incall only.
+        function updateDurationOptionsForLocation() {
+            const locationSelect = document.getElementById('incallOutcall');
+            const durationSelect = document.getElementById('duration');
+            const isOutcall = getEffectiveLocationType() === 'Outcall';
+
+            Array.prototype.forEach.call(durationSelect.querySelectorAll('option[data-incall-only], option[data-outcall-disabled]'), function(opt) {
+                opt.disabled = isOutcall;
+                if (isOutcall && (opt.value === durationSelect.value)) {
+                    durationSelect.value = '';
+                }
+            });
+
+            if (durationSelect.value) calculatePrice();
+            if (typeof applyDoublesEscortSourcedDurationRules === 'function') applyDoublesEscortSourcedDurationRules();
+        }
+
+        function toggleOutcallAddress() {
+            function refreshDoublesDisclaimer() {
+                if (typeof updateDoublesEscortSourcedOutcallDisclaimer === 'function') {
+                    updateDoublesEscortSourcedOutcallDisclaimer();
+                }
+            }
+            if (isDinnerDateExperience()) {
+                var od = document.getElementById('outcallAddress');
+                var oi = document.getElementById('addressInput');
+                if (od) od.style.display = 'none';
+                if (oi) oi.value = '';
+                refreshDoublesDisclaimer();
+                return;
+            }
+            const select = document.getElementById('incallOutcall');
+            const addressDiv = document.getElementById('outcallAddress');
+            const addressInput = document.getElementById('addressInput');
+
+            if (select.value === 'Outcall') {
+                addressDiv.style.display = 'block';
+                // Do NOT set required — browser shows inline ! icons on dynamic required fields.
+                // Address is validated in the submit handler instead.
+                // initAutocomplete runs while #outcallAddress is still display:none, so
+                // bindPlaceAutocomplete bails; bind after the field is visible.
+                setTimeout(function() {
+                    var ai = document.getElementById('addressInput');
+                    if (!ai || ai.dataset.placesBound) return;
+                    if (typeof window.bindPlaceAutocomplete === 'function') {
+                        window.bindPlaceAutocomplete(ai, 'Type hotel name or address...', 'address');
+                    }
+                }, 0);
+            } else {
+                addressDiv.style.display = 'none';
+                addressInput.value = '';
+            }
+            updateDurationOptionsForLocation();
+            refreshDoublesDisclaimer();
+        }
+
+        // Build time slot options from available_start to available_end (wraps midnight).
+        // endBufferMins: latest bookable start is this many minutes before nominal shift end
+        // (matches OPERATING_HOURS_END_BUFFER_MINUTES / SMS bot).
+        function populateTimeOptions(availStart, availEnd, minMins, endBufferMins) {
+            var timeSelect = document.getElementById('timeInput');
+            var prevValue = timeSelect.value;
+            timeSelect.innerHTML = '<option value="">Select time...</option>';
+
+            function toMins(t) {
+                var p = t.split(':');
+                return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+            }
+            function fmtValue(m) {
+                m = ((m % 1440) + 1440) % 1440;
+                var h = Math.floor(m / 60), mn = m % 60;
+                return (h < 10 ? '0' : '') + h + ':' + (mn < 10 ? '0' : '') + mn;
+            }
+            function fmtDisplay(m) {
+                m = ((m % 1440) + 1440) % 1440;
+                var h = Math.floor(m / 60), mn = m % 60;
+                var ampm = h >= 12 ? 'PM' : 'AM';
+                var h12 = h % 12 || 12;
+                return h12 + ':' + (mn < 10 ? '0' : '') + mn + ' ' + ampm;
+            }
+
+            var buf = (endBufferMins != null && !isNaN(parseInt(endBufferMins, 10)))
+                ? Math.max(0, parseInt(endBufferMins, 10))
+                : 30;
+
+            var start = toMins(availStart);
+            var end = toMins(availEnd);
+            // If minMins provided (today's buffer), skip slots before it
+            var effectiveStart = (minMins != null) ? Math.max(start, minMins) : start;
+            // Snap effectiveStart to next 15-min boundary
+            effectiveStart = Math.ceil(effectiveStart / 15) * 15;
+            var cur = effectiveStart;
+
+            // Overnight schedules (end < start): extend end past midnight on timeline
+            var normEnd = (end < start) ? end + 1440 : end;
+            normEnd -= buf;
+
+            for (var i = 0; i < 96; i++) {
+                if (cur > normEnd) break;
+                var opt = document.createElement('option');
+                opt.value = fmtValue(cur);
+                opt.textContent = fmtDisplay(cur);
+                timeSelect.appendChild(opt);
+                cur += 15;
+            }
+
+            // Restore previously selected value if it's still in the list
+            if (prevValue) timeSelect.value = prevValue;
+        }
+
+        // Debounced wrapper — collapses rapid successive calls into one (500ms quiet window).
+        var _updateTimeSlotsTimer = null;
+        var _updateAddressTimeSlotsTimer = null;
+        function updateAvailableTimeSlots() {
+            clearTimeout(_updateTimeSlotsTimer);
+            _updateTimeSlotsTimer = setTimeout(_doUpdateAvailableTimeSlots, 500);
+        }
+        function updateAvailableTimeSlotsForAddress() {
+            clearTimeout(_updateAddressTimeSlotsTimer);
+            _updateAddressTimeSlotsTimer = setTimeout(_doUpdateAvailableTimeSlots, 500);
+        }
+
+        function getOutcallAddressForBookedApi() {
+            var exp = (document.getElementById('experience') && document.getElementById('experience').value) || '';
+            if (exp === 'Dinner Date') {
+                var r = (document.getElementById('dinnerRestaurant') && document.getElementById('dinnerRestaurant').value) || '';
+                var da = (document.getElementById('dinnerClientAddressInput') && document.getElementById('dinnerClientAddressInput').value) || '';
+                return (r || da).trim();
+            }
+            return ((document.getElementById('addressInput') && document.getElementById('addressInput').value) || '').trim();
+        }
+
+        function setCalendarSlotsError(msg) {
+            var e = document.getElementById('bookingTimesCalendarError');
+            if (e) {
+                e.textContent = msg || '';
+                e.style.display = msg ? 'block' : 'none';
+            }
+            if (msg) {
+                var sb = document.getElementById('submitBtn');
+                if (sb) sb.disabled = true;
+            } else {
+                if (typeof calculatePrice === 'function') calculatePrice();
+            }
+        }
+
+        // Fetch booked times + working hours, rebuild options, then grey out
+        // booked slots and past times (when today is selected).
+        var _bookedTimesEtag = null;
+        function _doUpdateAvailableTimeSlots() {
+            var dateInput = document.getElementById('dateInput');
+            var durationSelect = document.getElementById('duration');
+            var timeSelect = document.getElementById('timeInput');
+            var locEl = document.getElementById('incallOutcall');
+            var incallVal = (locEl && locEl.value) ? locEl.value : '';
+
+            var _headers = {'Content-Type': 'application/json'};
+            if (_bookedTimesEtag) _headers['If-None-Match'] = _bookedTimesEtag;
+
+            fetch('/api/booked-times', {
+                method: 'POST',
+                headers: _headers,
+                body: JSON.stringify({
+                    date: dateInput.value || '',
+                    duration: durationSelect.value || '1 hour',
+                    experience: (document.getElementById('experience') || {}).value || '',
+                    incall_outcall: incallVal,
+                    outcall_address: getOutcallAddressForBookedApi()
+                })
+            })
+            .then(function(r) {
+                if (r.status === 304) return null;
+                _bookedTimesEtag = r.headers.get('ETag') || null;
+                return r.json();
+            })
+            .then(function(data) {
+                if (!data) return;
+                var err = data.error || null;
+                if (err) {
+                    setCalendarSlotsError(err);
+                } else {
+                    setCalendarSlotsError('');
+                }
+                var bookedTimes = new Set(data.booked_times || []);
+                var availStart = data.available_start || '00:00';
+                var availEnd   = data.available_end   || '23:45';
+                var endBufMins = (data.operating_hours_end_buffer_minutes != null)
+                    ? data.operating_hours_end_buffer_minutes
+                    : 30;
+                // Dinner Date: no operating-hours end buffer (last slot 9:00 PM, not 8:30 PM).
+                var _expBuf = (document.getElementById('experience') || {}).value || '';
+                if (_expBuf === 'Dinner Date') {
+                    endBufMins = 0;
+                }
+
+                // Today's grid: escort-local 30-min lead time. Escort-arranges-doubles 4h rule is applied below (UTC) so early tomorrow slots inside 4h are greyed too.
+                var isToday = false;
+                var graceMins = null;
+                if (dateInput.value) {
+                    var todayStr = escortCalendarYmd();
+                    isToday = (dateInput.value === todayStr);
+                    if (isToday) {
+                        var nowMins = escortMinsFromMidnight();
+                        graceMins = Math.ceil((nowMins + 30) / 15) * 15;
+                    }
+                }
+
+                populateTimeOptions(availStart, availEnd, graceMins, endBufMins);
+
+                var arrangeSecond = doublesEscortSourcesSecondProvider();
+                var cutoffFourHrMs = Date.now() + 4 * 60 * 60 * 1000;
+
+                Array.prototype.forEach.call(timeSelect.querySelectorAll('option'), function(opt) {
+                    if (!opt.value) return;
+                    if (bookedTimes.has(opt.value)) {
+                        opt.disabled = true;
+                        opt.textContent += ' \u2014 Booked';
+                        opt.style.color = '#999';
+                        opt.style.fontStyle = 'italic';
+                        return;
+                    }
+                    if (arrangeSecond && dateInput.value) {
+                        var slotMs = escortWallToUtcMs(dateInput.value, opt.value);
+                        if (!isNaN(slotMs) && slotMs < cutoffFourHrMs) {
+                            opt.disabled = true;
+                            opt.style.color = '#999';
+                            opt.style.fontStyle = 'italic';
+                            opt.textContent = opt.textContent.trim() + ' \u2014 Need 4 hours notice';
+                            return;
+                        }
+                    }
+                    opt.disabled = false;
+                    opt.style.color = '';
+                    opt.style.fontStyle = '';
+                });
+
+                // Clear selection if chosen time is now disabled
+                if (timeSelect.value && timeSelect.options[timeSelect.selectedIndex] &&
+                        timeSelect.options[timeSelect.selectedIndex].disabled) {
+                    timeSelect.value = '';
+                }
+                if (timeSelect) {
+                    timeSelect.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            })
+            .catch(function(err) {
+                console.error('Error fetching booked times:', err);
+                setCalendarSlotsError('Could not load calendar availability. Check your connection and try again, or refresh the page.');
+            });
+        }
+
+        // Set minimum date to escort "today" (admin Location / timezone)
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('dateInput');
+            const today = escortCalendarYmd();
+            dateInput.min = today;
+            // Pre-fill today's date so the 30-min buffer applies immediately on load
+            if (!dateInput.value) dateInput.value = today;
+            updateDurationOptionsForLocation();
+            toggleGroupEscortSection();
+            applyDinnerDateMode();
+            _doUpdateAvailableTimeSlots(); // Bypass debounce on initial load so times appear immediately
+            var _bookedTimesPollMs = 30 * 1000;
+            var _bookedTimesPollId = null;
+            function _startBookedTimesPolling() {
+                if (_bookedTimesPollId) {
+                    clearInterval(_bookedTimesPollId);
+                }
+                _bookedTimesPollId = window.setInterval(function() {
+                    if (!document.hidden) {
+                        _doUpdateAvailableTimeSlots();
+                    }
+                }, _bookedTimesPollMs);
+            }
+            _startBookedTimesPolling();
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    _doUpdateAvailableTimeSlots();
+                }
+            });
+            var _sf = document.getElementById('selfProviderFemale');
+            var _sm = document.getElementById('selfProviderMale');
+            if (_sf) { _updateCbBox(_sf); _sf.addEventListener('change', onProviderChange); }
+            if (_sm) { _updateCbBox(_sm); _sm.addEventListener('change', onProviderChange); }
+
+            var _addr = document.getElementById('addressInput');
+            if (_addr) _addr.addEventListener('input', updateAvailableTimeSlotsForAddress);
+            var _dr = document.getElementById('dinnerRestaurant');
+            if (_dr) _dr.addEventListener('input', updateAvailableTimeSlotsForAddress);
+            var _dca = document.getElementById('dinnerClientAddressInput');
+            if (_dca) _dca.addEventListener('input', updateAvailableTimeSlotsForAddress);
+
+            // Block submission if 4-hour rule violated (Doubles without self-provider checkbox)
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                var expEl = document.getElementById('experience');
+                if (expEl && expEl.value === 'Dinner Date') {
+                    var rest = (document.getElementById('dinnerRestaurant') && document.getElementById('dinnerRestaurant').value || '').trim();
+                    if (rest.length < 3) {
+                        e.preventDefault();
+                        alert('Please enter the restaurant name and suburb for your dinner date.');
+                        focusPlaceField('dinnerRestaurant');
+                        return false;
+                    }
+                    var acb = document.getElementById('dinnerAfterAddressCb');
+                    if (acb && acb.checked) {
+                        var da = (document.getElementById('dinnerClientAddressInput').value || '').trim();
+                        if (da.length < 10) {
+                            e.preventDefault();
+                            alert('Please enter your hotel or home address for after dinner.');
+                            focusPlaceField('dinnerClientAddressInput');
+                            return false;
+                        }
+                    }
+                } else {
+                // Validate address for outcall bookings
+                var locVal = document.getElementById('incallOutcall').value;
+                if (locVal === 'Outcall') {
+                    var addrVal = (document.getElementById('addressInput').value || '').trim();
+                    if (!addrVal) {
+                        e.preventDefault();
+                        alert('Please enter your hotel or address for the outcall booking.');
+                        focusPlaceField('addressInput');
+                        return false;
+                    }
+                }
+                }
+                var exp = document.getElementById('experience').value;
+                var dateVal = document.getElementById('dateInput').value;
+                var timeVal = document.getElementById('timeInput').value;
+                var sfChecked = document.getElementById('selfProviderFemale') && document.getElementById('selfProviderFemale').checked;
+                var smChecked = document.getElementById('selfProviderMale') && document.getElementById('selfProviderMale').checked;
+                var needsArranging = (exp === 'Doubles MFF' && sfChecked) || (exp === 'Doubles MMF' && smChecked);
+                if (exp === 'Doubles MMF' && smChecked) {
+                    var mmfAny = false;
+                    ['humiliation', 'voyeurism', 'bisexual', 'heterosexual'].forEach(function(s) {
+                        var el = document.getElementById('mmf_exploration_' + s);
+                        if (el && el.checked) mmfAny = true;
+                    });
+                    if (!mmfAny) {
+                        e.preventDefault();
+                        alert('Please tick at least one MMF exploration option (Humiliation, Voyeurism, Bisexual, Heterosexual) so I can source the right male escort.');
+                        return false;
+                    }
+                }
+                if (needsArranging && dateVal && timeVal) {
+                    var tMs = escortWallToUtcMs(dateVal, timeVal);
+                    if (isNaN(tMs) || (tMs - Date.now()) < 240 * 60 * 1000) {
+                        e.preventDefault();
+                        alert('A minimum of 4 hours notice is required for Doubles bookings when the escort needs to arrange the other provider. Please select a time at least 4 hours from now in the escort\'s local time.');
+                        return false;
+                    }
+                }
+            });
+
+            // Auto-advance date when selecting after-midnight time slots
+            const timeSelect = document.getElementById('timeInput');
+            timeSelect.addEventListener('change', function() {
+                if (!dateInput.value || !timeSelect.value) return;
+                const selectedHour = parseInt(timeSelect.value.split(':')[0], 10);
+                // Hours 0-3 (midnight to 3am) are "late night" = next day
+                if (selectedHour >= 0 && selectedHour <= 3) {
+                    // Auto-advance the date by 1 day
+                    const selectedDate = new Date(dateInput.value + 'T12:00:00');
+                    selectedDate.setDate(selectedDate.getDate() + 1);
+                    const nextDayStr = selectedDate.getFullYear() + '-' +
+                        String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(selectedDate.getDate()).padStart(2, '0');
+                    dateInput.value = nextDayStr;
+                    if (window.bookingDateFlatpickr) {
+                        window.bookingDateFlatpickr.setDate(nextDayStr, false, 'Y-m-d');
+                    }
+                    if (typeof window.updateDatePreviewFromInput === 'function') {
+                        window.updateDatePreviewFromInput();
+                    }
+                    updateAvailableTimeSlots();
+                }
+            });
+        });
+
+        // Google Places — restrict suggestions to escort area; confirm selection is within 15 km (radius) of city center.
+        var _placesBoundsCache = null;
+        var _placesLib = null;
+        var _useNewPlaceAutocomplete = null;
+        var PLACES_MAX_RADIUS_M = 15000;
+        var BOOKING_POLICY_CITY = {{ (location.city or 'this area') | tojson }};
+        /** Server-resolved center from admin Location city (same CBD table as outcall verification). */
+        window.BOOKING_ESCORT_CENTER = {{ place_autocomplete_center | default(none) | tojson }};
+        /** Places API (New): max 5 primary types per widget. Table A/B — see Google place types docs. */
+        var PLACES_PRIMARY_TYPES_DINING = ['restaurant', 'cafe', 'bar', 'meal_takeaway', 'bakery'];
+
+        // Fallback city centers when server could not resolve (must match booking/outcall_verification.CBD_COORDINATES)
+        const CITY_COORDS = {
+            'adelaide': {lat: -34.9285, lng: 138.6007},
+            'sydney': {lat: -33.8688, lng: 151.2093},
+            'melbourne': {lat: -37.8136, lng: 144.9631},
+            'brisbane': {lat: -27.4698, lng: 153.0251},
+            'perth': {lat: -31.9505, lng: 115.8605},
+            'darwin': {lat: -12.4634, lng: 130.8456},
+            'hobart': {lat: -42.8821, lng: 147.3272},
+            'canberra': {lat: -35.2809, lng: 149.1300},
+            'gold coast': {lat: -28.0167, lng: 153.4000},
+        };
+
+        function _firstCityTokenForFallback() {
+            var raw = {{ (location.city or '') | lower | tojson }};
+            if (!raw || !raw.trim) return '';
+            var s = raw.trim();
+            if (s.indexOf(',') >= 0) s = s.split(',')[0].trim();
+            if (s.indexOf('/') >= 0) s = s.split('/')[0].trim();
+            var parts = s.split(/\s+/).filter(Boolean);
+            if (parts.length >= 2 && parts[0] === 'gold' && parts[1] === 'coast') return 'gold coast';
+            return parts[0] || '';
+        }
+
+        function getCityCoordsForPlaces() {
+            if (window.BOOKING_ESCORT_CENTER && typeof window.BOOKING_ESCORT_CENTER.lat === 'number') {
+                return window.BOOKING_ESCORT_CENTER;
+            }
+            var escortCity = _firstCityTokenForFallback();
+            if (escortCity && CITY_COORDS[escortCity]) return CITY_COORDS[escortCity];
+            if (escortCity && escortCity.indexOf('gold') === 0 && CITY_COORDS['gold coast']) return CITY_COORDS['gold coast'];
+            return CITY_COORDS['adelaide'];
+        }
+
+        function getEscortCenterCoords() {
+            return getCityCoordsForPlaces();
+        }
+
+        var _placesCircleCache = null;
+
+        function getPlacesRestrictionCircle() {
+            if (_placesCircleCache) return _placesCircleCache;
+            if (!window.google || !google.maps) return null;
+            var coords = getEscortCenterCoords();
+            if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') return null;
+            // Return plain object {center, radius}, NOT google.maps.Circle object.
+            // The new Places API expects a plain object, not a Circle instance.
+            _placesCircleCache = {
+                center: { lat: coords.lat, lng: coords.lng },
+                radius: PLACES_MAX_RADIUS_M,
+            };
+            return _placesCircleCache;
+        }
+
+        function getPlacesBounds15km() {
+            if (_placesBoundsCache) return _placesBoundsCache;
+            const coords = getEscortCenterCoords();
+            const lat_offset = 15 / 111;
+            const lng_offset = 15 / (111 * Math.cos(coords.lat * Math.PI / 180));
+            _placesBoundsCache = new google.maps.LatLngBounds(
+                new google.maps.LatLng(coords.lat - lat_offset, coords.lng - lng_offset),
+                new google.maps.LatLng(coords.lat + lat_offset, coords.lng + lng_offset)
+            );
+            return _placesBoundsCache;
+        }
+
+        function haversineMeters(lat1, lng1, lat2, lng2) {
+            var R = 6371000;
+            var rad = Math.PI / 180;
+            var dLat = (lat2 - lat1) * rad;
+            var dLng = (lng2 - lng1) * rad;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function isLatLngWithinBookingRadius(lat, lng) {
+            var c = getEscortCenterCoords();
+            return haversineMeters(c.lat, c.lng, lat, lng) <= PLACES_MAX_RADIUS_M;
+        }
+
+        function latLngFromNewPlace(place) {
+            if (!place || !place.location) return null;
+            var loc = place.location;
+            var lat = (typeof loc.lat === 'function') ? loc.lat() : loc.lat;
+            var lng = (typeof loc.lng === 'function') ? loc.lng() : loc.lng;
+            if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+            return { lat: lat, lng: lng };
+        }
+
+        function latLngFromLegacyPlace(place) {
+            if (!place || !place.geometry || !place.geometry.location) return null;
+            return { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+        }
+
+        function rejectPlaceOutsideRadius(inputEl) {
+            inputEl.value = '';
+            alert('That place is more than 15 km from ' + BOOKING_POLICY_CITY + '. Please choose an address within the booking area.');
+        }
+
+        function isPlaceFieldVisible(el) {
+            if (!el) return false;
+            var node = el;
+            while (node && node !== document.body) {
+                if (node.style && node.style.display === 'none') return false;
+                var cs = window.getComputedStyle(node);
+                if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+                node = node.parentElement;
+            }
+            return true;
+        }
+
+        function focusPlaceField(inputId) {
+            var w = window._gmpPlaceWidgets && window._gmpPlaceWidgets[inputId];
+            if (w && typeof w.focus === 'function') {
+                w.focus();
+                return;
+            }
+            var el = document.getElementById(inputId);
+            if (el && el.type !== 'hidden') el.focus();
+        }
+
+        /** Legacy Autocomplete (older Google Cloud projects only). typeMode: 'dining' = POIs; 'address' = geocoding + hotels (no type filter). */
+        function bindPlacesLegacy(el, typeMode) {
+            if (!el || el.dataset.placesBound) return null;
+            try {
+                if (!window.google || !google.maps || !google.maps.places || !google.maps.places.Autocomplete) {
+                    return null;
+                }
+                var bounds = getPlacesBounds15km();
+                var opts = {
+                    componentRestrictions: { country: 'au' },
+                    bounds: bounds,
+                    strictBounds: false,
+                    fields: ['formatted_address', 'geometry', 'name', 'types']
+                };
+                if (typeMode === 'dining') {
+                    opts.types = ['establishment'];
+                }
+                var ac = new google.maps.places.Autocomplete(el, opts);
+                el.dataset.placesBound = '1';
+                ac.addListener('place_changed', function() {
+                    var place = ac.getPlace();
+                    var ll = latLngFromLegacyPlace(place);
+                    if (ll && !isLatLngWithinBookingRadius(ll.lat, ll.lng)) {
+                        rejectPlaceOutsideRadius(el);
+                        return;
+                    }
+                    if (place.name && place.formatted_address && !place.formatted_address.startsWith(place.name)) {
+                        el.value = place.name + ', ' + place.formatted_address;
+                    } else if (place.formatted_address) {
+                        el.value = place.formatted_address;
+                    } else if (place.name) {
+                        el.value = place.name;
+                    }
+                });
+                return ac;
+            } catch (e) {
+                console.warn('Places legacy Autocomplete failed:', el && el.id, e);
+                return null;
+            }
+        }
+
+        /** Places API (New) — PlaceAutocompleteElement; syncs into existing hidden input for form POST. */
+        function bindPlaceAutocompleteNew(inputEl, placeholder, typeMode) {
+            if (!inputEl || inputEl.dataset.placesBound) return null;
+            if (!isPlaceFieldVisible(inputEl)) return null;
+            var mount = null;
+            try {
+                var PlaceAutocompleteElement = _placesLib && _placesLib.PlaceAutocompleteElement;
+                if (!PlaceAutocompleteElement) return null;
+                mount = document.createElement('div');
+                mount.className = 'place-autocomplete-mount';
+                inputEl.parentNode.insertBefore(mount, inputEl);
+                inputEl.type = 'hidden';
+                if (placeholder) inputEl.setAttribute('data-placeholder', placeholder);
+                var pac = new PlaceAutocompleteElement({});
+                pac.placeholder = placeholder || '';
+                pac.includedRegionCodes = ['au'];
+                if (typeMode === 'dining') {
+                    pac.includedPrimaryTypes = PLACES_PRIMARY_TYPES_DINING.slice();
+                }
+                // Circle must be locationBias, not locationRestriction (bounds-only API).
+                var restrictCircle = getPlacesRestrictionCircle();
+                if (restrictCircle) {
+                    pac.locationBias = restrictCircle;
+                } else {
+                    pac.locationBias = getPlacesBounds15km();
+                }
+                pac.addEventListener('gmp-select', async function(ev) {
+                    try {
+                        var placePrediction = ev.placePrediction || (ev.detail && ev.detail.placePrediction);
+                        if (!placePrediction) return;
+                        var place = placePrediction.toPlace();
+                        await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+                        var ll = latLngFromNewPlace(place);
+                        if (ll && !isLatLngWithinBookingRadius(ll.lat, ll.lng)) {
+                            rejectPlaceOutsideRadius(inputEl);
+                            return;
+                        }
+                        var dn = place.displayName || '';
+                        var fa = place.formattedAddress || '';
+                        if (dn && fa && !fa.startsWith(dn)) {
+                            inputEl.value = dn + ', ' + fa;
+                        } else {
+                            inputEl.value = fa || dn || '';
+                        }
+                    } catch (err) {
+                        console.warn('Place selection failed:', err);
+                    }
+                });
+                mount.appendChild(pac);
+                inputEl.dataset.placesBound = '1';
+                if (!window._gmpPlaceWidgets) window._gmpPlaceWidgets = {};
+                window._gmpPlaceWidgets[inputEl.id] = pac;
+                return pac;
+            } catch (e) {
+                if (mount && mount.parentNode) mount.parentNode.removeChild(mount);
+                inputEl.type = 'text';
+                console.warn('PlaceAutocompleteElement failed:', inputEl && inputEl.id, e);
+                return null;
+            }
+        }
+
+        function bindPlaceAutocomplete(inputEl, placeholder, typeMode) {
+            if (!inputEl || inputEl.dataset.placesBound) return null;
+            if (!isPlaceFieldVisible(inputEl)) return null;
+            var mode = typeMode || 'address';
+            if (_useNewPlaceAutocomplete === true) {
+                return bindPlaceAutocompleteNew(inputEl, placeholder, mode);
+            }
+            if (_useNewPlaceAutocomplete === false) {
+                return bindPlacesLegacy(inputEl, mode);
+            }
+            return null;
+        }
+
+        /** Dinner fields live in a hidden section until "Dinner Date" is selected — bind after section is visible. */
+        function bindDinnerPlacesLazy() {
+            if (!isDinnerDateExperience()) return;
+            setTimeout(function() {
+                bindPlaceAutocomplete(document.getElementById('dinnerRestaurant'), 'e.g. Windy Point Restaurant, Belair', 'dining');
+                var cb = document.getElementById('dinnerAfterAddressCb');
+                if (cb && cb.checked) {
+                    bindPlaceAutocomplete(document.getElementById('dinnerClientAddressInput'), 'Hotel name and suburb, or street address', 'address');
+                }
+            }, 0);
+        }
+
+        async function initAutocomplete() {
+            try {
+                if (!window.google || !google.maps || !google.maps.importLibrary) {
+                    console.error('[Autocomplete] Google Maps JS API did not load. Check that the API key is set in Admin → Config → Google Maps and that Maps JavaScript API is enabled in Google Cloud Console.');
+                    return;
+                }
+                _placesLib = await google.maps.importLibrary('places');
+                var PAE = _placesLib && _placesLib.PlaceAutocompleteElement;
+                var legacy = window.google && google.maps && google.maps.places && google.maps.places.Autocomplete;
+                if (PAE) {
+                    _useNewPlaceAutocomplete = true;
+                } else if (legacy) {
+                    _useNewPlaceAutocomplete = false;
+                } else {
+                    console.error('[Autocomplete] Places API not available. In Google Cloud Console: enable "Places API (New)" and "Maps JavaScript API" and add them to this API key.');
+                    return;
+                }
+                getPlacesBounds15km();
+                getPlacesRestrictionCircle();
+                if (typeof isDinnerDateExperience === 'function' && isDinnerDateExperience()) {
+                    /* skip main address — hidden until Dinner Date selected */
+                } else {
+                    bindPlaceAutocomplete(document.getElementById('addressInput'), 'Type hotel name or address...', 'address');
+                }
+                if (typeof bindDinnerPlacesLazy === 'function') bindDinnerPlacesLazy();
+                console.info('[Autocomplete] Initialised successfully (mode:', _useNewPlaceAutocomplete ? 'new PlaceAutocompleteElement' : 'legacy Autocomplete', ')');
+            } catch (e) {
+                console.error('[Autocomplete] initAutocomplete failed:', e);
+            }
+        }
+
+        window.initAutocomplete = initAutocomplete;
+        window.bindDinnerPlacesLazy = bindDinnerPlacesLazy;
+        window.bindPlaceAutocomplete = bindPlaceAutocomplete;
+        window.focusPlaceField = focusPlaceField;
+
+        // Self-healing: if the Maps script already loaded before this script ran
+        // (can happen when browser caches the Maps JS), the callback was never
+        // called. Detect that and call it now.
+        if (window.google && window.google.maps && window.google.maps.importLibrary) {
+            initAutocomplete();
+        }
+    </script>
+
+    <script>
+        (function() {
+            const ENHANCED_SELECT_IDS = ['timeInput', 'experience', 'duration', 'incallOutcall'];
+            const THEME_CLASSES = [
+                'booking-theme-default',
+                'booking-theme-night-deep',
+                'booking-theme-night-soft',
+                'booking-theme-dawn',
+                'booking-theme-sunrise',
+                'booking-theme-day',
+                'booking-theme-evening',
+            ];
+            const stateById = new Map();
+
+            function normalizeText(text) {
+                return (text || '').replace(/\s+/g, ' ').trim();
+            }
+
+            function splitExperienceText(raw) {
+                const idx = raw.indexOf('—');
+                if (idx === -1) return { label: raw, price: '' };
+                return {
+                    label: raw.slice(0, idx).trim(),
+                    price: raw.slice(idx + 1).trim(),
+                };
+            }
+
+            function setTriggerContent(select, trigger, option) {
+                trigger.innerHTML = '';
+                const raw = option ? normalizeText(option.textContent) : '';
+                const isPlaceholder = !option || option.value === '';
+                trigger.classList.toggle('is-placeholder', isPlaceholder);
+
+                if (!raw) {
+                    trigger.textContent = 'Select...';
+                    trigger.classList.add('is-placeholder');
+                    return;
+                }
+
+                if (select.id === 'experience' && option && option.value) {
+                    const parsed = splitExperienceText(raw);
+                    const label = document.createElement('span');
+                    label.className = 'label';
+                    label.textContent = parsed.label;
+                    trigger.appendChild(label);
+                    if (parsed.price) {
+                        trigger.appendChild(document.createTextNode(' — '));
+                        const price = document.createElement('span');
+                        price.className = 'price';
+                        price.textContent = parsed.price;
+                        trigger.appendChild(price);
+                    }
+                } else {
+                    trigger.textContent = raw;
+                }
+            }
+
+            function renderMenu(select, menu, openState) {
+                menu.innerHTML = '';
+                const selectedValue = select.value;
+
+                function appendOption(option) {
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.className = 'themed-select__option';
+                    row.dataset.value = option.value;
+                    if (option.disabled) row.disabled = true;
+                    if (option.value === selectedValue) row.classList.add('is-selected');
+                    if (option.value === '') row.classList.add('is-placeholder');
+
+                    const raw = normalizeText(option.textContent);
+                    if (select.id === 'experience' && option.value) {
+                        const parsed = splitExperienceText(raw);
+                        const label = document.createElement('span');
+                        label.className = 'label';
+                        label.textContent = parsed.label;
+                        row.appendChild(label);
+                        if (parsed.price) {
+                            row.appendChild(document.createTextNode(' — '));
+                            const price = document.createElement('span');
+                            price.className = 'price';
+                            price.textContent = parsed.price;
+                            row.appendChild(price);
+                        }
+                    } else {
+                        row.textContent = raw;
+                    }
+
+                    row.addEventListener('click', function() {
+                        if (option.disabled) return;
+                        select.value = option.value;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                        syncSelect(select.id, false);
+                        closeAllMenus();
+                    });
+
+                    menu.appendChild(row);
+                }
+
+                Array.from(select.children).forEach(function(child) {
+                    if (child.tagName === 'OPTGROUP') {
+                        const groupLabel = document.createElement('div');
+                        groupLabel.className = 'themed-select__group-label';
+                        groupLabel.textContent = child.label;
+                        menu.appendChild(groupLabel);
+                        Array.from(child.children).forEach(appendOption);
+                    } else if (child.tagName === 'OPTION') {
+                        appendOption(child);
+                    }
+                });
+
+                if (!openState) menu.scrollTop = 0;
+            }
+
+            function closeAllMenus() {
+                stateById.forEach(function(st) {
+                    st.wrapper.classList.remove('is-open');
+                    st.trigger.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            function syncSelect(selectId, preserveOpen) {
+                const st = stateById.get(selectId);
+                if (!st) return;
+                const select = st.select;
+                const openState = preserveOpen && st.wrapper.classList.contains('is-open');
+                renderMenu(select, st.menu, openState);
+                const selected = select.options[select.selectedIndex] || select.options[0] || null;
+                setTriggerContent(select, st.trigger, selected);
+                st.lastValue = select.value;
+                st.lastDisabled = select.disabled;
+                st.trigger.disabled = !!select.disabled;
+                if (select.disabled) {
+                    st.wrapper.classList.remove('is-open');
+                    st.trigger.setAttribute('aria-expanded', 'false');
+                }
+                if (select.id === 'timeInput' && typeof window.applyBookingSceneThemeFromSelection === 'function') {
+                    window.applyBookingSceneThemeFromSelection();
+                }
+            }
+
+            function enhanceSelect(select) {
+                if (!select || stateById.has(select.id)) return;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'themed-select';
+                wrapper.dataset.selectId = select.id;
+
+                const trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.className = 'themed-select__trigger';
+                trigger.setAttribute('aria-haspopup', 'listbox');
+                trigger.setAttribute('aria-expanded', 'false');
+
+                const menu = document.createElement('div');
+                menu.className = 'themed-select__menu';
+                menu.setAttribute('role', 'listbox');
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                select.classList.add('native-select-hidden');
+                select.insertAdjacentElement('afterend', wrapper);
+
+                const st = {
+                    select: select,
+                    wrapper: wrapper,
+                    trigger: trigger,
+                    menu: menu,
+                    observer: null,
+                    poller: null,
+                    lastValue: select.value,
+                    lastDisabled: select.disabled,
+                };
+                stateById.set(select.id, st);
+
+                trigger.addEventListener('click', function() {
+                    if (trigger.disabled) return;
+                    const willOpen = !wrapper.classList.contains('is-open');
+                    closeAllMenus();
+                    if (willOpen) {
+                        wrapper.classList.add('is-open');
+                        trigger.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                trigger.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeAllMenus();
+                    }
+                    if ((e.key === 'Enter' || e.key === ' ') && !trigger.disabled) {
+                        e.preventDefault();
+                        trigger.click();
+                    }
+                });
+
+                menu.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeAllMenus();
+                        trigger.focus();
+                    }
+                });
+
+                select.addEventListener('change', function() {
+                    syncSelect(select.id, true);
+                });
+
+                select.addEventListener('input', function() {
+                    syncSelect(select.id, true);
+                });
+
+                st.observer = new MutationObserver(function() {
+                    syncSelect(select.id, true);
+                });
+                st.observer.observe(select, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['disabled', 'label', 'selected', 'style'],
+                });
+
+                st.poller = window.setInterval(function() {
+                    if (select.value !== st.lastValue || select.disabled !== st.lastDisabled) {
+                        syncSelect(select.id, true);
+                    }
+                }, 220);
+
+                syncSelect(select.id, false);
+            }
+
+            function parseTimeToMinutes(value) {
+                const m = /^(\d{2}):(\d{2})$/.exec((value || '').trim());
+                if (!m) return null;
+                const hour = parseInt(m[1], 10);
+                const minute = parseInt(m[2], 10);
+                if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+                return (hour * 60) + minute;
+            }
+
+            function getThemeForMinutes(minutes) {
+                return { className: 'booking-theme-night-deep', dawnProgress: 0 };
+            }
+
+            window.applyBookingSceneThemeFromSelection = function() {
+                const body = document.body;
+                const theme = getThemeForMinutes(null);
+                THEME_CLASSES.forEach(function(cls) { body.classList.remove(cls); });
+                body.classList.add(theme.className);
+                body.style.setProperty('--dawn-progress', String(theme.dawnProgress || 0));
+            };
+
+            function toLocalIsoDate(dateObj) {
+                const y = dateObj.getFullYear();
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const d = String(dateObj.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + d;
+            }
+
+            function parseIsoDate(value) {
+                const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((value || '').trim());
+                if (!m) return null;
+                const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+                if (Number.isNaN(d.getTime())) return null;
+                return d;
+            }
+
+            function formatPreviewParts(dateObj) {
+                const day = dateObj.toLocaleDateString('en-AU', { day: 'numeric' });
+                const month = dateObj.toLocaleDateString('en-AU', { month: 'long' });
+                const year = String(dateObj.getFullYear());
+                return { main: month + ' ' + day, year: year };
+            }
+
+            /** Human-readable preview from a civil Y-m-d (same calendar the escort uses). */
+            function formatYmdCivil(ymd) {
+                const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ymd || '').trim());
+                if (!m) return { main: 'Select a date', year: '----' };
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                return { main: months[parseInt(m[2], 10) - 1] + ' ' + parseInt(m[3], 10), year: m[1] };
+            }
+
+            function ensureFlatpickrBanner(instance, dateObj) {
+                if (!instance || !instance.calendarContainer || !dateObj) return;
+                let banner = instance.calendarContainer.querySelector('.flatpickr-selected-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.className = 'flatpickr-selected-banner';
+                    banner.innerHTML = '<span class="main"></span><span class="year"></span>';
+                    instance.calendarContainer.insertBefore(banner, instance.calendarContainer.firstChild);
+                }
+                const parts = formatPreviewParts(dateObj);
+                const main = banner.querySelector('.main');
+                const year = banner.querySelector('.year');
+                if (main) main.textContent = parts.main;
+                if (year) year.textContent = parts.year;
+            }
+
+            window.updateDatePreviewFromInput = function() {
+                const input = document.getElementById('dateInput');
+                const preview = document.getElementById('selectedDatePreview');
+                if (!input || !preview) return;
+                const mainEl = preview.querySelector('.date-main');
+                const yearEl = preview.querySelector('.date-year');
+                const parsed = parseIsoDate(input.value);
+                if (!parsed) {
+                    if (mainEl) mainEl.textContent = 'Select a date';
+                    if (yearEl) yearEl.textContent = '----';
+                    return;
+                }
+                const parts = formatYmdCivil(input.value);
+                if (mainEl) mainEl.textContent = parts.main;
+                if (yearEl) yearEl.textContent = parts.year;
+                if (window.bookingDateFlatpickr) {
+                    ensureFlatpickrBanner(window.bookingDateFlatpickr, parsed);
+                }
+            };
+
+            function initBookingDatePicker() {
+                const input = document.getElementById('dateInput');
+                if (!input) return;
+                const todayIso = escortCalendarYmd();
+
+                if (!input.value) input.value = todayIso;
+
+                if (!window.flatpickr) {
+                    input.type = 'date';
+                    input.min = todayIso;
+                    window.updateDatePreviewFromInput();
+                    return;
+                }
+
+                window.bookingDateFlatpickr = window.flatpickr(input, {
+                    dateFormat: 'Y-m-d',
+                    minDate: todayIso,
+                    defaultDate: input.value || todayIso,
+                    monthSelectorType: 'static',
+                    disableMobile: true,
+                    allowInput: false,
+                    onReady: function(selectedDates, dateStr, instance) {
+                        if (!input.value) {
+                            instance.setDate(todayIso, true);
+                        }
+                        window.updateDatePreviewFromInput();
+                        ensureFlatpickrBanner(instance, selectedDates[0] || parseIsoDate(input.value) || today);
+                    },
+                    onOpen: function(selectedDates, dateStr, instance) {
+                        ensureFlatpickrBanner(instance, selectedDates[0] || parseIsoDate(input.value) || today);
+                    },
+                    onChange: function(selectedDates, dateStr, instance) {
+                        window.updateDatePreviewFromInput();
+                        ensureFlatpickrBanner(instance, selectedDates[0] || parseIsoDate(input.value) || today);
+                    }
+                });
+            }
+
+            window.refreshCustomBookingSelect = function(selectId) {
+                syncSelect(selectId, true);
+            };
+
+            window.refreshAllCustomBookingSelects = function() {
+                ENHANCED_SELECT_IDS.forEach(function(id) {
+                    syncSelect(id, true);
+                });
+            };
+
+            document.addEventListener('click', function(evt) {
+                if (!evt.target.closest('.themed-select')) closeAllMenus();
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                initBookingDatePicker();
+                ENHANCED_SELECT_IDS.forEach(function(id) {
+                    enhanceSelect(document.getElementById(id));
+                });
+                window.updateDatePreviewFromInput();
+                window.applyBookingSceneThemeFromSelection();
+            });
+        })();
+    </script>
+
+    <!-- Maps JS: loading=async in the URL handles async loading; do NOT also add the async attribute
+         to this script tag — combining both causes the callback to silently misfire in Firefox/Safari. -->
+    {% if google_maps_api_key %}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initAutocomplete&loading=async"></script>
+    {% else %}
+    <script>console.error('[Autocomplete] Google Maps API key is not configured. Go to Admin → Config → Google Maps and enter your Browser API Key.');</script>
+    {% endif %}
+</body>
+</html>
